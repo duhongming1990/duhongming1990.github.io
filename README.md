@@ -201,9 +201,9 @@ ssh-keygen -C xxx
 
 ### git 免密登录
 
-- gitlab: https://gitlab.chehejia.com/-/profile/keys
-- gitee: https://gitee.com/profile/sshkeys
-- github: https://github.com/settings/keys
+- github: [https://github.com/settings/keys](https://github.com/settings/keys)
+- gitee: [https://gitee.com/profile/sshkeys](https://gitee.com/profile/sshkeys)
+- gitlab: [https://gitlab.chehejia.com/-/profile/keys](https://gitlab.chehejia.com/-/profile/keys)
 
 ### host 免密登录
 
