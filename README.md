@@ -41,3 +41,45 @@ scoop install corretto11-jdk corretto17-jdk corretto8-jdk git git-lfs go gradle 
 | visualvm        | ![Scoop Version (extras bucket)](https://img.shields.io/scoop/v/visualvm?bucket=java)          |
 
 ## 更换软件源
+
+### Ubuntu 软件仓库镜像使用
+
+https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/
+
+### Debian 软件仓库镜像使用
+
+https://mirrors.tuna.tsinghua.edu.cn/help/debian/
+
+### Alpine 镜像使用
+
+https://mirror.tuna.tsinghua.edu.cn/help/alpine/
+
+### Anaconda 镜像使用
+
+https://mirror.tuna.tsinghua.edu.cn/help/anaconda/
+
+### PyPI 镜像使用
+
+https://mirrors.tuna.tsinghua.edu.cn/help/pypi/
+
+### npm 镜像使用
+
+```
+npm config set registry https://registry.npm.taobao.org
+npm update
+```
+
+## IDEA
+
+### 注释
+
+[点击设置](jetbrains://idea/settings?name=Editor--Live+Templates)
+
+```
+/**
+ * $END$
+ * @author duhongming
+ * @see
+ * @since 1.0.0
+ */
+```
