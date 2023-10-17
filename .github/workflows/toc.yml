@@ -12,7 +12,7 @@ jobs:
       - run: |
           curl https://raw.githubusercontent.com/ekalinin/github-markdown-toc/0.8.0/gh-md-toc -o gh-md-toc
           chmod a+x gh-md-toc
-          GH_TOC_TOKEN=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 ./gh-md-toc --insert --no-backup --hide-footer README.md
+          GH_TOC_TOKEN=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 ./gh-md-toc --insert --no-backup --hide-footer README.md
           rm gh-md-toc
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
