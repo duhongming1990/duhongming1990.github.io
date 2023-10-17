@@ -1,9 +1,9 @@
-## 杜洪明最佳实践
+杜洪明最佳实践
+===========
 
 Table of contents
 =================
 <!--ts-->
-
 <!--te-->
 
 Windows安装开发环境软件
@@ -51,19 +51,23 @@ Ubuntu 软件仓库镜像使用
 
 [https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/](https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/)
 
-### Debian 软件仓库镜像使用
+Debian 软件仓库镜像使用
+--------------------
 
 [https://mirrors.tuna.tsinghua.edu.cn/help/debian/](https://mirrors.tuna.tsinghua.edu.cn/help/debian/)
 
-### Alpine 镜像使用
+Alpine 镜像使用
+-------------
 
 [https://mirror.tuna.tsinghua.edu.cn/help/alpine/](https://mirror.tuna.tsinghua.edu.cn/help/alpine/)
 
-### Anaconda 镜像使用
+Anaconda 镜像使用
+---------------
 
 [https://mirror.tuna.tsinghua.edu.cn/help/anaconda/](https://mirror.tuna.tsinghua.edu.cn/help/anaconda/)
 
-### PyPI 镜像使用
+PyPI 镜像使用
+-----------
 
 [https://mirrors.tuna.tsinghua.edu.cn/help/pypi/](https://mirrors.tuna.tsinghua.edu.cn/help/pypi/)
 
