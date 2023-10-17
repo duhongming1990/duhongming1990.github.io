@@ -6,7 +6,7 @@
 
 ## Windows安装开发环境软件
 
-https://scoop.sh/
+[https://scoop.sh/](https://scoop.sh/)
 
 ```
 scoop bucket add lzwme_scoop-proxy-cn https://github.com/lzwme/scoop-proxy-cn
@@ -44,23 +44,23 @@ scoop install corretto11-jdk corretto17-jdk corretto8-jdk git git-lfs go gradle 
 
 ### Ubuntu 软件仓库镜像使用
 
-https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/
+[https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/](https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/)
 
 ### Debian 软件仓库镜像使用
 
-https://mirrors.tuna.tsinghua.edu.cn/help/debian/
+[https://mirrors.tuna.tsinghua.edu.cn/help/debian/](https://mirrors.tuna.tsinghua.edu.cn/help/debian/)
 
 ### Alpine 镜像使用
 
-https://mirror.tuna.tsinghua.edu.cn/help/alpine/
+[https://mirror.tuna.tsinghua.edu.cn/help/alpine/](https://mirror.tuna.tsinghua.edu.cn/help/alpine/)
 
 ### Anaconda 镜像使用
 
-https://mirror.tuna.tsinghua.edu.cn/help/anaconda/
+[https://mirror.tuna.tsinghua.edu.cn/help/anaconda/](https://mirror.tuna.tsinghua.edu.cn/help/anaconda/)
 
 ### PyPI 镜像使用
 
-https://mirrors.tuna.tsinghua.edu.cn/help/pypi/
+[https://mirrors.tuna.tsinghua.edu.cn/help/pypi/](https://mirrors.tuna.tsinghua.edu.cn/help/pypi/)
 
 ### npm 镜像使用
 
