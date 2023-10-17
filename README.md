@@ -71,17 +71,19 @@ PyPI 镜像使用
 
 [https://mirrors.tuna.tsinghua.edu.cn/help/pypi/](https://mirrors.tuna.tsinghua.edu.cn/help/pypi/)
 
-### npm 镜像使用
+npm 镜像使用
+----------
 
 ```
 npm config set registry https://registry.npm.taobao.org
 npm update
 ```
 
-## IDEA
+IDEA
+====
 
-### java注释
-
+java注释
+-------
 [点击设置](jetbrains://idea/settings?name=Editor--Live+Templates)
 
 ```
@@ -93,15 +95,18 @@ npm update
  */
 ```
 
-## 开发
+开发
+===
 
-### 启用HTTP2
+启用HTTP2
+-------
 
 ```
 server.http2.enabled=true
 ```
 
-### 配置HTTPS
+配置HTTPS
+--------
 
 [点击配置](C:\Windows\System32\drivers\etc\HOSTS)
 
@@ -160,25 +165,29 @@ tasklist /fi "imagename eq nginx.exe"
 pause
 ```
 
-### 使用Files、Paths而不是File
+使用Files、Paths而不是File
+-----------------------
 
 ```
 Files.createTempDirectory()
 ```
 
-## 数据库主从
+数据库主从
+=======
 
-### 部署MySQL主从集群
-
+部署MySQL主从集群
+--------------
 [https://www.rainbond.com/docs/installation/ha-deployment/overview/mysql-ha](https://www.rainbond.com/docs/installation/ha-deployment/overview/mysql-ha)
 
-### 部署postgres主从集群
-
+部署postgres主从集群
+-----------------
 [https://juejin.cn/post/6999935606738403342](https://juejin.cn/post/6999935606738403342)
 
-## batch
+batch
+=====
 
-### check-git-commit-push.bat
+check-git-commit-push.bat
+-------------------------
 
 ```
 @rem 在批处理运行命令的时候不会一条一条的显示执行的命令
@@ -204,19 +213,22 @@ for /D %%i in (*) do (
 pause
 ```
 
-## 免密登录
+免密登录
+======
 
 ```
 ssh-keygen -C xxx
 ```
 
-### git 免密登录
+git 免密登录
+----------
 
 - github: [https://github.com/settings/keys](https://github.com/settings/keys)
 - gitee: [https://gitee.com/profile/sshkeys](https://gitee.com/profile/sshkeys)
 - gitlab: [https://gitlab.chehejia.com/-/profile/keys](https://gitlab.chehejia.com/-/profile/keys)
 
-### host 免密登录
+host 免密登录
+-----------
 
 ```
 ssh-copy-id host
