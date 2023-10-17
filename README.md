@@ -1,7 +1,9 @@
 ## 杜洪明最佳实践
 
+<!--ts-->
 Table of Contents
 -----------------
+<!--te-->
 
 Windows安装开发环境软件
 ===================
@@ -40,9 +42,11 @@ scoop install corretto11-jdk corretto17-jdk corretto8-jdk git git-lfs go gradle 
 | sslscan         | ![Scoop Version (extras bucket)](https://img.shields.io/scoop/v/sslscan?bucket=main)           |
 | visualvm        | ![Scoop Version (extras bucket)](https://img.shields.io/scoop/v/visualvm?bucket=java)          |
 
-## 更换软件源
+更换软件源
+========
 
-### Ubuntu 软件仓库镜像使用
+Ubuntu 软件仓库镜像使用
+--------------------
 
 [https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/](https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/)
 
