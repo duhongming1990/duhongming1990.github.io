@@ -161,9 +161,13 @@ Files.createTempDirectory()
 
 ## 数据库主从
 
-### 部署 MySQL 主从集群
+### 部署MySQL主从集群
 
 [https://www.rainbond.com/docs/installation/ha-deployment/overview/mysql-ha](https://www.rainbond.com/docs/installation/ha-deployment/overview/mysql-ha)
+
+### 部署postgres主从集群
+
+[https://juejin.cn/post/6999935606738403342](https://juejin.cn/post/6999935606738403342)
 
 ## batch
 
