@@ -2,7 +2,7 @@
 
 Network protocols are standard methods of transferring data between two computers in a network.
 
-![ep80-explaining-8-popular-network.gif](..%2Fimages%2Fep80-explaining-8-popular-network.gif)
+![ep80-explaining-8-popular-network.gif](https://raw.githubusercontent.com/duhongming1990/duhongming1990.github.io/master/images/ep80-explaining-8-popular-network.gif)
 
 ### HTTP (HyperText Transfer Protocol)
 
