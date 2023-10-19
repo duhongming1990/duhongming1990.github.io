@@ -46,3 +46,6 @@ Network protocols are standard methods of transferring data between two computer
 
    FTP is used to transfer computer files between client and server. It has separate connections for the control channel
    and data channel.
+   
+## [What happens when you type a URL into your browser?](https://blog.bytebytego.com/p/what-happens-when-you-type-a-url)
+![what-happens-when-you-type-a-url.gif](https://raw.githubusercontent.com/duhongming1990/duhongming1990.github.io/master/images/what-happens-when-you-type-a-url.gif)
