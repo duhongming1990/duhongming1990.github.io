@@ -4,8 +4,10 @@ Windows安装开发环境软件
 [https://scoop.sh/](https://scoop.sh/)
 
 ```
+scoop install git
 scoop bucket add spc https://ghproxy.com/github.com/lzwme/scoop-proxy-cn
-scoop update anaconda3 apifox corretto11-jdk corretto17-jdk corretto8-jdk dbeaver everything git git-lfs go gradle groovy keepass lua lua51 luajit maven mobaxterm nginx notepadplusplus openresty openssl python python310 python38 python39 scala sourcetree sslscan virtualbox-np visualvm
+scoop install corretto8-jdk  jetbrains-toolbox  maven  python
+scoop install apifox corretto11-jdk corretto17-jdk corretto8-jdk dbeaver everything git git-lfs go groovy keepass lua lua51 luajit maven mobaxterm nginx notepadplusplus openresty python python310 python38 python39 scala sourcetree sslscan virtualbox-np visualvm
 ```
 
 | app             | version                                                                                        |
