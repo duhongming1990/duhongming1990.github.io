@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>bytebytego - 杜洪明最佳实践</title>
+        <title>IDEA - 杜洪明最佳实践</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
         <link href="../css/font-awesome.min.css" rel="stylesheet">
         <link href="../css/base.css" rel="stylesheet">
@@ -33,11 +33,11 @@
                             <li class="navitem">
                                 <a href=".." class="nav-link">Home</a>
                             </li>
-                            <li class="navitem active">
-                                <a href="./" class="nav-link">bytebytego</a>
-                            </li>
                             <li class="navitem">
-                                <a href="../IDEA/" class="nav-link">IDEA</a>
+                                <a href="../bytebytego/" class="nav-link">bytebytego</a>
+                            </li>
+                            <li class="navitem active">
+                                <a href="./" class="nav-link">IDEA</a>
                             </li>
                         </ul>
 
@@ -48,12 +48,12 @@
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a rel="prev" href=".." class="nav-link">
+                                <a rel="prev" href="../bytebytego/" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../IDEA/" class="nav-link">
+                                <a rel="next" class="nav-link disabled">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -75,12 +75,25 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-level="2"><a href="#explaining-8-popular-network-protocols-in-1-diagram" class="nav-link">Explaining 8 Popular Network Protocols in 1 Diagram</a>
+            <li class="nav-item" data-level="1"><a href="#idea" class="nav-link">IDEA设置</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#javagroovy" class="nav-link">java|groovy注释</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#_1" class="nav-link">文件编码</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#idea_1" class="nav-link">IDEA插件</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
-            <li class="nav-item" data-level="2"><a href="#what-happens-when-you-type-a-url-into-your-browser" class="nav-link">What happens when you type a URL into your browser?</a>
+            <li class="nav-item" data-level="1"><a href="#jrebel-and-xrebel" class="nav-link">JRebel and XRebel</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -89,56 +102,89 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h2 id="explaining-8-popular-network-protocols-in-1-diagram"><a href="https://blog.bytebytego.com/p/ep80-explaining-8-popular-network">Explaining 8 Popular Network Protocols in 1 Diagram</a></h2>
-<p>Network protocols are standard methods of transferring data between two computers in a network.</p>
-<p><img alt="ep80-explaining-8-popular-network.gif" src="https://raw.githubusercontent.com/duhongming1990/duhongming1990.github.io/master/images/ep80-explaining-8-popular-network.gif" /></p>
-<h3 id="http-hypertext-transfer-protocol">HTTP (HyperText Transfer Protocol)</h3>
-<p>HTTP is a protocol for fetching resources such as HTML documents. It is the foundation of any data exchange on the
-Web and it is a client-server protocol.</p>
-<h3 id="http3">HTTP/3</h3>
-<p>HTTP/3 is the next major revision of the HTTP. It runs on QUIC, a new transport protocol designed for mobile-heavy
-internet usage. It relies on UDP instead of TCP, which enables faster web page responsiveness. VR applications demand
-more bandwidth to render intricate details of a virtual scene and will likely benefit from migrating to HTTP/3
-powered by QUIC.</p>
-<h3 id="https-hypertext-transfer-protocol-secure">HTTPS (HyperText Transfer Protocol Secure)</h3>
-<p>HTTPS extends HTTP and uses encryption for secure communications.</p>
-<h3 id="websocket">WebSocket</h3>
-<p>WebSocket is a protocol that provides full-duplex communications over TCP. Clients establish WebSockets to receive
-real-time updates from the back-end services. Unlike REST, which always “pulls” data, WebSocket enables data to be
-“pushed”. Applications, like online gaming, stock trading, and messaging apps leverage WebSocket for real-time
-communication.</p>
-<h3 id="tcp-transmission-control-protocol">TCP (Transmission Control Protocol)</h3>
-<p>TCP is is designed to send packets across the internet and ensure the successful delivery of data and messages over
-networks. Many application-layer protocols build on top of TCP.</p>
-<h3 id="udp-user-datagram-protocol">UDP (User Datagram Protocol)</h3>
-<p>UDP sends packets directly to a target computer, without establishing a connection first. UDP is commonly used in
-time-sensitive communications where occasionally dropping packets is better than waiting. Voice and video traffic are
-often sent using this protocol.</p>
-<h3 id="smtp-simple-mail-transfer-protocol">SMTP (Simple Mail Transfer Protocol)</h3>
-<p>SMTP is a standard protocol to transfer electronic mail from one user to another.</p>
-<h3 id="ftp-file-transfer-protocol">FTP (File Transfer Protocol)</h3>
-<p>FTP is used to transfer computer files between client and server. It has separate connections for the control channel
-and data channel.</p>
-<h2 id="what-happens-when-you-type-a-url-into-your-browser"><a href="https://blog.bytebytego.com/p/what-happens-when-you-type-a-url">What happens when you type a URL into your browser?</a></h2>
-<p><img alt="what-happens-when-you-type-a-url.gif" src="https://raw.githubusercontent.com/duhongming1990/duhongming1990.github.io/master/images/what-happens-when-you-type-a-url.gif" /></p>
-<p>Let’s look at the process step by step.</p>
-<p>Step 1: The user enters a URL (www. bytebytego. com) into the browser and hits Enter. The first thing we need to do is
-to translate the URL to an IP address. The mapping is usually stored in a cache, so the browser looks for the IP address
-in multiple layers of cache: the browser cache, OS cache, local cache, and ISP cache. If the browser couldn’t find the
-mapping in the cache, it will ask the DNS (Domain Name System) resolver to resolve it.</p>
-<p>Step 2: If the IP address cannot be found at any of the caches, the browser goes to DNS servers to do a recursive DNS
-lookup until the IP address is found.</p>
-<p>Step 3: Now that we have the IP address of the server, the browser sends an HTTP request to the server. For secure
-access of server resources, we should always use HTTPS. It first establishes a TCP connection with the server via TCP
-3-way handshake. Then it sends the public key to the client. The client uses the public key to encrypt the session key
-and sends to the server. The server uses the private key to decrypt the session key. The client and server can now
-exchange encrypted data using the session key.</p>
-<p>Step 4: The server processes the request and sends back the response. For a successful response, the status code is 200.
-There are 3 parts in the response: HTML, CSS and Javascript. The browser parses HTML and generates DOM tree. It also
-parses CSS and generates CSSOM tree. It then combines DOM tree and CSSOM tree to render tree. The browser renders the
-content and display to the user.</p>
-<p><a href="https://blog.bytebytego.com/p/ep81-how-companies-ship-code-to-production">How do companies ship code to production?</a>
-<img alt="ep81-how-companies-ship-code-to-production.gif" src="https://raw.githubusercontent.com/duhongming1990/duhongming1990.github.io/master/images/ep81-how-companies-ship-code-to-production.gif" /></p></div>
+<h1 id="idea">IDEA设置</h1>
+<h2 id="javagroovy">java|groovy注释</h2>
+<p><a href="jetbrains://idea/settings?name=Editor--Live+Templates">点击设置</a></p>
+<ul>
+<li>Abbreviation: dhm</li>
+<li>Applicable in: java、groovy</li>
+</ul>
+<pre><code>/**
+ * $END$
+ * @author duhongming
+ * @see
+ * @since 1.0.0
+ */
+</code></pre>
+<h2 id="_1">文件编码</h2>
+<p><a href="jetbrains://idea/settings?name=Editor--File+Encodings">点击设置</a></p>
+<ul>
+<li>Encoding: UTF-8</li>
+<li>shell文件执行报错: with NO BOM</li>
+<li>properties文件乱码: Transparent native-to-ascii conversion</li>
+</ul>
+<p><img alt="file-encodings.png" src="..%2Fimages%2FIDEA%2Ffile-encodings.png" /></p>
+<h1 id="idea_1">IDEA插件</h1>
+<table>
+<thead>
+<tr>
+<th><strong>插件名称</strong></th>
+<th><strong>插件描述</strong></th>
+<th><strong>插件链接</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Show Comment</td>
+<td>显示注释</td>
+<td>https://plugins.jetbrains.com/plugin/18553-show-comment</td>
+</tr>
+<tr>
+<td>ANTLR v4</td>
+<td>生成g4文件</td>
+<td>https://plugins.jetbrains.com/plugin/7358-antlr-v4</td>
+</tr>
+<tr>
+<td>Maven Helper</td>
+<td>Maven依赖分析</td>
+<td>https://plugins.jetbrains.com/plugin/7179-maven-helper</td>
+</tr>
+<tr>
+<td>JRebel and XRebel</td>
+<td>热部署</td>
+<td>https://plugins.jetbrains.com/plugin/4441-jrebel-and-xrebel</td>
+</tr>
+<tr>
+<td>JRebel mybatisPlus extension</td>
+<td>热部署</td>
+<td>https://plugins.jetbrains.com/plugin/12682-jrebel-mybatisplus-extension</td>
+</tr>
+<tr>
+<td>mermaid</td>
+<td>文本绘图</td>
+<td>https://plugins.jetbrains.com/plugin/20146-mermaid</td>
+</tr>
+<tr>
+<td>codeium</td>
+<td>代码生成</td>
+<td>https://plugins.jetbrains.com/plugin/20540-codeium-ai-autocomplete-and-chat-for-python-js-ts-java-go-</td>
+</tr>
+<tr>
+<td>codefuse</td>
+<td>代码生成</td>
+<td>https://codefuse.yuque.com/eoxx1u/codefuse/idea-plugin</td>
+</tr>
+</tbody>
+</table>
+<h1 id="jrebel-and-xrebel">JRebel and XRebel</h1>
+<ul>
+<li>Jrebel破解：https://jrebel.qekang.com/</li>
+<li>激活地址：http://127.0.0.1:8888/{GUID}</li>
+<li>Xrebel破解：http://www.javatiku.cn/idea/26.html</li>
+<li>请求地址：https://bsp-cal-service.testone.k8s.chehejia.com/xrebel</li>
+<li>代理激活：https://github.com/ilanyu/ReverseProxy/releases</li>
+<li>手册：https://manuals.jrebel.com/xrebel/ide/intellij.html#running-with-xrebel</li>
+</ul></div>
             </div>
         </div>
 
