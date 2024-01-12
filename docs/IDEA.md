@@ -25,7 +25,7 @@ java|groovy注释
 - shell文件执行报错: with NO BOM
 - properties文件乱码: Transparent native-to-ascii conversion
 
-![file-encodings.png](..%2Fimages%2FIDEA%2Ffile-encodings.png)
+![file-encodings.png](https://raw.githubusercontent.com/duhongming1990/duhongming1990.github.io/master/images/IDEA/file-encodings.png)
 
 IDEA插件
 ====
