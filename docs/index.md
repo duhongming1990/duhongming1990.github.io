@@ -73,22 +73,6 @@ npm config set registry https://registry.npm.taobao.org
 npm update
 ```
 
-IDEA
-====
-
-java注释
--------
-[点击设置](jetbrains://idea/settings?name=Editor--Live+Templates)
-
-```
-/**
- * $END$
- * @author duhongming
- * @see
- * @since 1.0.0
- */
-```
-
 开发
 ===
 
