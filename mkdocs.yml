@@ -1,0 +1,5 @@
+site_name: 杜洪明最佳实践
+nav:
+  - Home: index.md
+  - bytebytego: bytebytego.md
+  - IDEA: IDEA.md
