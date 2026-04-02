@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5分钟看懂时序图</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 30px;
+        }
+        .highlight {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-left: 5px solid #3498db;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .element-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .element-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .element-card h3 {
+            margin-top: 0;
+            color: #e67e22;
+        }
+        .diagram-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #fff;
+            border: 1px dashed #bdc3c7;
+            border-radius: 8px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+    </style>
+    <!-- 引入 Mermaid.js 用于渲染时序图 -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <h1>⏱️ 5分钟直观了解：什么是时序图？</h1>
+
+    <div class="highlight">
+        <strong>💡 一句话解释：</strong><br>
+        时序图（Sequence Diagram）就像是系统交互的<strong>“剧本”</strong>。它按照<strong>时间顺序</strong>（从上到下），展示了不同角色或对象之间是如何发送消息、互相配合完成一项任务的。
+    </div>
+
+    <h2>🧩 时序图的四大核心元素</h2>
+    <div class="element-grid">
+        <div class="element-card">
+            <h3>🧍 参与者 (Actor)</h3>
+            <p>发起操作的人或外部系统。通常画在最左边，用一个小人表示。</p>
+        </div>
+        <div class="element-card">
+            <h3>📦 对象 (Object)</h3>
+            <p>系统内部的模块、服务器或数据库。通常用顶部的矩形框表示。</p>
+        </div>
+        <div class="element-card">
+            <h3>⬇️ 生命线 (Lifeline)</h3>
+            <p>从对象往下垂的虚线，代表这个对象在一段时间内是存活/存在的。</p>
+        </div>
+        <div class="element-card">
+            <h3>✉️ 消息 (Message)</h3>
+            <p>对象之间的连线（箭头）。实线代表发送请求，虚线代表返回结果。</p>
+        </div>
+    </div>
+
+    <h2>🎬 实战演示：用户登录过程</h2>
+    <p>下面是一个典型的“用户登录”时序图。请<strong>从上往下</strong>看，箭头代表消息的传递方向：</p>
+
+    <div class="diagram-container">
+        <!-- Mermaid 时序图代码 -->
+        <pre class="mermaid">
+        sequenceDiagram
+            autonumber
+            actor User as 🧍 用户
+            participant App as 📱 手机APP
+            participant Server as 💻 后端服务器
+            participant DB as 🗄️ 数据库
+
+            User->>App: 1. 输入账号密码并点击登录
+            activate App
+            App->>Server: 2. 发送登录请求 (账号, 密码)
+            activate Server
+            Server->>DB: 3. 查询该账号信息
+            activate DB
+            DB-->>Server: 4. 返回账号数据
+            deactivate DB
+            
+            alt 密码正确
+                Server-->>App: 5. 返回登录成功 & Token
+                App-->>User: 6. 跳转到首页
+            else 密码错误
+                Server-->>App: 5. 返回错误提示
+                App-->>User: 6. 弹窗提示"密码错误"
+            end
+            deactivate Server
+            deactivate App
+        </pre>
+    </div>
+
+    <h2>📌 快速读图秘籍</h2>
+    <ul>
+        <li><strong>看顺序：</strong> 永远从最上面开始，往下看。越靠上的动作发生得越早。</li>
+        <li><strong>看箭头：</strong> <code>➔</code> 实线箭头是“我叫你做事”（请求），<code>--&gt;</code> 虚线箭头是“我做完了告诉你”（返回响应）。</li>
+        <li><strong>看方块：</strong> 生命线上的竖长方形（激活期）表示这个对象正在“干活”（处理逻辑）。</li>
+        <li><strong>看分支：</strong> 图中的 <code>alt</code> 框代表“如果...否则...”（If-Else逻辑），比如密码正确和错误的不同走向。</li>
+    </ul>
+
+    <div class="footer">
+        <p>现在你已经掌握了时序图的核心！它可以用来设计API、梳理业务逻辑、或者写技术文档。</p>
+    </div>
+</div>
+
+</body>
+</html>

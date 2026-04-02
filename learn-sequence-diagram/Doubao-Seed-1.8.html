@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速掌握时序图 | 豆包AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#475569',
+                        accent: '#f97316',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .timeline-line {
+                @apply h-full w-0.5 bg-gray-300 mx-auto relative;
+            }
+            .message-arrow {
+                @apply absolute h-0.5 bg-gray-700 z-10;
+            }
+            .message-arrow::after {
+                content: '';
+                @apply absolute top-[-4px] right-[-6px] border-solid border-[6px] border-transparent border-l-gray-700;
+            }
+            .async-arrow::after {
+                border-l: 6px solid transparent;
+                border-right: 6px solid #4b5563;
+                left: -6px;
+                right: auto;
+            }
+            .return-arrow {
+                @apply bg-gray-400 border-dashed;
+            }
+            .return-arrow::after {
+                border-l-color: #9ca3af;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+    <!-- 头部 -->
+    <header class="bg-white shadow-sm py-6">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-primary">一文读懂时序图</h1>
+            <p class="text-gray-600 mt-2">UML时序图快速入门：从概念到实战</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 max-w-4xl py-8">
+        <!-- 什么是时序图 -->
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                <i class="fa fa-info-circle mr-2 text-primary"></i>什么是时序图？
+            </h2>
+            <div class="mt-4 bg-white rounded-lg p-6 shadow-sm">
+                <p class="mb-4">时序图（Sequence Diagram）是UML统一建模语言中的一种<strong class="text-primary">交互图</strong>，它按<strong class="text-accent">时间顺序</strong>展示对象/参与者之间的消息交互过程，清晰呈现系统的动态行为。</p>
+                <div class="bg-blue-50 p-4 rounded-md border-l-4 border-primary">
+                    <p class="text-sm text-gray-700"><i class="fa fa-lightbulb-o mr-1 text-primary"></i> 核心特点：<strong>时间轴垂直向下，消息交互从左到右</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 核心用途 -->
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                <i class="fa fa-bullseye mr-2 text-primary"></i>核心用途
+            </h2>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                    <div class="text-primary text-xl mb-2"><i class="fa fa-sitemap"></i></div>
+                    <h3 class="font-medium mb-2">梳理业务流程</h3>
+                    <p class="text-sm text-gray-600">清晰展示系统各角色间的协作流程，比如用户登录、支付流程等</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                    <div class="text-primary text-xl mb-2"><i class="fa fa-code"></i></div>
+                    <h3 class="font-medium mb-2">辅助开发设计</h3>
+                    <p class="text-sm text-gray-600">帮助开发人员理解系统交互逻辑，指导接口设计和代码实现</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                    <div class="text-primary text-xl mb-2"><i class="fa fa-comments"></i></div>
+                    <h3 class="font-medium mb-2">团队沟通工具</h3>
+                    <p class="text-sm text-gray-600">跨角色沟通的可视化语言，减少需求理解偏差</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                    <div class="text-primary text-xl mb-2"><i class="fa fa-file-text-o"></i></div>
+                    <h3 class="font-medium mb-2">文档沉淀</h3>
+                    <p class="text-sm text-gray-600">作为系统设计文档的重要组成部分，留存系统交互逻辑</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 基本元素详解 -->
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                <i class="fa fa-cubes mr-2 text-primary"></i>核心元素详解
+            </h2>
+            <div class="mt-4 space-y-6">
+                <!-- 参与者 -->
+                <div class="bg-white rounded-lg p-6 shadow-sm flex flex-col md:flex-row items-center">
+                    <div class="w-16 h-16 flex items-center justify-center bg-blue-100 rounded-full mb-4 md:mb-0 md:mr-6">
+                        <i class="fa fa-user text-primary text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-lg">参与者（Actor）</h3>
+                        <p class="text-gray-600 mt-1">系统外部的角色，比如用户、其他系统或设备。用小人图标或矩形表示。</p>
+                    </div>
+                </div>
+
+                <!-- 生命线 -->
+                <div class="bg-white rounded-lg p-6 shadow-sm">
+                    <h3 class="font-medium text-lg mb-4">生命线（Lifeline）</h3>
+                    <div class="flex justify-center items-start relative h-48">
+                        <!-- 参与者头部 -->
+                        <div class="absolute top-0 w-24 h-8 bg-white border rounded-md flex items-center justify-center shadow-sm">系统</div>
+                        <!-- 生命线 -->
+                        <div class="timeline-line top-8 left-1/2"></div>
+                        <!-- 激活期 -->
+                        <div class="absolute top-16 left-1/4 w-1/2 h-12 bg-blue-100 rounded-sm border border-blue-200 z-0"></div>
+                    </div>
+                    <p class="text-gray-600 mt-4 text-center">垂直表示对象的存在周期，矩形块表示对象的活跃状态（激活期）</p>
+                </div>
+
+                <!-- 消息类型 -->
+                <div class="bg-white rounded-lg p-6 shadow-sm">
+                    <h3 class="font-medium text-lg mb-4">消息（Message）</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- 同步消息 -->
+                        <div class="flex flex-col items-center p-4 border border-gray-200 rounded">
+                            <div class="relative w-full h-20 flex items-center justify-center">
+                                <div class="message-arrow w-24"></div>
+                            </div>
+                            <h4 class="font-medium mt-2">同步消息</h4>
+                            <p class="text-gray-600 text-sm text-center">实线实心箭头，发送方等待接收方响应后继续执行</p>
+                        </div>
+                        <!-- 异步消息 -->
+                        <div class="flex flex-col items-center p-4 border border-gray-200 rounded">
+                            <div class="relative w-full h-20 flex items-center justify-center">
+                                <div class="message-arrow w-24 async-arrow"></div>
+                            </div>
+                            <h4 class="font-medium mt-2">异步消息</h4>
+                            <p class="text-gray-600 text-sm text-center">实线空心箭头，发送方无需等待响应，继续执行</p>
+                        </div>
+                        <!-- 返回消息 -->
+                        <div class="flex flex-col items-center p-4 border border-gray-200 rounded">
+                            <div class="relative w-full h-20 flex items-center justify-center">
+                                <div class="message-arrow w-24 return-arrow"></div>
+                            </div>
+                            <h4 class="font-medium mt-2">返回消息</h4>
+                            <p class="text-gray-600 text-sm text-center">虚线箭头，从接收方返回结果给发送方</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 绘制步骤 -->
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                <i class="fa fa-list-ol mr-2 text-primary"></i>快速绘制步骤
+            </h2>
+            <div class="mt-4 bg-white rounded-lg p-6 shadow-sm">
+                <ol class="space-y-4 list-decimal list-inside">
+                    <li class="pl-2">
+                        <span class="font-medium">确定参与者</span>：列出所有参与交互的角色和系统组件
+                    </li>
+                    <li class="pl-2">
+                        <span class="font-medium">梳理核心流程</span>：按时间顺序整理消息交互的先后顺序
+                    </li>
+                    <li class="pl-2">
+                        <span class="font-medium">添加消息连线</span>：根据消息类型选择对应的箭头样式，标注消息内容
+                    </li>
+                    <li class="pl-2">
+                        <span class="font-medium">完善细节</span>：添加激活期、注释等，增强图的可读性
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- 实战例子 -->
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                <i class="fa fa-play-circle mr-2 text-primary"></i>实战案例：用户登录流程
+            </h2>
+            <div class="mt-4 bg-white rounded-lg p-6 shadow-sm">
+                <div class="relative h-64 md:h-72">
+                    <!-- 参与者头部 -->
+                    <div class="absolute top-0 left-0 w-24 h-8 bg-white border rounded-md flex items-center justify-center shadow-sm">用户</div>
+                    <div class="absolute top-0 left-1/3 w-24 h-8 bg-white border rounded-md flex items-center justify-center shadow-sm">系统</div>
+                    <div class="absolute top-0 left-2/3 w-24 h-8 bg-white border rounded-md flex items-center justify-center shadow-sm">数据库</div>
+                    <div class="absolute top-0 right-0 w-24 h-8 bg-white border rounded-md flex items-center justify-center shadow-sm">用户</div>
+
+                    <!-- 生命线 -->
+                    <div class="timeline-line top-8 left-12"></div>
+                    <div class="timeline-line top-8 left-1/3+12"></div>
+                    <div class="timeline-line top-8 left-2/3+12"></div>
+                    <div class="timeline-line top-8 right-12"></div>
+
+                    <!-- 消息1：用户→系统 输入账号密码 -->
+                    <div class="message-arrow w-1/3 top-20 left-12"></div>
+                    <div class="absolute top-18 left-1/4 text-xs bg-white px-2 py-1 rounded shadow-sm">输入账号密码</div>
+
+                    <!-- 消息2：系统→数据库 查询用户 -->
+                    <div class="message-arrow w-1/3 top-32 left-1/3+12"></div>
+                    <div class="absolute top-30 left-1/2 text-xs bg-white px-2 py-1 rounded shadow-sm">查询用户信息</div>
+
+                    <!-- 消息3：数据库→系统 返回查询结果 -->
+                    <div class="message-arrow return-arrow w-1/3 top-44 left-2/3+12 transform -rotate-180"></div>
+                    <div class="absolute top-42 left-1/2 text-xs bg-white px-2 py-1 rounded shadow-sm">返回用户数据</div>
+
+                    <!-- 消息4：系统→用户 返回登录结果 -->
+                    <div class="message-arrow return-arrow w-1/3 top-56 left-1/3+12 transform -rotate-180"></div>
+                    <div class="absolute top-54 left-1/4 text-xs bg-white px-2 py-1 rounded shadow-sm">返回登录成功</div>
+                </div>
+                <div class="mt-4 text-gray-600">
+                    <p class="font-medium mb-2">流程说明：</p>
+                    <ol class="list-decimal list-inside space-y-1 text-sm">
+                        <li>用户向系统发送账号密码请求登录</li>
+                        <li>系统请求数据库验证用户信息</li>
+                        <li>数据库返回用户验证结果</li>
+                        <li>系统向用户返回登录成功/失败结果</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- 工具推荐 -->
+        <section class="mb-10">
+            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                <i class="fa fa-wrench mr-2 text-primary"></i>常用绘制工具
+            </h2>
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <h3 class="font-medium text-primary">Mermaid</h3>
+                    <p class="text-sm text-gray-600 mt-2">文本转图，支持Markdown，适合程序员</p>
+                    <a href="https://mermaid.js.org/syntax/sequenceDiagram.html" target="_blank" class="text-xs text-primary mt-2 inline-block">了解更多</a>
+                </div>
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <h3 class="font-medium text-primary">Draw.io</h3>
+                    <p class="text-sm text-gray-600 mt-2">免费在线工具，功能强大，支持多种格式导出</p>
+                    <a href="https://app.diagrams.net/" target="_blank" class="text-xs text-primary mt-2 inline-block">了解更多</a>
+                </div>
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <h3 class="font-medium text-primary">StarUML</h3>
+                    <p class="text-sm text-gray-600 mt-2">专业UML建模工具，适合复杂系统设计</p>
+                    <a href="https://staruml.io/" target="_blank" class="text-xs text-primary mt-2 inline-block">了解更多</a>
+                </div>
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <h3 class="font-medium text-primary">Figma</h3>
+                    <p class="text-sm text-gray-600 mt-2">UI/UX设计工具，也可快速绘制时序图</p>
+                    <a href="https://www.figma.com/" target="_blank" class="text-xs text-primary mt-2 inline-block">了解更多</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 快速小结 -->
+        <section class="mb-6">
+            <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
+                <h3 class="font-medium text-primary">快速小结</h3>
+                <p class="text-gray-700 mt-1">时序图是按时间顺序展示对象交互的UML图，核心是<strong class="text-accent">参与者、生命线、消息</strong>三个元素，常用于梳理业务流程、辅助开发设计和团队沟通。</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-6">
+        <div class="container mx-auto px-4 max-w-4xl text-center text-gray-500 text-sm">
+            <p>豆包AI | 时序图快速入门指南</p>
+        </div>
+    </footer>
+</body>
+</html>

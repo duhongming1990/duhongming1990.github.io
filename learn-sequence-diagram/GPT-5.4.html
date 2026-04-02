@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>时序图快速入门</title>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --text:#1f2d3d;
+      --sub:#5b6b7f;
+      --primary:#3b82f6;
+      --primary-2:#2563eb;
+      --green:#10b981;
+      --orange:#f59e0b;
+      --red:#ef4444;
+      --line:#dbe3ee;
+      --shadow:0 10px 30px rgba(18,38,63,.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+      color:var(--text);
+      background:linear-gradient(180deg,#eef4ff 0%, var(--bg) 100%);
+      line-height:1.7;
+    }
+    .container{
+      width:min(1100px, 92%);
+      margin:0 auto;
+    }
+    header{
+      padding:48px 0 24px;
+    }
+    .hero{
+      background:linear-gradient(135deg,#2563eb 0%,#60a5fa 100%);
+      color:#fff;
+      border-radius:24px;
+      padding:40px 32px;
+      box-shadow:var(--shadow);
+    }
+    .hero h1{
+      margin:0 0 12px;
+      font-size:40px;
+      line-height:1.2;
+    }
+    .hero p{
+      margin:0;
+      font-size:18px;
+      opacity:.95;
+    }
+    .chips{
+      margin-top:18px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      background:rgba(255,255,255,.16);
+      border:1px solid rgba(255,255,255,.22);
+      padding:8px 14px;
+      border-radius:999px;
+      font-size:14px;
+    }
+
+    nav{
+      position:sticky;
+      top:0;
+      z-index:20;
+      backdrop-filter: blur(10px);
+      background:rgba(246,248,252,.72);
+      border-bottom:1px solid rgba(219,227,238,.8);
+    }
+    .nav-inner{
+      width:min(1100px, 92%);
+      margin:0 auto;
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      padding:10px 0;
+    }
+    .nav-inner a{
+      text-decoration:none;
+      color:var(--primary-2);
+      background:#fff;
+      border:1px solid #d9e3f5;
+      padding:8px 14px;
+      border-radius:999px;
+      font-size:14px;
+      transition:.2s;
+    }
+    .nav-inner a:hover{
+      transform:translateY(-1px);
+      box-shadow:var(--shadow);
+    }
+
+    section{
+      margin:24px 0;
+    }
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:26px;
+      box-shadow:var(--shadow);
+      border:1px solid #edf2f7;
+    }
+    h2{
+      margin:0 0 16px;
+      font-size:28px;
+    }
+    h3{
+      margin:22px 0 10px;
+      font-size:20px;
+    }
+    p{margin:10px 0}
+    .muted{color:var(--sub)}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:18px;
+    }
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:18px;
+    }
+    @media (max-width: 860px){
+      .grid,.grid-3{grid-template-columns:1fr}
+      .hero h1{font-size:30px}
+    }
+
+    .point{
+      border-left:4px solid var(--primary);
+      padding:10px 14px;
+      background:#f5f9ff;
+      border-radius:10px;
+      margin:14px 0;
+    }
+    .badge{
+      display:inline-block;
+      font-size:12px;
+      color:#fff;
+      padding:4px 10px;
+      border-radius:999px;
+      vertical-align:middle;
+      margin-left:8px;
+    }
+    .b-blue{background:var(--primary)}
+    .b-green{background:var(--green)}
+    .b-orange{background:var(--orange)}
+    .b-red{background:var(--red)}
+
+    ul{
+      margin:8px 0 8px 20px;
+      padding:0;
+    }
+
+    .diagram-wrap{
+      overflow:auto;
+      background:#fbfdff;
+      border:1px solid #e7eef8;
+      border-radius:16px;
+      padding:18px;
+      margin-top:16px;
+    }
+
+    svg{
+      width:100%;
+      height:auto;
+      min-width:820px;
+      display:block;
+    }
+
+    .code{
+      background:#0f172a;
+      color:#e5edf8;
+      padding:18px;
+      border-radius:14px;
+      overflow:auto;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      font-size:14px;
+      line-height:1.6;
+      white-space:pre-wrap;
+    }
+
+    .steps{
+      counter-reset:step;
+      display:grid;
+      gap:14px;
+    }
+    .step{
+      position:relative;
+      padding:16px 16px 16px 58px;
+      background:#f8fbff;
+      border:1px solid #e5eefb;
+      border-radius:14px;
+    }
+    .step::before{
+      counter-increment:step;
+      content:counter(step);
+      position:absolute;
+      left:16px;
+      top:14px;
+      width:30px;
+      height:30px;
+      border-radius:50%;
+      background:var(--primary);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:bold;
+    }
+
+    .compare{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:14px;
+      overflow:hidden;
+      border-radius:12px;
+    }
+    .compare th,.compare td{
+      border:1px solid #e6edf7;
+      padding:12px 14px;
+      text-align:left;
+      vertical-align:top;
+      background:#fff;
+    }
+    .compare th{
+      background:#f3f8ff;
+    }
+
+    .qa{
+      background:#fffaf2;
+      border:1px solid #f5e3b3;
+      border-radius:14px;
+      padding:16px;
+      margin-top:12px;
+    }
+
+    .footer{
+      text-align:center;
+      color:var(--sub);
+      padding:30px 0 50px;
+      font-size:14px;
+    }
+
+    .highlight{
+      background:linear-gradient(transparent 60%, #fff3a3 60%);
+      font-weight:700;
+    }
+
+    .mini{
+      background:#f8fafc;
+      border:1px dashed #d7e2f2;
+      border-radius:12px;
+      padding:12px 14px;
+      margin-top:10px;
+    }
+  </style>
+</head>
+<body>
+  <header class="container">
+    <div class="hero">
+      <h1>时序图：一眼看懂“谁在什么时候做了什么”</h1>
+      <p>时序图（Sequence Diagram）是 UML 中最直观的图之一，用来表示：<strong>对象/角色之间，按时间顺序发生的交互过程</strong>。</p>
+      <div class="chips">
+        <span class="chip">适合初学者</span>
+        <span class="chip">5分钟快速入门</span>
+        <span class="chip">含图示 + 示例 + 画法</span>
+      </div>
+    </div>
+  </header>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="#what">是什么</a>
+      <a href="#why">为什么要学</a>
+      <a href="#read">怎么看</a>
+      <a href="#example">示例图</a>
+      <a href="#symbols">常见符号</a>
+      <a href="#draw">怎么画</a>
+      <a href="#mistakes">常见错误</a>
+      <a href="#practice">练习</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section id="what">
+      <div class="card">
+        <h2>一、什么是时序图？</h2>
+        <p>
+          <span class="highlight">时序图</span>是一种描述系统中多个参与者之间如何“发消息、调用方法、返回结果”的图。
+        </p>
+        <div class="point">
+          你可以把它理解成：<strong>“交互过程的时间流水账”</strong>。
+        </div>
+        <div class="grid">
+          <div>
+            <h3>它关注什么？ <span class="badge b-blue">核心</span></h3>
+            <ul>
+              <li>谁参与了这个过程</li>
+              <li>谁先调用谁</li>
+              <li>调用顺序是什么</li>
+              <li>什么时候返回结果</li>
+              <li>是否存在判断、循环、并行</li>
+            </ul>
+          </div>
+          <div>
+            <h3>一句话定义</h3>
+            <p class="muted">
+              时序图用“<strong>横向表示参与者</strong>，<strong>纵向表示时间</strong>”的方法，
+              展示一个业务或系统功能是如何一步一步被执行的。
+            </p>
+            <div class="mini">
+              <strong>记忆口诀：</strong><br>
+              <strong>横着看是谁，竖着看先后，箭头看调用，虚线看返回。</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="why">
+      <div class="card">
+        <h2>二、为什么要学时序图？</h2>
+        <div class="grid-3">
+          <div class="card" style="padding:18px;">
+            <h3>1. 理清流程</h3>
+            <p class="muted">把复杂业务拆成一步一步，特别适合登录、下单、支付、审批等场景。</p>
+          </div>
+          <div class="card" style="padding:18px;">
+            <h3>2. 沟通更高效</h3>
+            <p class="muted">产品、开发、测试都可以通过一张图对齐“到底发生了什么”。</p>
+          </div>
+          <div class="card" style="padding:18px;">
+            <h3>3. 方便设计与排错</h3>
+            <p class="muted">可以快速发现谁调用谁、调用是否多余、顺序是否错误。</p>
+          </div>
+        </div>
+
+        <h3>它通常用在哪些地方？</h3>
+        <ul>
+          <li>系统分析与设计</li>
+          <li>接口调用流程说明</li>
+          <li>业务流程建模</li>
+          <li>技术方案评审</li>
+          <li>微服务/前后端交互说明</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="read">
+      <div class="card">
+        <h2>三、怎么看时序图？</h2>
+        <div class="steps">
+          <div class="step">
+            <strong>先看顶部有哪些参与者</strong><br>
+            参与者可能是：用户、前端页面、后端服务、数据库、第三方平台等。
+          </div>
+          <div class="step">
+            <strong>再看竖线</strong><br>
+            每个参与者下面都有一条竖线，叫“生命线（Lifeline）”，表示它在这个过程中的存在时间。
+          </div>
+          <div class="step">
+            <strong>看箭头方向</strong><br>
+            A 指向 B，表示 A 向 B 发起调用或发送消息。
+          </div>
+          <div class="step">
+            <strong>从上往下看时间顺序</strong><br>
+            越上面的动作越早发生，越下面的动作越晚发生。
+          </div>
+          <div class="step">
+            <strong>看返回结果</strong><br>
+            常见是虚线箭头，表示处理完成后返回数据或结果。
+          </div>
+        </div>
+
+        <div class="point">
+          <strong>关键原则：</strong>时序图最重要的不是“画得多漂亮”，而是让人能一眼看懂<strong>交互顺序</strong>。
+        </div>
+      </div>
+    </section>
+
+    <section id="example">
+      <div class="card">
+        <h2>四、一个最经典的例子：用户登录</h2>
+        <p>下面这张图展示了一个简化版登录过程：</p>
+        <ul>
+          <li>用户输入账号密码</li>
+          <li>页面把请求发给登录服务</li>
+          <li>登录服务查数据库验证账号</li>
+          <li>数据库返回结果</li>
+          <li>服务告诉页面登录成功</li>
+          <li>页面通知用户</li>
+        </ul>
+
+        <div class="diagram-wrap">
+          <svg viewBox="0 0 980 560" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L10,3 L0,6 Z" fill="#2563eb" />
+              </marker>
+              <marker id="arrowGray" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L10,3 L0,6 Z" fill="#7c8aa5" />
+              </marker>
+            </defs>
+
+            <!-- participant headers -->
+            <rect x="60" y="30" width="120" height="46" rx="10" fill="#eaf2ff" stroke="#b9d1ff"/>
+            <text x="120" y="58" text-anchor="middle" font-size="18" fill="#1f2d3d">用户</text>
+
+            <rect x="280" y="30" width="120" height="46" rx="10" fill="#eaf2ff" stroke="#b9d1ff"/>
+            <text x="340" y="58" text-anchor="middle" font-size="18" fill="#1f2d3d">登录页面</text>
+
+            <rect x="500" y="30" width="120" height="46" rx="10" fill="#eaf2ff" stroke="#b9d1ff"/>
+            <text x="560" y="58" text-anchor="middle" font-size="18" fill="#1f2d3d">登录服务</text>
+
+            <rect x="720" y="30" width="120" height="46" rx="10" fill="#eaf2ff" stroke="#b9d1ff"/>
+            <text x="780" y="58" text-anchor="middle" font-size="18" fill="#1f2d3d">数据库</text>
+
+            <!-- lifelines -->
+            <line x1="120" y1="76" x2="120" y2="520" stroke="#9fb3cc" stroke-dasharray="6 6"/>
+            <line x1="340" y1="76" x2="340" y2="520" stroke="#9fb3cc" stroke-dasharray="6 6"/>
+            <line x1="560" y1="76" x2="560" y2="520" stroke="#9fb3cc" stroke-dasharray="6 6"/>
+            <line x1="780" y1="76" x2="780" y2="520" stroke="#9fb3cc" stroke-dasharray="6 6"/>
+
+            <!-- activation bars -->
+            <rect x="334" y="120" width="12" height="300" rx="4" fill="#cfe1ff"/>
+            <rect x="554" y="190" width="12" height="180" rx="4" fill="#cfe1ff"/>
+            <rect x="774" y="250" width="12" height="80" rx="4" fill="#cfe1ff"/>
+
+            <!-- messages -->
+            <line x1="120" y1="140" x2="340" y2="140" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+            <text x="230" y="130" text-anchor="middle" font-size="15" fill="#1f2d3d">1. 输入账号密码并点击登录</text>
+
+            <line x1="340" y1="210" x2="560" y2="210" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+            <text x="450" y="200" text-anchor="middle" font-size="15" fill="#1f2d3d">2. 发送登录请求</text>
+
+            <line x1="560" y1="270" x2="780" y2="270" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+            <text x="670" y="260" text-anchor="middle" font-size="15" fill="#1f2d3d">3. 查询用户信息</text>
+
+            <line x1="780" y1="330" x2="560" y2="330" stroke="#7c8aa5" stroke-width="2.2" stroke-dasharray="7 6" marker-end="url(#arrowGray)"/>
+            <text x="670" y="320" text-anchor="middle" font-size="15" fill="#1f2d3d">4. 返回查询结果</text>
+
+            <line x1="560" y1="390" x2="340" y2="390" stroke="#7c8aa5" stroke-width="2.2" stroke-dasharray="7 6" marker-end="url(#arrowGray)"/>
+            <text x="450" y="380" text-anchor="middle" font-size="15" fill="#1f2d3d">5. 返回登录成功</text>
+
+            <line x1="340" y1="450" x2="120" y2="450" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+            <text x="230" y="440" text-anchor="middle" font-size="15" fill="#1f2d3d">6. 显示“登录成功”</text>
+
+            <!-- explanation labels -->
+            <text x="860" y="120" font-size="14" fill="#5b6b7f">从上到下 = 时间推进</text>
+            <text x="860" y="145" font-size="14" fill="#5b6b7f">实线箭头 = 调用/请求</text>
+            <text x="860" y="170" font-size="14" fill="#5b6b7f">虚线箭头 = 返回</text>
+            <text x="860" y="195" font-size="14" fill="#5b6b7f">竖虚线 = 生命线</text>
+          </svg>
+        </div>
+
+        <div class="qa">
+          <strong>如何理解这张图？</strong><br>
+          它并不是画“页面长什么样”，而是在画：<strong>登录这个动作背后，参与者之间是怎样一步步协作的</strong>。
+        </div>
+      </div>
+    </section>
+
+    <section id="symbols">
+      <div class="card">
+        <h2>五、时序图里的常见符号</h2>
+        <table class="compare">
+          <thead>
+            <tr>
+              <th>符号</th>
+              <th>含义</th>
+              <th>怎么理解</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>参与者（顶部方框）</td>
+              <td>表示角色或对象</td>
+              <td>比如用户、页面、服务、数据库</td>
+            </tr>
+            <tr>
+              <td>生命线（竖虚线）</td>
+              <td>表示对象在交互期间持续存在</td>
+              <td>每个参与者下面一条</td>
+            </tr>
+            <tr>
+              <td>激活条（细长矩形）</td>
+              <td>表示对象正在执行某个操作</td>
+              <td>谁在忙，就在谁的生命线上出现</td>
+            </tr>
+            <tr>
+              <td>实线箭头</td>
+              <td>调用、请求、发送消息</td>
+              <td>A → B：A 请求 B 做事</td>
+            </tr>
+            <tr>
+              <td>虚线箭头</td>
+              <td>返回结果</td>
+              <td>B → A：B 把处理结果返回给 A</td>
+            </tr>
+            <tr>
+              <td>组合片段（alt/loop/opt）</td>
+              <td>表示条件、循环、可选逻辑</td>
+              <td>例如“如果密码错误”“重复重试”</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>最常见的 3 个控制结构</h3>
+        <div class="grid">
+          <div class="mini">
+            <strong>alt</strong>：分支判断<br>
+            例如：<br>
+            - 密码正确 → 登录成功<br>
+            - 密码错误 → 提示失败
+          </div>
+          <div class="mini">
+            <strong>loop</strong>：循环<br>
+            例如：重复尝试发送消息、分页加载、批量处理。
+          </div>
+        </div>
+        <div class="mini" style="margin-top:12px;">
+          <strong>opt</strong>：可选流程<br>
+          例如：如果用户勾选“记住我”，就额外保存 token。
+        </div>
+      </div>
+    </section>
+
+    <section id="draw">
+      <div class="card">
+        <h2>六、怎么画时序图？新手最简单的方法</h2>
+        <div class="steps">
+          <div class="step">
+            <strong>先确定场景</strong><br>
+            比如：登录、下单、退款、注册、支付。
+          </div>
+          <div class="step">
+            <strong>找出参与者</strong><br>
+            一般按“谁和谁交互”来找：用户、页面、服务、数据库、第三方系统。
+          </div>
+          <div class="step">
+            <strong>按时间写步骤</strong><br>
+            用自然语言先写出来，例如：用户提交 → 页面发请求 → 服务校验 → 数据库查询 → 返回结果。
+          </div>
+          <div class="step">
+            <strong>把步骤变成箭头</strong><br>
+            谁发起动作，就从谁指向谁。
+          </div>
+          <div class="step">
+            <strong>补充返回与条件</strong><br>
+            哪一步有返回？哪里有成功/失败分支？哪里会循环？
+          </div>
+        </div>
+
+        <h3>画图模板（你可以照着套）</h3>
+        <div class="code">参与者：用户、前端页面、后端服务、数据库
+
+步骤：
+1. 用户发起操作
+2. 页面发送请求给服务
+3. 服务调用数据库
+4. 数据库返回结果
+5. 服务返回处理结果
+6. 页面展示给用户</div>
+
+        <h3>如果你想用 Mermaid 语法画</h3>
+        <div class="code">sequenceDiagram
+participant U as 用户
+participant P as 登录页面
+participant S as 登录服务
+participant DB as 数据库
+
+U->>P: 输入账号密码并点击登录
+P->>S: 发送登录请求
+S->>DB: 查询用户信息
+DB-->>S: 返回查询结果
+S-->>P: 返回登录成功
+P-->>U: 显示登录成功</div>
+        <p class="muted">把这段代码放到支持 Mermaid 的工具里，就能自动生成时序图。</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="card">
+        <h2>七、时序图 vs 流程图，有什么区别？</h2>
+        <table class="compare">
+          <thead>
+            <tr>
+              <th>对比项</th>
+              <th>时序图</th>
+              <th>流程图</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>核心关注点</td>
+              <td>对象之间如何交互</td>
+              <td>事情如何流转</td>
+            </tr>
+            <tr>
+              <td>强调顺序</td>
+              <td>非常强调时间先后</td>
+              <td>强调流程节点与判断</td>
+            </tr>
+            <tr>
+              <td>适合场景</td>
+              <td>接口调用、系统协作、消息传递</td>
+              <td>业务流程、审批流程、操作步骤</td>
+            </tr>
+            <tr>
+              <td>常见参与元素</td>
+              <td>用户、页面、服务、数据库</td>
+              <td>开始、处理、判断、结束</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="point">
+          <strong>简单区分：</strong><br>
+          流程图更像“事情怎么走”；时序图更像“谁在什么时候和谁说了什么”。
+        </div>
+      </div>
+    </section>
+
+    <section id="mistakes">
+      <div class="card">
+        <h2>八、新手最容易犯的错误</h2>
+        <div class="grid">
+          <div class="mini">
+            <strong>错误 1：</strong>把时序图画成流程图<br>
+            只画步骤，不画参与者之间的调用关系。
+          </div>
+          <div class="mini">
+            <strong>错误 2：</strong>没有时间顺序<br>
+            箭头位置随便放，导致看不出先后。
+          </div>
+          <div class="mini">
+            <strong>错误 3：</strong>参与者太多太乱<br>
+            一个图里塞太多系统，阅读成本会很高。
+          </div>
+          <div class="mini">
+            <strong>错误 4：</strong>只画请求，不画返回<br>
+            会让人不知道结果是怎么回来的。
+          </div>
+        </div>
+
+        <h3>避免错误的小建议</h3>
+        <ul>
+          <li>一张图只讲一个核心场景</li>
+          <li>参与者尽量控制在 3～6 个</li>
+          <li>按“从上到下”严格排列步骤</li>
+          <li>必要时标上序号：1、2、3、4……</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="practice">
+      <div class="card">
+        <h2>九、3分钟自测：你真的懂了吗？</h2>
+        <div class="qa">
+          <strong>问题 1：</strong>时序图中，时间是横着走还是竖着走？<br>
+          <strong>答案：</strong>竖着走，从上到下。
+        </div>
+        <div class="qa">
+          <strong>问题 2：</strong>实线箭头和虚线箭头通常分别表示什么？<br>
+          <strong>答案：</strong>实线箭头表示请求/调用；虚线箭头表示返回。
+        </div>
+        <div class="qa">
+          <strong>问题 3：</strong>时序图最适合表达什么？<br>
+          <strong>答案：</strong>多个参与者之间按时间顺序发生的交互过程。
+        </div>
+
+        <h3>练习题</h3>
+        <p>请你试着自己画一个“用户下单”的时序图，至少包含以下参与者：</p>
+        <ul>
+          <li>用户</li>
+          <li>下单页面</li>
+          <li>订单服务</li>
+          <li>库存服务</li>
+          <li>数据库</li>
+        </ul>
+        <p class="muted">你只要先写出步骤，再把步骤改成箭头，就已经成功一大半了。</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="card">
+        <h2>十、最后用一句话记住时序图</h2>
+        <div class="point" style="font-size:18px;">
+          <strong>时序图 = 用时间顺序展示“谁调用谁、发生了什么、结果怎么返回”的图。</strong>
+        </div>
+        <p>
+          如果你愿意，我还可以继续帮你做下面任意一种版本：
+        </p>
+        <ul>
+          <li>① <strong>更高级网页版</strong>：加动画、按钮切换、交互练习</li>
+          <li>② <strong>Mermaid 自动生成版</strong>：可直接复制到 Markdown/Notion</li>
+          <li>③ <strong>PPT 风格教学版</strong>：更适合课堂展示</li>
+          <li>④ <strong>“下单流程”时序图网页版</strong>：用真实业务案例教你</li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="footer">
+      学习建议：先会“看懂”，再学“画”，最后学“用它表达复杂业务”。
+    </div>
+  </main>
+</body>
+</html>

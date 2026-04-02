@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 模型输出对比</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #f0f2f5;
+      color: #1d1d1f;
+    }
+
+    /* ---- 导航栏 ---- */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #fff; border-bottom: 1px solid #e5e5e5;
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 24px; height: 52px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .navbar .brand {
+      font-weight: 700; font-size: 16px; white-space: nowrap;
+    }
+    .navbar .topics {
+      display: flex; gap: 6px; overflow-x: auto; flex: 1;
+    }
+    .navbar .topics button {
+      padding: 6px 16px; border-radius: 20px; border: 1px solid #d1d5db;
+      background: #fff; cursor: pointer; white-space: nowrap;
+      font-size: 14px; color: #374151; transition: all .2s;
+    }
+    .navbar .topics button:hover { border-color: #3b82f6; color: #3b82f6; }
+    .navbar .topics button.active {
+      background: #3b82f6; color: #fff; border-color: #3b82f6;
+    }
+
+    /* ---- 对比视图 ---- */
+    .compare-view {
+      position: fixed; top: 52px; left: 0; right: 0; bottom: 0;
+      display: none; /* 默认隐藏，选主题后显示 */
+    }
+    .compare-view.active { display: grid; }
+
+    .compare-view.cols-1 { grid-template-columns: 1fr; }
+    .compare-view.cols-2 { grid-template-columns: 1fr 1fr; }
+    .compare-view.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .compare-view.cols-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+    .compare-view.cols-5 { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+    .compare-view.cols-6 { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+
+    .frame-wrapper {
+      display: flex; flex-direction: column;
+      border: 1px solid #e5e5e5; overflow: hidden;
+      background: #fff;
+    }
+    .frame-label {
+      padding: 4px 12px; font-size: 13px; font-weight: 600;
+      background: #f9fafb; border-bottom: 1px solid #e5e5e5;
+      text-align: center; color: #4b5563;
+      flex-shrink: 0;
+    }
+    .frame-wrapper iframe {
+      flex: 1; width: 100%; border: none;
+    }
+
+    /* ---- 首页欢迎 ---- */
+    .welcome {
+      margin-top: 52px; padding: 80px 24px; text-align: center;
+    }
+    .welcome h1 { font-size: 28px; margin-bottom: 12px; }
+    .welcome p { color: #6b7280; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="brand">AI 对比</span>
+  <div class="topics" id="topicBar"></div>
+</nav>
+
+<div class="welcome" id="welcome">
+  <h1>AI 模型输出对比</h1>
+  <p>点击上方主题标签，四宫格平铺查看不同模型的输出</p>
+</div>
+
+<div class="compare-view" id="compareView"></div>
+
+<script>
+/**
+ * 主题配置 —— 后续添加新主题只需往这个数组加一项
+ * {
+ *   name: '显示名称',
+ *   pages: [
+ *     { label: '模型名', src: '相对路径' },
+ *   ]
+ * }
+ */
+const TOPICS = [
+  {
+    name: '时序图',
+    pages: [
+      { label: 'GPT-5.4',        src: 'learn-sequence-diagram/GPT-5.4.html' },
+      { label: 'Gemini-3.1-Pro', src: 'learn-sequence-diagram/Gemini-3.1-Pro.html' },
+      { label: 'Doubao-Seed-1.8',src: 'learn-sequence-diagram/Doubao-Seed-1.8.html' },
+      { label: 'Claude-Opus-4.6',src: 'learn-sequence-diagram/Claude-Opus-4.6.html' },
+    ]
+  },
+  // ---- 添加更多主题示例 ----
+  // {
+  //   name: '设计模式',
+  //   pages: [
+  //     { label: 'GPT-5.4',        src: 'learn-design-patterns/GPT-5.4.html' },
+  //     { label: 'Claude-Opus-4.6',src: 'learn-design-patterns/Claude-Opus-4.6.html' },
+  //   ]
+  // },
+];
+
+const topicBar = document.getElementById('topicBar');
+const compareView = document.getElementById('compareView');
+const welcome = document.getElementById('welcome');
+
+// 渲染主题按钮
+TOPICS.forEach((topic, i) => {
+  const btn = document.createElement('button');
+  btn.textContent = topic.name;
+  btn.dataset.index = i;
+  btn.addEventListener('click', () => selectTopic(i));
+  topicBar.appendChild(btn);
+});
+
+function selectTopic(index) {
+  const topic = TOPICS[index];
+  if (!topic) return;
+
+  // 按钮高亮
+  topicBar.querySelectorAll('button').forEach((b, i) => {
+    b.classList.toggle('active', i === index);
+  });
+
+  // 隐藏欢迎页
+  welcome.style.display = 'none';
+
+  // 构建 iframe 网格
+  const count = topic.pages.length;
+  const colClass = 'cols-' + Math.min(count, 6);
+
+  compareView.className = 'compare-view active ' + colClass;
+  compareView.innerHTML = topic.pages.map(p => `
+    <div class="frame-wrapper">
+      <div class="frame-label">${p.label}</div>
+      <iframe src="${p.src}" loading="lazy"></iframe>
+    </div>
+  `).join('');
+}
+
+// 如果只有一个主题，自动选中
+if (TOPICS.length === 1) {
+  selectTopic(0);
+}
+</script>
+
+</body>
+</html>
