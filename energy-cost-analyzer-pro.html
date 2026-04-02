@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>油电出行成本计算器 Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #0a0e1a;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: #e0e6f0;
+            overflow-x: hidden;
+        }
+
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 195, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 195, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00c3ff, #00ff88, #00c3ff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            color: #5a6a8a;
+            font-size: 1.05em;
+            letter-spacing: 4px;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* 场景选择器 */
+        .scene-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .scene-btn {
+            padding: 10px 22px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 30px;
+            background: transparent;
+            color: #8a8aaa;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .scene-btn:hover {
+            border-color: rgba(139, 92, 246, 0.6);
+            color: #c4b5fd;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .scene-btn.active {
+            border-color: #8b5cf6;
+            color: #fff;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.1));
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(15, 20, 40, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .card-oil::before {
+            background: linear-gradient(90deg, #ff6b35, #ff8c42, #ffa559);
+        }
+
+        .card-electric::before {
+            background: linear-gradient(90deg, #00c3ff, #00e5a0, #00ff88);
+        }
+
+        .card-oil:hover {
+            box-shadow: 0 20px 60px rgba(255, 107, 53, 0.15);
+        }
+
+        .card-electric:hover {
+            box-shadow: 0 20px 60px rgba(0, 195, 255, 0.15);
+        }
+
+        .card-glow {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.08;
+            top: -50px;
+            right: -50px;
+            pointer-events: none;
+        }
+
+        .card-oil .card-glow { background: #ff6b35; }
+        .card-electric .card-glow { background: #00c3ff; }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 22px;
+        }
+
+        .card-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
+        .card-oil .card-icon {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 140, 66, 0.1));
+            border: 1px solid rgba(255, 107, 53, 0.3);
+        }
+
+        .card-electric .card-icon {
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.2), rgba(0, 255, 136, 0.1));
+            border: 1px solid rgba(0, 195, 255, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .card-oil .card-title { color: #ff8c42; }
+        .card-electric .card-title { color: #00d4ff; }
+
+        .card-subtitle {
+            font-size: 0.8em;
+            color: #4a5a7a;
+            margin-top: 2px;
+            letter-spacing: 2px;
+        }
+
+        /* 下拉框样式 */
+        .select-group {
+            margin-bottom: 18px;
+        }
+
+        .select-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #7a8aaa;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .custom-select {
+            width: 100%;
+            padding: 13px 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #e0e6f0;
+            font-size: 1em;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6a8a' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+        }
+
+        .card-oil .custom-select:focus {
+            border-color: rgba(255, 107, 53, 0.5);
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.1);
+        }
+
+        .card-electric .custom-select:focus {
+            border-color: rgba(0, 195, 255, 0.5);
+            box-shadow: 0 0 20px rgba(0, 195, 255, 0.1);
+        }
+
+        .custom-select option {
+            background: #151a30;
+            color: #e0e6f0;
+            padding: 10px;
+        }
+
+        /* 充电方式标签组 */
+        .charge-type-group {
+            margin-bottom: 18px;
+        }
+
+        .charge-type-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .charge-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid rgba(0, 195, 255, 0.2);
+            border-radius: 10px;
+            background: transparent;
+            color: #6a7a9a;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-align: center;
+        }
+
+        .charge-btn:hover {
+            border-color: rgba(0, 195, 255, 0.4);
+            color: #aac;
+        }
+
+        .charge-btn.active {
+            border-color: rgba(0, 195, 255, 0.6);
+            background: rgba(0, 195, 255, 0.1);
+            color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 195, 255, 0.1);
+        }
+
+        .charge-btn .price-hint {
+            display: block;
+            font-size: 0.8em;
+            margin-top: 3px;
+            opacity: 0.6;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #7a8aaa;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 13px 70px 13px 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #e0e6f0;
+            font-size: 1.1em;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .card-oil .input-wrapper input:focus {
+            border-color: rgba(255, 107, 53, 0.5);
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.1);
+            background: rgba(255, 107, 53, 0.05);
+        }
+
+        .card-electric .input-wrapper input:focus {
+            border-color: rgba(0, 195, 255, 0.5);
+            box-shadow: 0 0 20px rgba(0, 195, 255, 0.1);
+            background: rgba(0, 195, 255, 0.05);
+        }
+
+        .input-unit {
+            position: absolute;
+            right: 15px;
+            font-size: 0.8em;
+            color: #4a5a7a;
+            font-weight: 600;
+            letter-spacing: 1px;
+            pointer-events: none;
+        }
+
+        /* 车型信息小标签 */
+        .car-info-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .card-oil .car-info-tag {
+            background: rgba(255, 107, 53, 0.1);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            color: #ff8c42;
+        }
+
+        .card-electric .car-info-tag {
+            background: rgba(0, 195, 255, 0.1);
+            border: 1px solid rgba(0, 195, 255, 0.2);
+            color: #00d4ff;
+        }
+
+        .result-box {
+            margin-top: 22px;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-oil .result-box {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(255, 140, 66, 0.03));
+            border: 1px solid rgba(255, 107, 53, 0.15);
+        }
+
+        .card-electric .result-box {
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.08), rgba(0, 255, 136, 0.03));
+            border: 1px solid rgba(0, 195, 255, 0.15);
+        }
+
+        .result-label {
+            font-size: 0.85em;
+            color: #5a6a8a;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-size: 2.8em;
+            font-weight: 900;
+            line-height: 1.2;
+        }
+
+        .card-oil .result-value { color: #ff8c42; }
+        .card-electric .result-value { color: #00d4ff; }
+
+        .result-unit-text {
+            font-size: 0.85em;
+            color: #5a6a8a;
+            margin-top: 5px;
+            letter-spacing: 1px;
+        }
+
+        /* 对比区域 */
+        .comparison-section { margin-top: 30px; }
+
+        .comparison-card {
+            background: rgba(15, 20, 40, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 35px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comparison-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b35, #8b5cf6, #00c3ff);
+        }
+
+        .comparison-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .comparison-header h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff6b35, #8b5cf6, #00c3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+
+        .comparison-header p {
+            color: #4a5a7a;
+            font-size: 0.85em;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        .distance-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .distance-selector span {
+            color: #5a6a8a;
+            font-size: 0.9em;
+        }
+
+        .dist-btn {
+            padding: 8px 18px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 25px;
+            background: transparent;
+            color: #8a8aaa;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .dist-btn:hover {
+            border-color: rgba(139, 92, 246, 0.6);
+            color: #c4b5fd;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .dist-btn.active {
+            border-color: #8b5cf6;
+            color: #fff;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.1));
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+        }
+
+        .bar-compare { margin-bottom: 30px; }
+
+        .bar-item { margin-bottom: 18px; }
+
+        .bar-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .bar-name {
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot-oil { background: #ff6b35; box-shadow: 0 0 10px rgba(255, 107, 53, 0.5); }
+        .dot-elec { background: #00c3ff; box-shadow: 0 0 10px rgba(0, 195, 255, 0.5); }
+
+        .bar-amount { font-size: 0.95em; font-weight: 700; }
+
+        .bar-track {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+        }
+
+        .bar-fill-oil {
+            background: linear-gradient(90deg, #ff6b35, #ff8c42);
+            box-shadow: 0 0 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .bar-fill-elec {
+            background: linear-gradient(90deg, #00c3ff, #00ff88);
+            box-shadow: 0 0 15px rgba(0, 195, 255, 0.3);
+        }
+
+        .bar-fill::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: barShine 2s ease-in-out infinite;
+        }
+
+        @keyframes barShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 20px 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-3px);
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.1);
+        }
+
+        .stat-icon { font-size: 1.6em; margin-bottom: 10px; }
+
+        .stat-value {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #8b5cf6;
+            margin-bottom: 5px;
+        }
+
+        .stat-value.positive { color: #00ff88; }
+        .stat-value.negative { color: #ff4757; }
+
+        .stat-desc {
+            font-size: 0.72em;
+            color: #4a5a7a;
+            letter-spacing: 1px;
+            line-height: 1.4;
+        }
+
+        .annual-ring {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 50px;
+            margin-top: 30px;
+            padding: 25px 0;
+        }
+
+        .ring-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+        }
+
+        .ring-container svg { transform: rotate(-90deg); }
+
+        .ring-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.04);
+            stroke-width: 8;
+        }
+
+        .ring-fill-oil {
+            fill: none;
+            stroke: url(#oilGrad);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .ring-fill-elec {
+            fill: none;
+            stroke: url(#elecGrad);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .ring-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .ring-value { font-size: 1.05em; font-weight: 700; }
+        .ring-label { font-size: 0.65em; color: #5a6a8a; margin-top: 3px; letter-spacing: 1px; }
+
+        .vs-badge {
+            font-size: 1.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff6b35, #8b5cf6, #00c3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .saving-banner {
+            margin-top: 25px;
+            padding: 18px 25px;
+            border-radius: 14px;
+            text-align: center;
+            font-size: 1em;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.5s ease;
+        }
+
+        .saving-banner.save-elec {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 195, 255, 0.05));
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .saving-banner.save-oil {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 140, 66, 0.05));
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            color: #ff8c42;
+        }
+
+        .saving-banner.save-equal {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #2a3a5a;
+            font-size: 0.8em;
+            letter-spacing: 2px;
+        }
+
+        .animate-value { animation: valueFlash 0.3s ease; }
+
+        @keyframes valueFlash {
+            0% { transform: scale(1.05); filter: brightness(1.5); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] { -moz-appearance: textfield; }
+
+        .loading-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00c3ff, #8b5cf6, #ff6b35);
+            z-index: 100;
+            animation: loadingBar 1.5s ease forwards;
+        }
+
+        @keyframes loadingBar {
+            0% { width: 0; }
+            100% { width: 100%; opacity: 0; }
+        }
+
+        /* 场景标签 */
+        .scene-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7em;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            color: #c4b5fd;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .header h1 { font-size: 1.6em; }
+            .result-value { font-size: 2em; }
+            .annual-ring { gap: 20px; }
+            .ring-container { width: 110px; height: 110px; }
+            .charge-type-btns { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="loading-line"></div>
+<div class="grid-bg"></div>
+<div class="bg-particles" id="particles"></div>
+
+<div class="container">
+    <div class="header">
+        <h1>⚡ 油电成本计算器 ⛽</h1>
+        <p>ENERGY COST ANALYZER PRO</p>
+    </div>
+
+    <!-- 场景选择 -->
+    <div class="scene-selector">
+        <span>🌍 驾驶场景：</span>
+        <button class="scene-btn active" onclick="setScene('normal')">🚗 日常综合</button>
+        <button class="scene-btn" onclick="setScene('city')">🏙️ 市区通勤</button>
+        <button class="scene-btn" onclick="setScene('highway')">🛣️ 高速长途</button>
+        <button class="scene-btn" onclick="setScene('summer')">☀️ 夏季空调</button>
+        <button class="scene-btn" onclick="setScene('winter')">❄️ 冬季暖风</button>
+    </div>
+
+    <!-- 双卡片 -->
+    <div class="main-grid">
+        <!-- 燃油 -->
+        <div class="card card-oil">
+            <div class="card-glow"></div>
+            <div class="card-header">
+                <div class="card-icon">⛽</div>
+                <div>
+                    <div class="card-title">燃油车</div>
+                    <div class="card-subtitle">FUEL VEHICLE</div>
+                </div>
+            </div>
+
+            <div class="select-group">
+                <div class="select-label">🚘 选择车型</div>
+                <select class="custom-select" id="oilCarSelect" onchange="onOilCarChange()">
+                    <option value="custom">✏️ 自定义输入</option>
+                    <optgroup label="── 增程式(馈电) ──">
+                        <option value="lixiang_one">理想ONE（增程馈电）</option>
+                        <option value="lixiang_l7">理想L7（增程馈电）</option>
+                        <option value="lixiang_l8">理想L8（增程馈电）</option>
+                        <option value="lixiang_l9">理想L9（增程馈电）</option>
+                        <option value="wenjie_m7">问界M7（增程馈电）</option>
+                        <option value="wenjie_m9">问界M9（增程馈电）</option>
+                        <option value="lanjtu_free">岚图FREE 增程版</option>
+                    </optgroup>
+                    <optgroup label="── 日系经济型 ──">
+                        <option value="corolla">丰田卡罗拉 1.2T</option>
+                        <option value="civic">本田思域 1.5T</option>
+                        <option value="sylphy">日产轩逸 1.6L</option>
+                        <option value="camry">丰田凯美瑞 2.5L</option>
+                    </optgroup>
+                    <optgroup label="── 德系 ──">
+                        <option value="lavida">大众朗逸 1.4T</option>
+                        <option value="passat">大众帕萨特 2.0T</option>
+                        <option value="bmw3">宝马3系 325i</option>
+                        <option value="benz_c">奔驰C200L</option>
+                    </optgroup>
+                    <optgroup label="── 国产 ──">
+                        <option value="changan_plus">长安逸动PLUS</option>
+                        <option value="geely_star">吉利星瑞</option>
+                        <option value="haval_h6">哈弗H6 2.0T</option>
+                        <option value="tank300">坦克300</option>
+                    </optgroup>
+                    <optgroup label="── SUV / MPV ──">
+                        <option value="rav4">丰田RAV4 2.0L</option>
+                        <option value="crv">本田CR-V 1.5T</option>
+                        <option value="tiguan">途观L 2.0T</option>
+                        <option value="gl8">别克GL8 2.0T</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="car-info-tag" id="oilCarTag">✏️ 自定义模式</div>
+
+            <div class="input-group">
+                <label class="input-label">💰 油价（每升）</label>
+                <div class="input-wrapper">
+                    <input type="number" id="oilPrice" value="7.82" step="0.01" min="0" oninput="calculate()">
+                    <span class="input-unit">元/L</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">📊 百公里油耗 <span class="scene-tag" id="oilSceneTag">日常综合</span></label>
+                <div class="input-wrapper">
+                    <input type="number" id="oilPer100" value="8" step="0.1" min="0" oninput="markCustomOil(); calculate()">
+                    <span class="input-unit">L/100km</span>
+                </div>
+            </div>
+
+            <div class="result-box">
+                <div class="result-label">每公里油费</div>
+                <div class="result-value" id="oilResult">0.626</div>
+                <div class="result-unit-text">元 / 公里</div>
+            </div>
+        </div>
+
+        <!-- 电动 -->
+        <div class="card card-electric">
+            <div class="card-glow"></div>
+            <div class="card-header">
+                <div class="card-icon">⚡</div>
+                <div>
+                    <div class="card-title">电动车</div>
+                    <div class="card-subtitle">ELECTRIC VEHICLE</div>
+                </div>
+            </div>
+
+            <div class="select-group">
+                <div class="select-label">🚘 选择车型</div>
+                <select class="custom-select" id="elecCarSelect" onchange="onElecCarChange()">
+                    <option value="custom">✏️ 自定义输入</option>
+                    <optgroup label="── 增程式(纯电) ──">
+                        <option value="lixiang_one_e">理想ONE（纯电模式）</option>
+                        <option value="lixiang_l7_e">理想L7（纯电模式）</option>
+                        <option value="lixiang_l8_e">理想L8（纯电模式）</option>
+                        <option value="lixiang_l9_e">理想L9（纯电模式）</option>
+                        <option value="wenjie_m7_e">问界M7（纯电模式）</option>
+                        <option value="wenjie_m9_e">问界M9（纯电模式）</option>
+                    </optgroup>
+                    <optgroup label="── 纯电轿车 ──">
+                        <option value="model3">特斯拉 Model 3</option>
+                        <option value="modely">特斯拉 Model Y</option>
+                        <option value="han_ev">比亚迪汉EV</option>
+                        <option value="seal">比亚迪海豹</option>
+                        <option value="qin_plus_ev">比亚迪秦PLUS EV</option>
+                        <option value="aion_s">广汽埃安AION S</option>
+                        <option value="p7">小鹏P7</option>
+                        <option value="et5">蔚来ET5</option>
+                        <option value="zeekr007">极氪007</option>
+                    </optgroup>
+                    <optgroup label="── 纯电SUV ──">
+                        <option value="modelx">特斯拉 Model X</option>
+                        <option value="es6">蔚来ES6</option>
+                        <option value="g6">小鹏G6</option>
+                        <option value="tang_ev">比亚迪唐EV</option>
+                        <option value="aion_v">广汽埃安AION V</option>
+                        <option value="zeekr001">极氪001</option>
+                        <option value="ls6">智己LS6</option>
+                    </optgroup>
+                    <optgroup label="── 微型/小型 ──">
+                        <option value="mini_ev">五菱宏光MINI EV</option>
+                        <option value="dolphin">比亚迪海豚</option>
+                        <option value="qiulin">奇瑞小蚂蚁</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="car-info-tag" id="elecCarTag">✏️ 自定义模式</div>
+
+            <!-- 充电方式 -->
+            <div class="charge-type-group">
+                <div class="select-label">🔌 充电方式</div>
+                <div class="charge-type-btns">
+                    <button class="charge-btn active" onclick="setChargeType('home')" data-type="home">
+                        🏠 家充
+                        <span class="price-hint">~0.56元/度</span>
+                    </button>
+                    <button class="charge-btn" onclick="setChargeType('public')" data-type="public">
+                        🅿️ 公共桩
+                        <span class="price-hint">~1.20元/度</span>
+                    </button>
+                    <button class="charge-btn" onclick="setChargeType('super')" data-type="super">
+                        ⚡ 超充站
+                        <span class="price-hint">~1.80元/度</span>
+                    </button>
+                    <button class="charge-btn" onclick="setChargeType('valley')" data-type="valley">
+                        🌙 谷电
+                        <span class="price-hint">~0.31元/度</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">💰 电价（每度）</label>
+                <div class="input-wrapper">
+                    <input type="number" id="elecPrice" value="0.56" step="0.01" min="0" oninput="calculate()">
+                    <span class="input-unit">元/kWh</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">📊 百公里电耗 <span class="scene-tag" id="elecSceneTag">日常综合</span></label>
+                <div class="input-wrapper">
+                    <input type="number" id="elecPer100" value="15" step="0.1" min="0" oninput="markCustomElec(); calculate()">
+                    <span class="input-unit">kWh/100km</span>
+                </div>
+            </div>
+
+            <div class="result-box">
+                <div class="result-label">每公里电费</div>
+                <div class="result-value" id="elecResult">0.084</div>
+                <div class="result-unit-text">元 / 公里</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 对比 -->
+    <div class="comparison-section">
+        <div class="comparison-card">
+            <div class="comparison-header">
+                <h2>📊 油电对比分析</h2>
+                <p>COST COMPARISON ANALYSIS</p>
+            </div>
+
+            <div class="distance-selector">
+                <span>对比里程：</span>
+                <button class="dist-btn" onclick="setDistance(1)">1 公里</button>
+                <button class="dist-btn" onclick="setDistance(10)">10 公里</button>
+                <button class="dist-btn active" onclick="setDistance(100)">100 公里</button>
+                <button class="dist-btn" onclick="setDistance(1000)">1,000 公里</button>
+                <button class="dist-btn" onclick="setDistance(10000)">10,000 公里</button>
+                <button class="dist-btn" onclick="setDistance(20000)">20,000 公里</button>
+            </div>
+
+            <div class="bar-compare">
+                <div class="bar-item">
+                    <div class="bar-info">
+                        <span class="bar-name"><span class="dot dot-oil"></span> <span id="barOilName">燃油费用</span></span>
+                        <span class="bar-amount" id="barOilAmount" style="color:#ff8c42;">¥0</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-fill-oil" id="barOilFill" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div class="bar-item">
+                    <div class="bar-info">
+                        <span class="bar-name"><span class="dot dot-elec"></span> <span id="barElecName">电费</span></span>
+                        <span class="bar-amount" id="barElecAmount" style="color:#00d4ff;">¥0</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-fill-elec" id="barElecFill" style="width: 10%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value positive" id="statSave">¥0</div>
+                    <div class="stat-desc">该里程节省金额</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">📉</div>
+                    <div class="stat-value positive" id="statPercent">0%</div>
+                    <div class="stat-desc">费用节省比例</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">🔄</div>
+                    <div class="stat-value" id="statRatio">0x</div>
+                    <div class="stat-desc">油费/电费 倍率</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-value positive" id="statAnnual">¥0</div>
+                    <div class="stat-desc">年省（按2万km）</div>
+                </div>
+            </div>
+
+            <div class="annual-ring">
+                <div class="ring-container">
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                        <defs>
+                            <linearGradient id="oilGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#ff6b35"/>
+                                <stop offset="100%" style="stop-color:#ff8c42"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="ring-bg" cx="70" cy="70" r="58"/>
+                        <circle class="ring-fill-oil" id="ringOil" cx="70" cy="70" r="58"
+                            stroke-dasharray="364.42" stroke-dashoffset="0"/>
+                    </svg>
+                    <div class="ring-center">
+                        <div class="ring-value" id="ringOilVal" style="color:#ff8c42;">¥0</div>
+                        <div class="ring-label">年油费</div>
+                    </div>
+                </div>
+                <div class="vs-badge">VS</div>
+                <div class="ring-container">
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                        <defs>
+                            <linearGradient id="elecGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#00c3ff"/>
+                                <stop offset="100%" style="stop-color:#00ff88"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="ring-bg" cx="70" cy="70" r="58"/>
+                        <circle class="ring-fill-elec" id="ringElec" cx="70" cy="70" r="58"
+                            stroke-dasharray="364.42" stroke-dashoffset="300"/>
+                    </svg>
+                    <div class="ring-center">
+                        <div class="ring-value" id="ringElecVal" style="color:#00d4ff;">¥0</div>
+                        <div class="ring-label">年电费</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="saving-banner save-elec" id="savingBanner">
+                ⚡ 计算中...
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        ENERGY COST CALCULATOR PRO · 数据仅供参考 · 实际油耗电耗因驾驶习惯而异
+    </div>
+</div>
+
+<script>
+// ============ 车型数据库 ============
+// 场景: normal(日常综合), city(市区), highway(高速), summer(夏天), winter(冬天)
+const oilCars = {
+    // 增程馈电
+    lixiang_one:  { name: '理想ONE 馈电', type: '增程SUV', normal: 8.8, city: 10, highway: 8.5, summer: 9.5, winter: 10.5 },
+    lixiang_l7:   { name: '理想L7 馈电',  type: '增程SUV', normal: 8.5, city: 9.8, highway: 8.2, summer: 9.2, winter: 10.2 },
+    lixiang_l8:   { name: '理想L8 馈电',  type: '增程SUV', normal: 9.0, city: 10.2, highway: 8.5, summer: 9.8, winter: 10.8 },
+    lixiang_l9:   { name: '理想L9 馈电',  type: '增程SUV', normal: 9.5, city: 11, highway: 9.0, summer: 10.2, winter: 11.5 },
+    wenjie_m7:    { name: '问界M7 馈电',  type: '增程SUV', normal: 8.5, city: 9.8, highway: 8.0, summer: 9.3, winter: 10.3 },
+    wenjie_m9:    { name: '问界M9 馈电',  type: '增程SUV', normal: 9.8, city: 11.5, highway: 9.2, summer: 10.5, winter: 12.0 },
+    lanjtu_free:  { name: '岚图FREE 馈电', type: '增程SUV', normal: 9.0, city: 10.5, highway: 8.5, summer: 9.8, winter: 11.0 },
+    // 日系
+    corolla:      { name: '卡罗拉 1.2T',   type: '紧凑轿车', normal: 6.5, city: 7.5, highway: 5.8, summer: 7.0, winter: 7.2 },
+    civic:        { name: '思域 1.5T',     type: '紧凑轿车', normal: 7.0, city: 8.0, highway: 6.2, summer: 7.5, winter: 7.5 },
+    sylphy:       { name: '轩逸 1.6L',     type: '紧凑轿车', normal: 6.2, city: 7.2, highway: 5.5, summer: 6.8, winter: 7.0 },
+    camry:        { name: '凯美瑞 2.5L',   type: '中型轿车', normal: 8.0, city: 9.2, highway: 7.0, summer: 8.5, winter: 8.8 },
+    // 德系
+    lavida:       { name: '朗逸 1.4T',     type: '紧凑轿车', normal: 6.8, city: 7.8, highway: 6.0, summer: 7.3, winter: 7.5 },
+    passat:       { name: '帕萨特 2.0T',   type: '中型轿车', normal: 8.5, city: 10.0, highway: 7.5, summer: 9.2, winter: 9.5 },
+    bmw3:         { name: '宝马325i',      type: '中型轿车', normal: 8.2, city: 9.5, highway: 7.2, summer: 8.8, winter: 9.2 },
+    benz_c:       { name: '奔驰C200L',     type: '中型轿车', normal: 8.5, city: 10.0, highway: 7.5, summer: 9.2, winter: 9.5 },
+    // 国产
+    changan_plus: { name: '逸动PLUS',      type: '紧凑轿车', normal: 6.8, city: 7.8, highway: 6.0, summer: 7.3, winter: 7.5 },
+    geely_star:   { name: '星瑞',          type: '紧凑轿车', normal: 7.5, city: 8.5, highway: 6.8, summer: 8.0, winter: 8.2 },
+    haval_h6:     { name: '哈弗H6 2.0T',   type: '紧凑SUV', normal: 8.8, city: 10.0, highway: 7.8, summer: 9.5, winter: 10.0 },
+    tank300:      { name: '坦克300',        type: '硬派SUV', normal: 11.0, city: 13.0, highway: 9.5, summer: 12.0, winter: 12.5 },
+    // SUV / MPV
+    rav4:         { name: 'RAV4 2.0L',     type: '紧凑SUV', normal: 8.0, city: 9.2, highway: 7.0, summer: 8.5, winter: 8.8 },
+    crv:          { name: 'CR-V 1.5T',     type: '紧凑SUV', normal: 7.8, city: 9.0, highway: 7.0, summer: 8.3, winter: 8.5 },
+    tiguan:       { name: '途观L 2.0T',    type: '中型SUV', normal: 9.0, city: 10.5, highway: 8.0, summer: 9.8, winter: 10.2 },
+    gl8:          { name: '别克GL8 2.0T',  type: 'MPV',     normal: 10.0, city: 12.0, highway: 8.5, summer: 10.8, winter: 11.5 },
+};
+
+const elecCars = {
+    // 增程纯电
+    lixiang_one_e: { name: '理想ONE 纯电', type: '增程SUV', normal: 19, city: 17, highway: 22, summer: 21, winter: 25 },
+    lixiang_l7_e:  { name: '理想L7 纯电',  type: '增程SUV', normal: 18, city: 16, highway: 21, summer: 20, winter: 24 },
+    lixiang_l8_e:  { name: '理想L8 纯电',  type: '增程SUV', normal: 19, city: 17, highway: 22, summer: 21, winter: 25 },
+    lixiang_l9_e:  { name: '理想L9 纯电',  type: '增程SUV', normal: 20, city: 18, highway: 23, summer: 22, winter: 26 },
+    wenjie_m7_e:   { name: '问界M7 纯电',  type: '增程SUV', normal: 18, city: 16, highway: 21, summer: 20, winter: 24 },
+    wenjie_m9_e:   { name: '问界M9 纯电',  type: '增程SUV', normal: 22, city: 19, highway: 25, summer: 24, winter: 28 },
+    // 纯电轿车
+    model3:       { name: 'Model 3',       type: '中型轿车', normal: 13, city: 11, highway: 16, summer: 15, winter: 18 },
+    modely:       { name: 'Model Y',       type: '中型SUV', normal: 15, city: 13, highway: 18, summer: 17, winter: 20 },
+    han_ev:       { name: '比亚迪汉EV',     type: '中型轿车', normal: 15, city: 13, highway: 18, summer: 17, winter: 20 },
+    seal:         { name: '比亚迪海豹',      type: '中型轿车', normal: 14, city: 12, highway: 17, summer: 16, winter: 19 },
+    qin_plus_ev:  { name: '秦PLUS EV',     type: '紧凑轿车', normal: 12, city: 10, highway: 15, summer: 14, winter: 17 },
+    aion_s:       { name: 'AION S',        type: '紧凑轿车', normal: 13, city: 11, highway: 16, summer: 15, winter: 18 },
+    p7:           { name: '小鹏P7',         type: '中型轿车', normal: 14, city: 12, highway: 17, summer: 16, winter: 19 },
+    et5:          { name: '蔚来ET5',        type: '中型轿车', normal: 15, city: 13, highway: 18, summer: 17, winter: 21 },
+    zeekr007:     { name: '极氪007',        type: '中型轿车', normal: 14, city: 12, highway: 17, summer: 16, winter: 19 },
+    // 纯电SUV
+    modelx:       { name: 'Model X',       type: '大型SUV', normal: 19, city: 16, highway: 23, summer: 21, winter: 25 },
+    es6:          { name: '蔚来ES6',        type: '中型SUV', normal: 17, city: 15, highway: 20, summer: 19, winter: 23 },
+    g6:           { name: '小鹏G6',         type: '中型SUV', normal: 15, city: 13, highway: 18, summer: 17, winter: 20 },
+    tang_ev:      { name: '比亚迪唐EV',     type: '中型SUV', normal: 18, city: 15, highway: 21, summer: 20, winter: 24 },
+    aion_v:       { name: 'AION V',        type: '紧凑SUV', normal: 15, city: 13, highway: 18, summer: 17, winter: 20 },
+    zeekr001:     { name: '极氪001',        type: '中型轿跑', normal: 16, city: 14, highway: 19, summer: 18, winter: 22 },
+    ls6:          { name: '智己LS6',        type: '中型SUV', normal: 16, city: 14, highway: 19, summer: 18, winter: 21 },
+    // 微型
+    mini_ev:      { name: '宏光MINI EV',   type: '微型车',   normal: 8, city: 7, highway: 10, summer: 9, winter: 12 },
+    dolphin:      { name: '比亚迪海豚',      type: '小型车',   normal: 11, city: 9, highway: 14, summer: 13, winter: 16 },
+    qiulin:       { name: '小蚂蚁',         type: '微型车',   normal: 9, city: 8, highway: 12, summer: 10, winter: 13 },
+};
+
+const chargePrices = {
+    home: 0.56,
+    public: 1.20,
+    super: 1.80,
+    valley: 0.31
+};
+
+const sceneNames = {
+    normal: '日常综合', city: '市区通勤', highway: '高速长途', summer: '夏季空调', winter: '冬季暖风'
+};
+
+let currentScene = 'normal';
+let currentDistance = 100;
+let currentChargeType = 'home';
+const circumference = 2 * Math.PI * 58;
+
+// 粒子
+function createParticles() {
+    const c = document.getElementById('particles');
+    const colors = ['#00c3ff', '#00ff88', '#8b5cf6', '#ff6b35', '#ff8c42'];
+    for (let i = 0; i < 25; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const s = Math.random() * 4 + 1;
+        const col = colors[Math.floor(Math.random() * colors.length)];
+        p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;background:${col};box-shadow:0 0 ${s*3}px ${col};animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*10}s;`;
+        c.appendChild(p);
+    }
+}
+createParticles();
+
+function setScene(s) {
+    currentScene = s;
+    document.querySelectorAll('.scene-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('oilSceneTag').textContent = sceneNames[s];
+    document.getElementById('elecSceneTag').textContent = sceneNames[s];
+    // 更新数据
+    onOilCarChange();
+    onElecCarChange();
+}
+
+function setChargeType(type) {
+    currentChargeType = type;
+    document.querySelectorAll('.charge-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.charge-btn[data-type="${type}"]`).classList.add('active');
+    document.getElementById('elecPrice').value = chargePrices[type];
+    calculate();
+}
+
+function setDistance(d) {
+    currentDistance = d;
+    document.querySelectorAll('.dist-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (parseInt(btn.textContent.replace(/,/g, '')) === d) btn.classList.add('active');
+    });
+    calculate();
+}
+
+function onOilCarChange() {
+    const sel = document.getElementById('oilCarSelect');
+    const val = sel.value;
+    const tag = document.getElementById('oilCarTag');
+    if (val === 'custom') {
+        tag.innerHTML = '✏️ 自定义模式';
+        return;
+    }
+    const car = oilCars[val];
+    if (!car) return;
+    const consumption = car[currentScene] || car.normal;
+    document.getElementById('oilPer100').value = consumption;
+    tag.innerHTML = `🚘 ${car.name} · ${car.type} · ${sceneNames[currentScene]}工况 ${consumption}L`;
+    calculate();
+}
+
+function onElecCarChange() {
+    const sel = document.getElementById('elecCarSelect');
+    const val = sel.value;
+    const tag = document.getElementById('elecCarTag');
+    if (val === 'custom') {
+        tag.innerHTML = '✏️ 自定义模式';
+        return;
+    }
+    const car = elecCars[val];
+    if (!car) return;
+    const consumption = car[currentScene] || car.normal;
+    document.getElementById('elecPer100').value = consumption;
+    tag.innerHTML = `🚘 ${car.name} · ${car.type} · ${sceneNames[currentScene]}工况 ${consumption}kWh`;
+    calculate();
+}
+
+function markCustomOil() {
+    document.getElementById('oilCarSelect').value = 'custom';
+    document.getElementById('oilCarTag').innerHTML = '✏️ 自定义模式';
+}
+
+function markCustomElec() {
+    document.getElementById('elecCarSelect').value = 'custom';
+    document.getElementById('elecCarTag').innerHTML = '✏️ 自定义模式';
+}
+
+function fmt(n) {
+    return n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function animateEl(el) {
+    el.classList.remove('animate-value');
+    void el.offsetWidth;
+    el.classList.add('animate-value');
+}
+
+function calculate() {
+    const oilPrice = parseFloat(document.getElementById('oilPrice').value) || 0;
+    const oilPer100 = parseFloat(document.getElementById('oilPer100').value) || 0;
+    const elecPrice = parseFloat(document.getElementById('elecPrice').value) || 0;
+    const elecPer100 = parseFloat(document.getElementById('elecPer100').value) || 0;
+
+    const oilPerKm = (oilPrice * oilPer100) / 100;
+    const elecPerKm = (elecPrice * elecPer100) / 100;
+
+    const oilR = document.getElementById('oilResult');
+    const elecR = document.getElementById('elecResult');
+    oilR.textContent = oilPerKm.toFixed(3);
+    elecR.textContent = elecPerKm.toFixed(3);
+    animateEl(oilR);
+    animateEl(elecR);
+
+    // Bar names
+    const oilSel = document.getElementById('oilCarSelect');
+    const elecSel = document.getElementById('elecCarSelect');
+    const oilName = oilSel.value !== 'custom' && oilCars[oilSel.value] ? oilCars[oilSel.value].name : '燃油车';
+    const elecName = elecSel.value !== 'custom' && elecCars[elecSel.value] ? elecCars[elecSel.value].name : '电动车';
+    document.getElementById('barOilName').textContent = oilName + ' 费用';
+    document.getElementById('barElecName').textContent = elecName + ' 费用';
+
+    const oilTotal = oilPerKm * currentDistance;
+    const elecTotal = elecPerKm * currentDistance;
+    const maxTotal = Math.max(oilTotal, elecTotal, 0.01);
+
+    document.getElementById('barOilAmount').textContent = '¥' + oilTotal.toFixed(2);
+    document.getElementById('barElecAmount').textContent = '¥' + elecTotal.toFixed(2);
+    document.getElementById('barOilFill').style.width = (oilTotal / maxTotal * 100) + '%';
+    document.getElementById('barElecFill').style.width = (elecTotal / maxTotal * 100) + '%';
+
+    const diff = Math.abs(oilTotal - elecTotal);
+    const percentSave = maxTotal > 0 ? (diff / maxTotal * 100) : 0;
+    const ratio = elecTotal > 0 ? (oilTotal / elecTotal) : 0;
+    const annualKm = 20000;
+    const annualSave = Math.abs(oilPerKm - elecPerKm) * annualKm;
+
+    const s1 = document.getElementById('statSave');
+    s1.textContent = '¥' + diff.toFixed(2);
+    animateEl(s1);
+
+    const s2 = document.getElementById('statPercent');
+    s2.textContent = percentSave.toFixed(1) + '%';
+    animateEl(s2);
+
+    const s3 = document.getElementById('statRatio');
+    s3.textContent = ratio.toFixed(2) + 'x';
+    animateEl(s3);
+
+    const s4 = document.getElementById('statAnnual');
+    s4.textContent = '¥' + fmt(annualSave);
+    animateEl(s4);
+
+    // Rings
+    const annualOil = oilPerKm * annualKm;
+    const annualElec = elecPerKm * annualKm;
+    const maxA = Math.max(annualOil, annualElec, 0.01);
+
+    document.getElementById('ringOil').style.strokeDashoffset = circumference * (1 - annualOil / maxA);
+    document.getElementById('ringElec').style.strokeDashoffset = circumference * (1 - annualElec / maxA);
+    document.getElementById('ringOilVal').textContent = '¥' + fmt(annualOil);
+    document.getElementById('ringElecVal').textContent = '¥' + fmt(annualElec);
+
+    // Banner
+    const banner = document.getElementById('savingBanner');
+    const diffKm = Math.abs(oilPerKm - elecPerKm);
+    if (oilPerKm > elecPerKm) {
+        banner.className = 'saving-banner save-elec';
+        banner.innerHTML = `⚡ ${elecName}每公里省 <strong>¥${diffKm.toFixed(3)}</strong> · 每年可省 <strong>¥${fmt(annualSave)}</strong>（按2万公里） · 油费是电费的 <strong>${ratio.toFixed(1)}倍</strong>`;
+    } else if (elecPerKm > oilPerKm) {
+        banner.className = 'saving-banner save-oil';
+        banner.innerHTML = `⛽ ${oilName}每公里省 <strong>¥${diffKm.toFixed(3)}</strong> · 每年可省 <strong>¥${fmt(annualSave)}</strong>（按2万公里）`;
+    } else {
+        banner.className = 'saving-banner save-equal';
+        banner.innerHTML = `🤝 费用持平，每公里均为 <strong>¥${oilPerKm.toFixed(3)}</strong>`;
+    }
+}
+
+// 初始选理想ONE做演示
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('oilCarSelect').value = 'lixiang_one';
+    document.getElementById('elecCarSelect').value = 'lixiang_one_e';
+    onOilCarChange();
+    onElecCarChange();
+});
+</script>
+
+</body>
+</html>

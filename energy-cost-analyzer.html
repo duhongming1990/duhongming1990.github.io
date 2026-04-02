@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>油电出行成本计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+        body {
+            min-height: 100vh;
+            background: #0a0e1a;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: #e0e6f0;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景粒子 */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        /* 网格背景 */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 195, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 195, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* 标题区域 */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', 'Microsoft YaHei', sans-serif;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #00c3ff, #00ff88, #00c3ff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease infinite;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            color: #5a6a8a;
+            font-size: 1.05em;
+            letter-spacing: 4px;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* 主布局 */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: rgba(15, 20, 40, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 35px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .card-oil::before {
+            background: linear-gradient(90deg, #ff6b35, #ff8c42, #ffa559);
+        }
+
+        .card-electric::before {
+            background: linear-gradient(90deg, #00c3ff, #00e5a0, #00ff88);
+        }
+
+        .card-oil:hover {
+            box-shadow: 0 20px 60px rgba(255, 107, 53, 0.15), 0 0 40px rgba(255, 107, 53, 0.05);
+        }
+
+        .card-electric:hover {
+            box-shadow: 0 20px 60px rgba(0, 195, 255, 0.15), 0 0 40px rgba(0, 195, 255, 0.05);
+        }
+
+        /* 卡片光效 */
+        .card-glow {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.08;
+            top: -50px;
+            right: -50px;
+            pointer-events: none;
+        }
+
+        .card-oil .card-glow { background: #ff6b35; }
+        .card-electric .card-glow { background: #00c3ff; }
+
+        /* 卡片头部 */
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .card-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            position: relative;
+        }
+
+        .card-oil .card-icon {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 140, 66, 0.1));
+            border: 1px solid rgba(255, 107, 53, 0.3);
+        }
+
+        .card-electric .card-icon {
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.2), rgba(0, 255, 136, 0.1));
+            border: 1px solid rgba(0, 195, 255, 0.3);
+        }
+
+        .card-icon::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 18px;
+            padding: 2px;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        .card-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .card-oil .card-title { color: #ff8c42; }
+        .card-electric .card-title { color: #00d4ff; }
+
+        .card-subtitle {
+            font-size: 0.8em;
+            color: #4a5a7a;
+            margin-top: 2px;
+            letter-spacing: 2px;
+        }
+
+        /* 输入组 */
+        .input-group {
+            margin-bottom: 22px;
+        }
+
+        .input-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #7a8aaa;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .input-label .label-icon {
+            font-size: 1em;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 70px 14px 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #e0e6f0;
+            font-size: 1.1em;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: 'Orbitron', 'Segoe UI', sans-serif;
+        }
+
+        .card-oil .input-wrapper input:focus {
+            border-color: rgba(255, 107, 53, 0.5);
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.1);
+            background: rgba(255, 107, 53, 0.05);
+        }
+
+        .card-electric .input-wrapper input:focus {
+            border-color: rgba(0, 195, 255, 0.5);
+            box-shadow: 0 0 20px rgba(0, 195, 255, 0.1);
+            background: rgba(0, 195, 255, 0.05);
+        }
+
+        .input-unit {
+            position: absolute;
+            right: 15px;
+            font-size: 0.8em;
+            color: #4a5a7a;
+            font-weight: 600;
+            letter-spacing: 1px;
+            pointer-events: none;
+        }
+
+        /* 结果展示区 */
+        .result-box {
+            margin-top: 28px;
+            padding: 22px;
+            border-radius: 16px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-oil .result-box {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(255, 140, 66, 0.03));
+            border: 1px solid rgba(255, 107, 53, 0.15);
+        }
+
+        .card-electric .result-box {
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.08), rgba(0, 255, 136, 0.03));
+            border: 1px solid rgba(0, 195, 255, 0.15);
+        }
+
+        .result-label {
+            font-size: 0.85em;
+            color: #5a6a8a;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.8em;
+            font-weight: 900;
+            line-height: 1.2;
+        }
+
+        .card-oil .result-value { color: #ff8c42; }
+        .card-electric .result-value { color: #00d4ff; }
+
+        .result-unit-text {
+            font-size: 0.85em;
+            color: #5a6a8a;
+            margin-top: 5px;
+            letter-spacing: 1px;
+        }
+
+        /* 对比区域 */
+        .comparison-section {
+            margin-top: 30px;
+        }
+
+        .comparison-card {
+            background: rgba(15, 20, 40, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 35px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comparison-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b35, #8b5cf6, #00c3ff);
+        }
+
+        .comparison-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .comparison-header h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff6b35, #8b5cf6, #00c3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .comparison-header p {
+            color: #4a5a7a;
+            font-size: 0.85em;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        /* 对比条 */
+        .bar-compare {
+            margin-bottom: 30px;
+        }
+
+        .bar-item {
+            margin-bottom: 18px;
+        }
+
+        .bar-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .bar-name {
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar-name .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .bar-name .dot-oil { background: #ff6b35; box-shadow: 0 0 10px rgba(255, 107, 53, 0.5); }
+        .bar-name .dot-elec { background: #00c3ff; box-shadow: 0 0 10px rgba(0, 195, 255, 0.5); }
+
+        .bar-amount {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95em;
+            font-weight: 700;
+        }
+
+        .bar-track {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+        }
+
+        .bar-fill-oil {
+            background: linear-gradient(90deg, #ff6b35, #ff8c42);
+            box-shadow: 0 0 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .bar-fill-elec {
+            background: linear-gradient(90deg, #00c3ff, #00ff88);
+            box-shadow: 0 0 15px rgba(0, 195, 255, 0.3);
+        }
+
+        .bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: barShine 2s ease-in-out infinite;
+        }
+
+        @keyframes barShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* 差额统计 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 20px 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-3px);
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.1);
+        }
+
+        .stat-icon {
+            font-size: 1.6em;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #8b5cf6;
+            margin-bottom: 5px;
+        }
+
+        .stat-value.positive { color: #00ff88; }
+        .stat-value.negative { color: #ff4757; }
+
+        .stat-desc {
+            font-size: 0.75em;
+            color: #4a5a7a;
+            letter-spacing: 1px;
+            line-height: 1.4;
+        }
+
+        /* 距离选择器 */
+        .distance-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .distance-selector span {
+            color: #5a6a8a;
+            font-size: 0.9em;
+        }
+
+        .dist-btn {
+            padding: 8px 20px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 25px;
+            background: transparent;
+            color: #8a8aaa;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .dist-btn:hover {
+            border-color: rgba(139, 92, 246, 0.6);
+            color: #c4b5fd;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .dist-btn.active {
+            border-color: #8b5cf6;
+            color: #fff;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.1));
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+        }
+
+        /* 年度对比环形图区域 */
+        .annual-ring {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 60px;
+            margin-top: 30px;
+            padding: 25px 0;
+        }
+
+        .ring-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+        }
+
+        .ring-container svg {
+            transform: rotate(-90deg);
+        }
+
+        .ring-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.04);
+            stroke-width: 8;
+        }
+
+        .ring-fill-oil {
+            fill: none;
+            stroke: url(#oilGrad);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .ring-fill-elec {
+            fill: none;
+            stroke: url(#elecGrad);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .ring-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .ring-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1em;
+            font-weight: 700;
+        }
+
+        .ring-label {
+            font-size: 0.65em;
+            color: #5a6a8a;
+            margin-top: 3px;
+            letter-spacing: 1px;
+        }
+
+        .vs-badge {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff6b35, #8b5cf6, #00c3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        /* 省钱提示 */
+        .saving-banner {
+            margin-top: 25px;
+            padding: 18px 25px;
+            border-radius: 14px;
+            text-align: center;
+            font-size: 1em;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.5s ease;
+        }
+
+        .saving-banner.save-elec {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 195, 255, 0.05));
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .saving-banner.save-oil {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 140, 66, 0.05));
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            color: #ff8c42;
+        }
+
+        .saving-banner.save-equal {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+        }
+
+        /* 脚注 */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #2a3a5a;
+            font-size: 0.8em;
+            letter-spacing: 2px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .header h1 {
+                font-size: 1.6em;
+            }
+            .result-value {
+                font-size: 2em;
+            }
+            .annual-ring {
+                gap: 25px;
+            }
+            .ring-container {
+                width: 110px;
+                height: 110px;
+            }
+        }
+
+        /* 数字翻转动画 */
+        .animate-value {
+            animation: valueFlash 0.3s ease;
+        }
+
+        @keyframes valueFlash {
+            0% { transform: scale(1.05); filter: brightness(1.5); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        /* 输入框数字样式 */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        /* 工具提示 */
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75em;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+
+        /* 加载动画 */
+        .loading-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00c3ff, #8b5cf6, #ff6b35);
+            z-index: 100;
+            animation: loadingBar 1.5s ease forwards;
+        }
+
+        @keyframes loadingBar {
+            0% { width: 0; }
+            100% { width: 100%; opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="loading-line"></div>
+
+<!-- 背景 -->
+<div class="grid-bg"></div>
+<div class="bg-particles" id="particles"></div>
+
+<div class="container">
+    <!-- 标题 -->
+    <div class="header">
+        <h1>⚡ 油电成本计算器 ⛽</h1>
+        <p>ENERGY COST ANALYZER</p>
+    </div>
+
+    <!-- 双卡片 -->
+    <div class="main-grid">
+        <!-- 燃油卡片 -->
+        <div class="card card-oil">
+            <div class="card-glow"></div>
+            <div class="card-header">
+                <div class="card-icon">⛽</div>
+                <div>
+                    <div class="card-title">燃油车</div>
+                    <div class="card-subtitle">FUEL VEHICLE</div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">
+                    <span class="label-icon">💰</span> 油价（每升）
+                </label>
+                <div class="input-wrapper">
+                    <input type="number" id="oilPrice" value="7.82" step="0.01" min="0" oninput="calculate()">
+                    <span class="input-unit">元/L</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">
+                    <span class="label-icon">📊</span> 百公里油耗
+                </label>
+                <div class="input-wrapper">
+                    <input type="number" id="oilPer100" value="8" step="0.1" min="0" oninput="calculate()">
+                    <span class="input-unit">L/100km</span>
+                </div>
+            </div>
+
+            <div class="result-box">
+                <div class="result-label">每公里油费</div>
+                <div class="result-value" id="oilResult">0.626</div>
+                <div class="result-unit-text">元 / 公里</div>
+            </div>
+        </div>
+
+        <!-- 电动卡片 -->
+        <div class="card card-electric">
+            <div class="card-glow"></div>
+            <div class="card-header">
+                <div class="card-icon">⚡</div>
+                <div>
+                    <div class="card-title">电动车</div>
+                    <div class="card-subtitle">ELECTRIC VEHICLE</div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">
+                    <span class="label-icon">💰</span> 电价（每度）
+                </label>
+                <div class="input-wrapper">
+                    <input type="number" id="elecPrice" value="0.56" step="0.01" min="0" oninput="calculate()">
+                    <span class="input-unit">元/kWh</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">
+                    <span class="label-icon">📊</span> 百公里电耗
+                </label>
+                <div class="input-wrapper">
+                    <input type="number" id="elecPer100" value="15" step="0.1" min="0" oninput="calculate()">
+                    <span class="input-unit">kWh/100km</span>
+                </div>
+            </div>
+
+            <div class="result-box">
+                <div class="result-label">每公里电费</div>
+                <div class="result-value" id="elecResult">0.084</div>
+                <div class="result-unit-text">元 / 公里</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 对比区域 -->
+    <div class="comparison-section">
+        <div class="comparison-card">
+            <div class="comparison-header">
+                <h2>📊 油电对比分析</h2>
+                <p>COST COMPARISON ANALYSIS</p>
+            </div>
+
+            <!-- 距离选择器 -->
+            <div class="distance-selector">
+                <span>对比里程：</span>
+                <button class="dist-btn" onclick="setDistance(1)">1 公里</button>
+                <button class="dist-btn" onclick="setDistance(10)">10 公里</button>
+                <button class="dist-btn active" onclick="setDistance(100)">100 公里</button>
+                <button class="dist-btn" onclick="setDistance(1000)">1,000 公里</button>
+                <button class="dist-btn" onclick="setDistance(10000)">10,000 公里</button>
+                <button class="dist-btn" onclick="setDistance(20000)">20,000 公里</button>
+            </div>
+
+            <!-- 对比条 -->
+            <div class="bar-compare">
+                <div class="bar-item">
+                    <div class="bar-info">
+                        <span class="bar-name"><span class="dot dot-oil"></span> 燃油费用</span>
+                        <span class="bar-amount" id="barOilAmount" style="color:#ff8c42;">¥62.56</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-fill-oil" id="barOilFill" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div class="bar-item">
+                    <div class="bar-info">
+                        <span class="bar-name"><span class="dot dot-elec"></span> 电费</span>
+                        <span class="bar-amount" id="barElecAmount" style="color:#00d4ff;">¥8.40</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-fill-elec" id="barElecFill" style="width: 13%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计数据 -->
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value positive" id="statSave">¥54.16</div>
+                    <div class="stat-desc">选里程节省金额</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">📉</div>
+                    <div class="stat-value positive" id="statPercent">86.6%</div>
+                    <div class="stat-desc">费用节省比例</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">🔄</div>
+                    <div class="stat-value" id="statRatio">7.45x</div>
+                    <div class="stat-desc">油费/电费 倍率</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-value positive" id="statAnnual">¥10,832</div>
+                    <div class="stat-desc">年省（按2万公里）</div>
+                </div>
+            </div>
+
+            <!-- 环形对比图 -->
+            <div class="annual-ring">
+                <div class="ring-container">
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                        <defs>
+                            <linearGradient id="oilGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#ff6b35"/>
+                                <stop offset="100%" style="stop-color:#ff8c42"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="ring-bg" cx="70" cy="70" r="58"/>
+                        <circle class="ring-fill-oil" id="ringOil" cx="70" cy="70" r="58"
+                            stroke-dasharray="364.42" stroke-dashoffset="0"/>
+                    </svg>
+                    <div class="ring-center">
+                        <div class="ring-value" id="ringOilVal" style="color:#ff8c42;">¥12,512</div>
+                        <div class="ring-label">年油费</div>
+                    </div>
+                </div>
+
+                <div class="vs-badge">VS</div>
+
+                <div class="ring-container">
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                        <defs>
+                            <linearGradient id="elecGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#00c3ff"/>
+                                <stop offset="100%" style="stop-color:#00ff88"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="ring-bg" cx="70" cy="70" r="58"/>
+                        <circle class="ring-fill-elec" id="ringElec" cx="70" cy="70" r="58"
+                            stroke-dasharray="364.42" stroke-dashoffset="300"/>
+                    </svg>
+                    <div class="ring-center">
+                        <div class="ring-value" id="ringElecVal" style="color:#00d4ff;">¥1,680</div>
+                        <div class="ring-label">年电费</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 省钱提示 -->
+            <div class="saving-banner save-elec" id="savingBanner">
+                ⚡ 电动车每公里省 ¥0.542 · 每年可省 ¥10,832（按2万公里计算）
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        ENERGY COST CALCULATOR · 实时计算 · 数据仅供参考
+    </div>
+</div>
+
+<script>
+    // 粒子背景
+    function createParticles() {
+        const container = document.getElementById('particles');
+        const colors = ['#00c3ff', '#00ff88', '#8b5cf6', '#ff6b35', '#ff8c42'];
+        for (let i = 0; i < 30; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            const size = Math.random() * 4 + 1;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            p.style.cssText = `
+                width: ${size}px; height: ${size}px;
+                left: ${Math.random() * 100}%;
+                background: ${color};
+                box-shadow: 0 0 ${size * 3}px ${color};
+                animation-duration: ${Math.random() * 15 + 10}s;
+                animation-delay: ${Math.random() * 10}s;
+            `;
+            container.appendChild(p);
+        }
+    }
+    createParticles();
+
+    let currentDistance = 100;
+    const circumference = 2 * Math.PI * 58; // ≈364.42
+
+    function setDistance(d) {
+        currentDistance = d;
+        document.querySelectorAll('.dist-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (parseInt(btn.textContent.replace(/,/g, '')) === d) {
+                btn.classList.add('active');
+            }
+        });
+        calculate();
+    }
+
+    function animateEl(el) {
+        el.classList.remove('animate-value');
+        void el.offsetWidth;
+        el.classList.add('animate-value');
+    }
+
+    function calculate() {
+        const oilPrice = parseFloat(document.getElementById('oilPrice').value) || 0;
+        const oilPer100 = parseFloat(document.getElementById('oilPer100').value) || 0;
+        const elecPrice = parseFloat(document.getElementById('elecPrice').value) || 0;
+        const elecPer100 = parseFloat(document.getElementById('elecPer100').value) || 0;
+
+        // 每公里费用
+        const oilPerKm = (oilPrice * oilPer100) / 100;
+        const elecPerKm = (elecPrice * elecPer100) / 100;
+
+        const oilResultEl = document.getElementById('oilResult');
+        const elecResultEl = document.getElementById('elecResult');
+        oilResultEl.textContent = oilPerKm.toFixed(3);
+        elecResultEl.textContent = elecPerKm.toFixed(3);
+        animateEl(oilResultEl);
+        animateEl(elecResultEl);
+
+        // 选定里程费用
+        const oilTotal = oilPerKm * currentDistance;
+        const elecTotal = elecPerKm * currentDistance;
+        const maxTotal = Math.max(oilTotal, elecTotal, 0.01);
+
+        document.getElementById('barOilAmount').textContent = '¥' + oilTotal.toFixed(2);
+        document.getElementById('barElecAmount').textContent = '¥' + elecTotal.toFixed(2);
+        document.getElementById('barOilFill').style.width = (oilTotal / maxTotal * 100) + '%';
+        document.getElementById('barElecFill').style.width = (elecTotal / maxTotal * 100) + '%';
+
+        // 差额统计
+        const diff = Math.abs(oilTotal - elecTotal);
+        const percentSave = maxTotal > 0 ? (diff / maxTotal * 100) : 0;
+        const ratio = elecTotal > 0 ? (oilTotal / elecTotal) : 0;
+        const annualKm = 20000;
+        const annualSave = Math.abs(oilPerKm - elecPerKm) * annualKm;
+
+        const statSaveEl = document.getElementById('statSave');
+        statSaveEl.textContent = '¥' + diff.toFixed(2);
+        statSaveEl.className = 'stat-value positive';
+        animateEl(statSaveEl);
+
+        const statPercentEl = document.getElementById('statPercent');
+        statPercentEl.textContent = percentSave.toFixed(1) + '%';
+        statPercentEl.className = 'stat-value positive';
+        animateEl(statPercentEl);
+
+        const statRatioEl = document.getElementById('statRatio');
+        statRatioEl.textContent = ratio.toFixed(2) + 'x';
+        statRatioEl.className = 'stat-value';
+        animateEl(statRatioEl);
+
+        const statAnnualEl = document.getElementById('statAnnual');
+        statAnnualEl.textContent = '¥' + annualSave.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        statAnnualEl.className = 'stat-value positive';
+        animateEl(statAnnualEl);
+
+        // 年费用环形图（按2万公里）
+        const annualOil = oilPerKm * annualKm;
+        const annualElec = elecPerKm * annualKm;
+        const maxAnnual = Math.max(annualOil, annualElec, 0.01);
+
+        const ringOil = document.getElementById('ringOil');
+        const ringElec = document.getElementById('ringElec');
+        const oilRatio = annualOil / maxAnnual;
+        const elecRatio = annualElec / maxAnnual;
+
+        ringOil.style.strokeDashoffset = circumference * (1 - oilRatio);
+        ringElec.style.strokeDashoffset = circumference * (1 - elecRatio);
+
+        document.getElementById('ringOilVal').textContent = '¥' + annualOil.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        document.getElementById('ringElecVal').textContent = '¥' + annualElec.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+        // 省钱提示
+        const banner = document.getElementById('savingBanner');
+        const diffPerKm = Math.abs(oilPerKm - elecPerKm);
+        if (oilPerKm > elecPerKm) {
+            banner.className = 'saving-banner save-elec';
+            banner.innerHTML = `⚡ 电动车每公里省 <strong>¥${diffPerKm.toFixed(3)}</strong> · 每年可省 <strong>¥${annualSave.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</strong>（按2万公里计算）`;
+        } else if (elecPerKm > oilPerKm) {
+            banner.className = 'saving-banner save-oil';
+            banner.innerHTML = `⛽ 燃油车每公里省 <strong>¥${diffPerKm.toFixed(3)}</strong> · 每年可省 <strong>¥${annualSave.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</strong>（按2万公里计算）`;
+        } else {
+            banner.className = 'saving-banner save-equal';
+            banner.innerHTML = `🤝 油电费用持平，每公里均为 <strong>¥${oilPerKm.toFixed(3)}</strong>`;
+        }
+    }
+
+    // 初始计算
+    calculate();
+</script>
+
+</body>
+</html>
