@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux 文件系统极简对比指南</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #f4f4f9; }
+        h1 { text-align: center; color: #2c3e50; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
+        th { background-color: #3498db; color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        code { background: #eee; padding: 2px 6px; border-radius: 4px; color: #c7254e; font-family: monospace; }
+        .cmd { display: block; background: #2d2d2d; color: #fff; padding: 10px; border-radius: 5px; font-family: monospace; margin: 5px 0; }
+        .highlight { font-weight: bold; color: #e67e22; }
+        .box { padding: 15px; background: #e8f6f3; border-left: 5px solid #1abc9c; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>Linux 文件系统快速选型指南</h1>
+
+    <div class="card">
+        <h2>核心对比表</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>文件系统</th>
+                    <th>最佳使用场景 (Use Case)</th>
+                    <th>安装/配置 (Linux命令)</th>
+                    <th>代表软件/环境</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>ext4</strong></td>
+                    <td>
+                        <ul>
+                            <li>桌面/笔记本系统盘</li>
+                            <li>通用服务器</li>
+                            <li>需要最大化兼容性的地方</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="cmd">sudo mkfs.ext4 /dev/sdX</span>
+                        <small>大多数发行版默认</small>
+                    </td>
+                    <td>Ubuntu/CentOS 装机默认，所有通用软件</td>
+                </tr>
+                <tr>
+                    <td><strong>XFS</strong></td>
+                    <td>
+                        <ul>
+                            <li><span class="highlight">大文件</span> (视频、媒体库)</li>
+                            <li>高并发IO (数据库)</li>
+                            <li>RHEL/CentOS 默认</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="cmd">sudo mkfs.xfs /dev/sdX</span>
+                        <small>需安装: xfsprogs</small>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>PostgreSQL / MySQL</li>
+                            <li>大型视频编辑</li>
+                            <li>邮件服务器</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>ZFS</strong></td>
+                    <td>
+                        <ul>
+                            <li>海量存储 (NAS)</li>
+                            <li><span class="highlight">数据安全</span> (校验码)</li>
+                            <li>需要快照/容错</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <span class="cmd">sudo apt install zfsutils-linux</span>
+                        <span class="cmd">sudo zpool create pool1 /dev/sdX</span>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>TrueNAS (FreeNAS)</li>
+                            <li>Unraid</li>
+                            <li>企业级归档</li>
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>极简决策</h2>
+        <div class="box">
+            <strong>选 ext4:</strong> 不知道用什么好，就用这个。系统盘最快选择。<br><br>
+            <strong>选 XFS:</strong> 你的硬盘里有 4K 视频，或者你要跑 MySQL 数据库。<br><br>
+            <strong>选 ZFS:</strong> 你有很多块硬盘组 NAS，或者极度害怕数据丢失（它会自动修复数据）。
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>关键配置命令速查</h2>
+        <p><strong>1. 格式化 (以 ext4 为例，其他把 ext4 改成 xfs/zfs 即可):</strong></p>
+        <div class="cmd">sudo mkfs.ext4 /dev/sdb1</div>
+        
+        <p><strong>2. 挂载:</strong></p>
+        <div class="cmd">sudo mount /dev/sdb1 /mnt/mydisk</div>
+        
+        <p><strong>3. ZFS 创建存储池 (进阶):</strong></p>
+        <div class="cmd">sudo zpool create -f mypool mirror /dev/sdb /dev/sdc</div>
+    </div>
+
+</body>
+</html>

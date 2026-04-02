@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 AI Gateway 深度评测与推荐</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #0ea5e9;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #0c4a6e 100%);
+            padding: 80px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(14, 165, 233, 0.15) 0%, transparent 50%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #818cf8, #38bdf8, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+
+        .hero .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .hero .badge-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .badge-purple { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+        .badge-blue { background: rgba(14,165,233,0.2); color: #7dd3fc; border: 1px solid rgba(14,165,233,0.3); }
+        .badge-green { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+        .badge-amber { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Section */
+        section {
+            padding: 60px 0;
+        }
+
+        section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        section .section-desc {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Gateway Cards */
+        .gateway-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .gateway-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .gateway-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .gateway-card.winner {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(245,158,11,0.05), rgba(99,102,241,0.05));
+        }
+
+        .gateway-card.winner::before {
+            content: '🏆 最佳推荐';
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .card-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .card-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .card-header .stars {
+            font-size: 0.85rem;
+            color: var(--accent);
+        }
+
+        .card-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            min-height: 48px;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: rgba(99,102,241,0.15);
+            color: #a5b4fc;
+        }
+
+        .card-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .pros h4, .cons h4 {
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .pros h4 { color: var(--success); }
+        .cons h4 { color: var(--danger); }
+
+        .pros li, .cons li {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            list-style: none;
+            padding: 2px 0;
+        }
+
+        .pros li::before { content: '✅ '; }
+        .cons li::before { content: '⚠️ '; }
+
+        /* Comparison Table */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: rgba(99,102,241,0.15);
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover td {
+            background: rgba(99,102,241,0.05);
+        }
+
+        tr.highlight td {
+            background: rgba(245,158,11,0.08);
+        }
+
+        .check { color: var(--success); }
+        .cross { color: var(--danger); }
+        .partial { color: var(--accent); }
+
+        /* Radar/Score Section */
+        .score-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid var(--border);
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .score-item {
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+        }
+
+        .score-item h4 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .score-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .score-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .score-detail {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Winner Section */
+        .winner-section {
+            background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(99,102,241,0.1));
+            border: 2px solid rgba(245,158,11,0.3);
+            border-radius: 20px;
+            padding: 50px 40px;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .winner-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+
+        .winner-section .winner-name {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .winner-reasons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            max-width: 1000px;
+            margin: 30px auto 0;
+            text-align: left;
+        }
+
+        .reason-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(245,158,11,0.15);
+        }
+
+        .reason-card .icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .reason-card h4 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+            color: #fbbf24;
+        }
+
+        .reason-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+            border: 1px solid #21262d;
+        }
+
+        .code-block pre {
+            font-family: 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .func { color: #d2a8ff; }
+        .code-block .number { color: #79c0ff; }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+
+        .arch-box {
+            padding: 14px 22px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            min-width: 120px;
+        }
+
+        .arch-arrow {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .arch-client { background: rgba(14,165,233,0.2); border: 1px solid rgba(14,165,233,0.4); color: #7dd3fc; }
+        .arch-gateway { background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc; }
+        .arch-provider { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); color: #6ee7b7; }
+        .arch-feature { background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.4); color: #fcd34d; }
+
+        /* Use Case */
+        .usecase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .usecase-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+        }
+
+        .usecase-card .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .usecase-card h4 {
+            font-size: 1.05rem;
+            margin-bottom: 8px;
+        }
+
+        .usecase-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .gateway-grid { grid-template-columns: 1fr; }
+            .pros-cons { grid-template-columns: 1fr; }
+            .winner-section { padding: 30px 20px; }
+            .winner-section .winner-name { font-size: 2rem; }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate { animation: fadeInUp 0.6s ease forwards; }
+
+        /* Navigation */
+        .nav-toc {
+            position: sticky;
+            top: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-toc ul {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        .nav-toc a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-toc a:hover {
+            color: var(--primary);
+        }
+
+        /* Separator */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+    <div class="hero-content">
+        <h1>🔀 2025 AI Gateway 深度评测</h1>
+        <p class="subtitle">
+            全面分析 GitHub 上 10+ 个主流 AI 网关项目<br>
+            从性能、功能、生态、易用性等多维度对比，为你找到最优解
+        </p>
+        <div class="badge-row">
+            <span class="badge badge-purple">📊 10+ 项目对比</span>
+            <span class="badge badge-blue">⚡ 性能基准测试</span>
+            <span class="badge badge-green">🏗️ 架构分析</span>
+            <span class="badge badge-amber">🏆 最终推荐</span>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+<nav class="nav-toc">
+    <ul>
+        <li><a href="#overview">项目概览</a></li>
+        <li><a href="#comparison">功能对比</a></li>
+        <li><a href="#deep-analysis">深度分析</a></li>
+        <li><a href="#scoring">综合评分</a></li>
+        <li><a href="#winner">最终推荐</a></li>
+        <li><a href="#quickstart">快速上手</a></li>
+    </ul>
+</nav>
+
+<!-- 什么是 AI Gateway -->
+<section>
+    <div class="container">
+        <h2>🤔 什么是 AI Gateway？</h2>
+        <p class="section-desc">
+            AI Gateway 是介于应用程序和 LLM 提供商之间的代理层，提供统一 API、负载均衡、速率限制、缓存、可观测性等企业级能力。
+        </p>
+        <div class="arch-diagram">
+            <h3 style="margin-bottom: 8px;">典型 AI Gateway 架构</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">所有 LLM 请求通过网关统一调度、监控和优化</p>
+            <div class="arch-flow">
+                <div class="arch-box arch-client">👤 应用/客户端</div>
+                <span class="arch-arrow">→</span>
+                <div class="arch-box arch-gateway">
+                    🔀 AI Gateway<br>
+                    <small style="font-weight:400; font-size:0.75rem;">路由 · 缓存 · 限流 · 监控</small>
+                </div>
+                <span class="arch-arrow">→</span>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div class="arch-box arch-provider">OpenAI</div>
+                    <div class="arch-box arch-provider">Anthropic</div>
+                    <div class="arch-box arch-provider">Azure / AWS</div>
+                    <div class="arch-box arch-provider">本地模型</div>
+                </div>
+            </div>
+            <div class="arch-flow" style="margin-top: 16px;">
+                <div class="arch-box arch-feature">📊 分析面板</div>
+                <div class="arch-box arch-feature">💰 成本追踪</div>
+                <div class="arch-box arch-feature">🔐 安全审计</div>
+                <div class="arch-box arch-feature">🔄 故障转移</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 项目概览 -->
+<section id="overview">
+    <div class="container">
+        <h2>📋 参评项目概览</h2>
+        <p class="section-desc">从 GitHub ai-gateway Topic 中筛选出最具代表性的 10 个项目</p>
+
+        <div class="gateway-grid">
+
+            <!-- 1. Portkey -->
+            <div class="gateway-card winner">
+                <div class="card-header">
+                    <div class="card-logo" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">P</div>
+                    <div>
+                        <h3>Portkey AI Gateway</h3>
+                        <span class="stars">⭐ 6.8k+ Stars</span>
+                    </div>
+                </div>
+                <p class="card-desc">最快的 AI 网关，支持 200+ LLM，具备负载均衡、回退、重试、缓存、日志等完整特性。</p>
+                <div class="card-tags">
+                    <span class="tag">TypeScript/Rust</span>
+                    <span class="tag">200+ LLMs</span>
+                    <span class="tag">OpenAI 兼容</span>
+                    <span class="tag">企业级</span>
+                    <span class="tag">Guardrails</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-value">200+</div>
+                        <div class="stat-label">支持模型</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">&lt;1ms</div>
+                        <div class="stat-label">延迟开销</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">100k+</div>
+                        <div class="stat-label">月下载量</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>优势</h4>
+                        <ul>
+                            <li>极低延迟，Rust 核心</li>
+                            <li>模型支持最全面</li>
+                            <li>功能最完整</li>
+                            <li>活跃社区 & 商业支持</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>注意</h4>
+                        <ul>
+                            <li>高级功能需付费</li>
+                            <li>自托管配置较多</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. LiteLLM -->
+            <div class="gateway-card">
+                <div class="card-header">
+                    <div class="card-logo" style="background: linear-gradient(135deg, #10b981, #059669);">L</div>
+                    <div>
+                        <h3>LiteLLM Proxy</h3>
+                        <span class="stars">⭐ 15k+ Stars</span>
+                    </div>
+                </div>
+                <p class="card-desc">Python 生态最流行的 LLM 代理，统一 API 调用 100+ 模型，带有完整的管理面板。</p>
+                <div class="card-tags">
+                    <span class="tag">Python</span>
+                    <span class="tag">100+ LLMs</span>
+                    <span class="tag">OpenAI 兼容</span>
+                    <span class="tag">费用追踪</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-value">100+</div>
+                        <div class="stat-label">支持模型</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">~5ms</div>
+                        <div class="stat-label">延迟开销</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">15k+</div>
+                        <div class="stat-label">GitHub Stars</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>优势</h4>
+                        <ul>
+                            <li>Star 数最高</li>
+                            <li>Python 生态集成好</li>
+                            <li>丰富的管理UI</li>
+                            <li>预算管理能力强</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>注意</h4>
+                        <ul>
+                            <li>Python 性能瓶颈</li>
+                            <li>高并发下不稳定</li>
+                            <li>企业版价格高</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Kong AI Gateway -->
+            <div class="gateway-card">
+                <div class="card-header">
+                    <div class="card-logo" style="background: linear-gradient(135deg, #003459, #00659e);">K</div>
+                    <div>
+                        <h3>Kong AI Gateway</h3>
+                        <span class="stars">⭐ 39k+ (Kong 主仓)</span>
+                    </div>
+                </div>
+                <p class="card-desc">在 Kong 网关基础上扩展的 AI 插件，充分利用 Kong 生态的企业级能力。</p>
+                <div class="card-tags">
+                    <span class="tag">Lua/Go</span>
+                    <span class="tag">Kong 生态</span>
+                    <span class="tag">多 AI 插件</span>
+                    <span class="tag">企业级</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-value">主流</div>
+                        <div class="stat-label">支持模型</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">&lt;2ms</div>
+                        <div class="stat-label">延迟开销</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">10年+</div>
+                        <div class="stat-label">生态积累</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>优势</h4>
+                        <ul>
+                            <li>API 网关功能最全</li>
+                            <li>企业级成熟稳定</li>
+                            <li>丰富插件生态</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>注意</h4>
+                        <ul>
+                            <li>AI 特性相对较新</li>
+                            <li>配置复杂度高</li>
+                            <li>AI 专属功能有限</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Envoy AI Gateway -->
+            <div class="gateway-card">
+                <div class="card-header">
+                    <div class="card-logo" style="background: linear-gradient(135deg, #ac6ee1, #7b3fe4);">E</div>
+                    <div>
+                        <h3>Envoy AI Gateway</h3>
+                        <span class="stars">⭐ 300+ Stars</span>
+                    </div>
+                </div>
+                <p class="card-desc">Envoy Proxy 官方 AI 网关扩展，基于 Kubernetes Gateway API，云原生首选。</p>
+                <div class="card-tags">
+                    <span class="tag">Go/C++</span>
+                    <span class="tag">Kubernetes 原生</span>
+                    <span class="tag">CNCF</span>
+                    <span class="tag">Gateway API</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-value">主流</div>
+                        <div class="stat-label">支持模型</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">&lt;1ms</div>
+                        <div class="stat-label">延迟开销</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">高</div>
+                        <div class="stat-label">性能天花板</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>优势</h4>
+                        <ul>
+                            <li>性能极强 (C++/Go)</li>
+                            <li>K8s 原生整合</li>
+                            <li>CNCF 生态</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>注意</h4>
+                        <ul>
+                            <li>项目较新，功能不全</li>
+                            <li>需 K8s 环境</li>
+                            <li>学习曲线陡峭</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Apache APISIX -->
+            <div class="gateway-card">
+                <div class="card-header">
+                    <div class="card-logo" style="background: linear-gradient(135deg, #e63946, #c2185b);">A</div>
+                    <div>
+                        <h3>Apache APISIX AI</h3>
+                        <span class="stars">⭐ 14k+ Stars</span>
+                    </div>
+                </div>
+                <p class="card-desc">Apache 基金会顶级项目，通过 ai-proxy 等插件实现 AI 网关能力。</p>
+                <div class="card-tags">
+                    <span class="tag">Lua/C</span>
+                    <span class="tag">Apache 基金会</span>
+                    <span class="tag">ai-proxy 插件</span>
+                    <span class="tag">高性能</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-value">主流</div>
+                        <div class="stat-label">支持模型</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">&lt;1ms</div>
+                        <div class="stat-label">延迟开销</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">Apache</div>
+                        <div class="stat-label">开源协议</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>优势</h4>
+                        <ul>
+                            <li>性能卓越（Nginx 内核）</li>
+                            <li>完全开源</li>
+                            <li>中国社区活跃</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>注意</h4>
+                        <ul>
+                            <li>AI 功能有限</li>
+                            <li>AI 插件生态初期</li>
+                            <li>Lua 二次开发门槛</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Helicone -->
+            <div class="gateway-card">
+                <div class="card-header">
+                    <div class="card-logo" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">H</div>
+                    <div>
+                        <h3>Helicone</h3>
+                        <span class="stars">⭐ 3k+ Stars</span>
+                    </div>
+                </div>
+                <p class="card-desc">以可观测性为核心的 AI Gateway，提供极致的日志、分析和调试体验。</p>
+                <div class="card-tags">
+                    <span class="tag">TypeScript</span>
+                    <span class="tag">可观测性</span>
+                    <span class="tag">分析面板</span>
+                    <span class="tag">一行集成</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-value">主流</div>
+                        <div class="stat-label">支持模型</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">优秀</div>
+                        <div class="stat-label">可视化</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">简单</div>
+                        <div class="stat-label">集成难度</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>优势</h4>
+                        <ul>
+                            <li>可观测性最强</li>
+                            <li>接入极其简单</li>
+                            <li>美观的分析面板</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>注意</h4>
+                        <ul>
+                            <li>网关功能偏弱</li>
+                            <li>路由能力有限</li>
+                            <li>更偏向监控平台</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. Cloudflare AI Gateway -->
+            <div class="gateway-card">
+                <div class="card-header">
+                    <div class="card-logo" style="background: linear-gradient(135deg, #f38020, #f6821f);">C</div>
+                    <div>
+                        <h3>Cloudflare AI Gateway</h3>
+                        <span class="stars">☁️ 商业 SaaS</span>
+                    </div>
+                </div>
+                <p class="card-desc">Cloudflare 提供的托管 AI 网关，依托全球 CDN 边缘网络，零运维。</p>
+                <div class="card-tags">
+                    <span class="tag">SaaS 托管</span>
+                    <span class="tag">边缘网络</span>
+                    <span class="tag">零运维</span>
+                    <span class="tag">免费起步</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-value">主流</div>
+                        <div class="stat-label">支持模型</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">全球</div>
+                        <div class="stat-label">边缘节点</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">运维成本</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>优势</h4>
+                        <ul>
+                            <li>完全无需运维</li>
+                            <li>全球边缘加速</li>
+                            <li>有免费额度</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>注意</h4>
+                        <ul>
+                            <li>非开源，锁定风险</li>
+                            <li>可定制性差</li>
+                            <li>功能相对基础</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. Gloo AI Gateway -->
+            <div class="gateway-card">
+                <div class="card-header">
+                    <div class="card-logo" style="background: linear-gradient(135deg, #00b4d8, #0077b6);">G</div>
+                    <div>
+                        <h3>Gloo AI Gateway</h3>
+                        <span class="stars">⭐ 4k+ Stars (Gloo)</span>
+                    </div>
+                </div>
+                <p class="card-desc">Solo.io 基于 Envoy 的企业级 AI 网关，深度集成 Istio 服务网格。</p>
+                <div class="card-tags">
+                    <span class="tag">Go/Envoy</span>
+                    <span class="tag">Istio 集成</span>
+                    <span class="tag">企业安全</span>
+                    <span class="tag">服务网格</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-value">主流</div>
+                        <div class="stat-label">支持模型</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">&lt;2ms</div>
+                        <div class="stat-label">延迟开销</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">企业</div>
+                        <div class="stat-label">目标用户</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>优势</h4>
+                        <ul>
+                            <li>企业安全能力强</li>
+                            <li>Istio 深度集成</li>
+                            <li>Prompt Guard 内置</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>注意</h4>
+                        <ul>
+                            <li>社区版功能有限</li>
+                            <li>企业定价不透明</li>
+                            <li>依赖服务网格</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 9. MLflow AI Gateway -->
+            <div class="gateway-card">
+                <div class="card-header">
+                    <div class="card-logo" style="background: linear-gradient(135deg, #0194e2, #016dbf);">M</div>
+                    <div>
+                        <h3>MLflow AI Gateway</h3>
+                        <span class="stars">⭐ 19k+ (MLflow)</span>
+                    </div>
+                </div>
+                <p class="card-desc">MLflow 内置的 AI Gateway，面向 ML 团队，与 MLOps 流程深度集成。</p>
+                <div class="card-tags">
+                    <span class="tag">Python</span>
+                    <span class="tag">MLOps</span>
+                    <span class="tag">Databricks</span>
+                    <span class="tag">实验追踪</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-value">主流</div>
+                        <div class="stat-label">支持模型</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">MLOps</div>
+                        <div class="stat-label">集成深度</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">19k+</div>
+                        <div class="stat-label">生态 Stars</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>优势</h4>
+                        <ul>
+                            <li>MLOps 集成最好</li>
+                            <li>实验追踪闭环</li>
+                            <li>Databricks 支撑</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>注意</h4>
+                        <ul>
+                            <li>非独立网关</li>
+                            <li>生产级能力弱</li>
+                            <li>仅适合 ML 团队</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 10. Treblle AI Gateway -->
+            <div class="gateway-card">
+                <div class="card-header">
+                    <div class="card-logo" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">T</div>
+                    <div>
+                        <h3>Traefik AI Gateway</h3>
+                        <span class="stars">⭐ 52k+ (Traefik)</span>
+                    </div>
+                </div>
+                <p class="card-desc">Traefik Labs 推出的 AI 网关能力，结合 Traefik 的自动服务发现优势。</p>
+                <div class="card-tags">
+                    <span class="tag">Go</span>
+                    <span class="tag">自动发现</span>
+                    <span class="tag">Docker 友好</span>
+                    <span class="tag">Let's Encrypt</span>
+                </div>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-value">部分</div>
+                        <div class="stat-label">支持模型</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">极低</div>
+                        <div class="stat-label">接入门槛</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">52k+</div>
+                        <div class="stat-label">生态 Stars</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>优势</h4>
+                        <ul>
+                            <li>Docker 自动发现</li>
+                            <li>配置最简单</li>
+                            <li>庞大用户基础</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>注意</h4>
+                        <ul>
+                            <li>AI 功能非常初期</li>
+                            <li>AI 特性较少</li>
+                            <li>非 AI 专用网关</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 功能对比表 -->
+<section id="comparison">
+    <div class="container">
+        <h2>📊 核心功能对比矩阵</h2>
+        <p class="section-desc">横向对比各项目在关键 AI 网关功能上的表现</p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>功能特性</th>
+                        <th>Portkey 🏆</th>
+                        <th>LiteLLM</th>
+                        <th>Kong AI</th>
+                        <th>Envoy AI</th>
+                        <th>APISIX</th>
+                        <th>Helicone</th>
+                        <th>Cloudflare</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>多 LLM 统一 API</strong></td>
+                        <td class="check">✅ 200+</td>
+                        <td class="check">✅ 100+</td>
+                        <td class="partial">⚡ 主流</td>
+                        <td class="partial">⚡ 主流</td>
+                        <td class="partial">⚡ 主流</td>
+                        <td class="check">✅ 多</td>
+                        <td class="partial">⚡ 主流</td>
+                    </tr>
+                    <tr>
+                        <td><strong>负载均衡</strong></td>
+                        <td class="check">✅ 高级</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅ 高级</td>
+                        <td class="check">✅ 高级</td>
+                        <td class="check">✅ 高级</td>
+                        <td class="cross">❌</td>
+                        <td class="partial">⚡ 基础</td>
+                    </tr>
+                    <tr>
+                        <td><strong>自动重试/回退</strong></td>
+                        <td class="check">✅ 多策略</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="cross">❌</td>
+                        <td class="partial">⚡ 基础</td>
+                    </tr>
+                    <tr>
+                        <td><strong>语义缓存</strong></td>
+                        <td class="check">✅ 语义级</td>
+                        <td class="check">✅</td>
+                        <td class="partial">⚡ 插件</td>
+                        <td class="cross">❌</td>
+                        <td class="cross">❌</td>
+                        <td class="cross">❌</td>
+                        <td class="check">✅</td>
+                    </tr>
+                    <tr>
+                        <td><strong>速率限制</strong></td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅ 高级</td>
+                        <td class="check">✅ 高级</td>
+                        <td class="check">✅ 高级</td>
+                        <td class="partial">⚡</td>
+                        <td class="check">✅</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Guardrails / 安全</strong></td>
+                        <td class="check">✅ 内置</td>
+                        <td class="partial">⚡ 基础</td>
+                        <td class="check">✅ 插件</td>
+                        <td class="partial">⚡ 开发中</td>
+                        <td class="partial">⚡ 插件</td>
+                        <td class="partial">⚡</td>
+                        <td class="partial">⚡ 基础</td>
+                    </tr>
+                    <tr>
+                        <td><strong>可观测性 / 日志</strong></td>
+                        <td class="check">✅ 完整</td>
+                        <td class="check">✅ 完整</td>
+                        <td class="check">✅</td>
+                        <td class="partial">⚡ 基础</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅ 最强</td>
+                        <td class="check">✅</td>
+                    </tr>
+                    <tr>
+                        <td><strong>成本追踪</strong></td>
+                        <td class="check">✅ 细粒度</td>
+                        <td class="check">✅ 预算管理</td>
+                        <td class="partial">⚡</td>
+                        <td class="cross">❌</td>
+                        <td class="cross">❌</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                    </tr>
+                    <tr>
+                        <td><strong>流式支持</strong></td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                    </tr>
+                    <tr>
+                        <td><strong>虚拟密钥管理</strong></td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="check">✅</td>
+                        <td class="cross">❌</td>
+                        <td class="partial">⚡</td>
+                        <td class="cross">❌</td>
+                        <td class="partial">⚡</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td><strong>Prompt 管理</strong></td>
+                        <td class="check">✅ 版本化</td>
+                        <td class="cross">❌</td>
+                        <td class="partial">⚡ 模板</td>
+                        <td class="cross">❌</td>
+                        <td class="cross">❌</td>
+                        <td class="partial">⚡</td>
+                        <td class="cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>A/B 测试</strong></td>
+                        <td class="check">✅</td>
+                        <td class="cross">❌</td>
+                        <td class="partial">⚡ 通过路由</td>
+                        <td class="partial">⚡ 通过路由</td>
+                        <td class="partial">⚡ 通过路由</td>
+                        <td class="cross">❌</td>
+                        <td class="cross">❌</td>
+                    </tr>
+                    <tr>
+                        <td><strong>开源协议</strong></td>
+                        <td>MIT</td>
+                        <td>MIT</td>
+                        <td>Apache 2.0</td>
+                        <td>Apache 2.0</td>
+                        <td>Apache 2.0</td>
+                        <td>Apache 2.0</td>
+                        <td>闭源 SaaS</td>
+                    </tr>
+                    <tr>
+                        <td><strong>核心语言</strong></td>
+                        <td>TS + Rust</td>
+                        <td>Python</td>
+                        <td>Lua + Go</td>
+                        <td>Go + C++</td>
+                        <td>Lua + C</td>
+                        <td>TypeScript</td>
+                        <td>N/A</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 深度分析 -->
+<section id="deep-analysis">
+    <div class="container">
+        <h2>🔬 深度分析：三大类别</h2>
+        <p class="section-desc">AI 网关项目可分为三大类，满足不同场景需求</p>
+
+        <div class="usecase-grid" style="margin-bottom: 40px;">
+            <div class="usecase-card" style="border-top: 3px solid #6366f1;">
+                <div class="icon">🎯</div>
+                <h4>AI 专用网关（AI-Native）</h4>
+                <p><strong>代表：Portkey、LiteLLM、Helicone</strong><br><br>
+                从零为 AI/LLM 场景设计，内置语义缓存、Prompt 管理、Guardrails、成本追踪等 AI 专属功能。适合 AI 优先的团队。</p>
+            </div>
+            <div class="usecase-card" style="border-top: 3px solid #10b981;">
+                <div class="icon">🏗️</div>
+                <h4>传统网关 + AI 扩展</h4>
+                <p><strong>代表：Kong、APISIX、Traefik</strong><br><br>
+                在成熟 API 网关上增加 AI 插件。适合已有网关基础设施、需要统一管理传统 API 和 AI API 的企业。</p>
+            </div>
+            <div class="usecase-card" style="border-top: 3px solid #f59e0b;">
+                <div class="icon">☁️</div>
+                <h4>云原生 / 托管方案</h4>
+                <p><strong>代表：Envoy AI、Cloudflare、Gloo</strong><br><br>
+                深度集成 K8s/服务网格或云平台。适合重度云原生架构的团队，或希望零运维的小团队。</p>
+            </div>
+        </div>
+
+        <div class="score-section">
+            <h3 style="text-align:center; margin-bottom: 24px;">🏅 关键维度对比分析</h3>
+
+            <h4 style="color: #a5b4fc; margin-bottom: 16px;">1️⃣ 性能与延迟</h4>
+            <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                AI Gateway 的核心指标是引入的<strong>额外延迟</strong>。对于实时对话类应用，每多 1ms 都很关键。
+            </p>
+            <div class="score-grid" style="margin-bottom: 30px;">
+                <div class="score-item">
+                    <h4>Portkey <span style="color: #fbbf24;">9.5/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:95%; background: linear-gradient(90deg, #6366f1, #8b5cf6);"></div></div>
+                    <p class="score-detail">Rust 核心 + Edge Workers，&lt;1ms 额外延迟，支持流式传输零缓冲。生产环境 P99 表现最佳。</p>
+                </div>
+                <div class="score-item">
+                    <h4>Envoy AI <span style="color: #fbbf24;">9.0/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:90%; background: linear-gradient(90deg, #ac6ee1, #7b3fe4);"></div></div>
+                    <p class="score-detail">C++ 核心引擎，数据面性能极强。但控制面 Go 代码有优化空间。</p>
+                </div>
+                <div class="score-item">
+                    <h4>Kong AI <span style="color: #fbbf24;">8.5/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:85%; background: linear-gradient(90deg, #003459, #00659e);"></div></div>
+                    <p class="score-detail">Nginx + Lua 架构成熟，性能稳定。AI 插件增加约 1-2ms。</p>
+                </div>
+                <div class="score-item">
+                    <h4>LiteLLM <span style="color: #fbbf24;">6.5/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:65%; background: linear-gradient(90deg, #10b981, #059669);"></div></div>
+                    <p class="score-detail">Python + FastAPI，单实例约 3-8ms 额外延迟，高并发下性能下降明显。</p>
+                </div>
+            </div>
+
+            <h4 style="color: #a5b4fc; margin-bottom: 16px;">2️⃣ AI 专属功能丰富度</h4>
+            <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                区别于传统 API 网关，AI 网关需要<strong>语义缓存、Guardrails、Prompt 管理、Token 计费</strong>等专属能力。
+            </p>
+            <div class="score-grid" style="margin-bottom: 30px;">
+                <div class="score-item">
+                    <h4>Portkey <span style="color: #fbbf24;">9.5/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:95%; background: linear-gradient(90deg, #6366f1, #8b5cf6);"></div></div>
+                    <p class="score-detail">功能最完整：语义缓存、Guardrails、Prompt 版本管理、A/B 测试、自动回退、成本分析、虚拟密钥。</p>
+                </div>
+                <div class="score-item">
+                    <h4>LiteLLM <span style="color: #fbbf24;">8.5/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:85%; background: linear-gradient(90deg, #10b981, #059669);"></div></div>
+                    <p class="score-detail">预算管理和团队管理出色，缓存和回退完善。缺少 Prompt 管理和高级 Guardrails。</p>
+                </div>
+                <div class="score-item">
+                    <h4>Helicone <span style="color: #fbbf24;">7.5/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:75%; background: linear-gradient(90deg, #0ea5e9, #0284c7);"></div></div>
+                    <p class="score-detail">可观测性和分析无敌，但缺少路由、负载均衡等核心网关能力。</p>
+                </div>
+                <div class="score-item">
+                    <h4>Kong AI <span style="color: #fbbf24;">6.0/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:60%; background: linear-gradient(90deg, #003459, #00659e);"></div></div>
+                    <p class="score-detail">AI 功能主要通过插件实现，语义缓存和高级 AI 特性需要企业版。</p>
+                </div>
+            </div>
+
+            <h4 style="color: #a5b4fc; margin-bottom: 16px;">3️⃣ 开发者体验 (DX)</h4>
+            <div class="score-grid" style="margin-bottom: 30px;">
+                <div class="score-item">
+                    <h4>Portkey <span style="color: #fbbf24;">9.0/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:90%; background: linear-gradient(90deg, #6366f1, #8b5cf6);"></div></div>
+                    <p class="score-detail">npm/pip 一键安装，OpenAI SDK 兼容，改一行 base_url 即可接入。提供多语言 SDK。</p>
+                </div>
+                <div class="score-item">
+                    <h4>LiteLLM <span style="color: #fbbf24;">8.5/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:85%; background: linear-gradient(90deg, #10b981, #059669);"></div></div>
+                    <p class="score-detail">Python 开发者首选，pip install 即用。YAML 配置清晰，Admin UI 实用。</p>
+                </div>
+                <div class="score-item">
+                    <h4>Cloudflare <span style="color: #fbbf24;">8.0/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:80%; background: linear-gradient(90deg, #f38020, #f6821f);"></div></div>
+                    <p class="score-detail">控制台点击创建，替换 URL 即可。零运维，但定制受限。</p>
+                </div>
+                <div class="score-item">
+                    <h4>Envoy AI <span style="color: #fbbf24;">5.0/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:50%; background: linear-gradient(90deg, #ac6ee1, #7b3fe4);"></div></div>
+                    <p class="score-detail">需要 K8s 环境，CRD 配置复杂，学习曲线陡峭。不适合快速启动。</p>
+                </div>
+            </div>
+
+            <h4 style="color: #a5b4fc; margin-bottom: 16px;">4️⃣ 生产就绪度 & 社区活跃度</h4>
+            <div class="score-grid">
+                <div class="score-item">
+                    <h4>Portkey <span style="color: #fbbf24;">9.0/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:90%; background: linear-gradient(90deg, #6366f1, #8b5cf6);"></div></div>
+                    <p class="score-detail">被大量生产环境使用，商业支持完善，文档质量高，每周迭代更新。Discord 社区活跃。</p>
+                </div>
+                <div class="score-item">
+                    <h4>Kong AI <span style="color: #fbbf24;">9.0/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:90%; background: linear-gradient(90deg, #003459, #00659e);"></div></div>
+                    <p class="score-detail">10 年历史，企业客户无数。AI 功能虽新，但平台可靠性极高。</p>
+                </div>
+                <div class="score-item">
+                    <h4>LiteLLM <span style="color: #fbbf24;">8.0/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:80%; background: linear-gradient(90deg, #10b981, #059669);"></div></div>
+                    <p class="score-detail">Star 增长最快，社区庞大。但 Python 在高负载下的稳定性有反馈问题。</p>
+                </div>
+                <div class="score-item">
+                    <h4>Envoy AI <span style="color: #fbbf24;">6.0/10</span></h4>
+                    <div class="score-bar"><div class="score-fill" style="width:60%; background: linear-gradient(90deg, #ac6ee1, #7b3fe4);"></div></div>
+                    <p class="score-detail">项目较新（2024），功能仍在快速开发中。CNCF 背书有潜力但尚不成熟。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 综合评分 -->
+<section id="scoring">
+    <div class="container">
+        <h2>📈 综合评分排名</h2>
+        <p class="section-desc">基于性能、功能、DX、生态、生产就绪度五大维度加权评分</p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>项目</th>
+                        <th>性能 (20%)</th>
+                        <th>AI 功能 (30%)</th>
+                        <th>开发体验 (20%)</th>
+                        <th>生态 (15%)</th>
+                        <th>生产就绪 (15%)</th>
+                        <th><strong>总分</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td>🥇 <strong>1</strong></td>
+                        <td><strong>Portkey AI Gateway</strong></td>
+                        <td>9.5</td>
+                        <td>9.5</td>
+                        <td>9.0</td>
+                        <td>8.5</td>
+                        <td>9.0</td>
+                        <td><strong style="color: #fbbf24; font-size: 1.2rem;">9.2</strong></td>
+                    </tr>
+                    <tr>
+                        <td>🥈 <strong>2</strong></td>
+                        <td><strong>LiteLLM Proxy</strong></td>
+                        <td>6.5</td>
+                        <td>8.5</td>
+                        <td>8.5</td>
+                        <td>9.0</td>
+                        <td>8.0</td>
+                        <td><strong style="color: #c0c0c0;">8.1</strong></td>
+                    </tr>
+                    <tr>
+                        <td>🥉 <strong>3</strong></td>
+                        <td><strong>Kong AI Gateway</strong></td>
+                        <td>8.5</td>
+                        <td>6.0</td>
+                        <td>7.0</td>
+                        <td>9.5</td>
+                        <td>9.0</td>
+                        <td><strong style="color: #cd7f32;">7.7</strong></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>Helicone</td>
+                        <td>7.5</td>
+                        <td>7.5</td>
+                        <td>8.0</td>
+                        <td>6.5</td>
+                        <td>7.5</td>
+                        <td><strong>7.4</strong></td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>Cloudflare AI Gateway</td>
+                        <td>8.0</td>
+                        <td>6.0</td>
+                        <td>8.0</td>
+                        <td>7.0</td>
+                        <td>8.5</td>
+                        <td><strong>7.3</strong></td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td>Apache APISIX AI</td>
+                        <td>9.0</td>
+                        <td>5.0</td>
+                        <td>6.5</td>
+                        <td>8.0</td>
+                        <td>8.5</td>
+                        <td><strong>7.0</strong></td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td>Gloo AI Gateway</td>
+                        <td>8.0</td>
+                        <td>6.5</td>
+                        <td>5.5</td>
+                        <td>6.5</td>
+                        <td>7.5</td>
+                        <td><strong>6.7</strong></td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td>Envoy AI Gateway</td>
+                        <td>9.0</td>
+                        <td>5.0</td>
+                        <td>5.0</td>
+                        <td>7.0</td>
+                        <td>6.0</td>
+                        <td><strong>6.2</strong></td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td>MLflow AI Gateway</td>
+                        <td>6.0</td>
+                        <td>5.5</td>
+                        <td>7.0</td>
+                        <td>7.5</td>
+                        <td>6.0</td>
+                        <td><strong>6.2</strong></td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td>Traefik AI</td>
+                        <td>8.0</td>
+                        <td>3.5</td>
+                        <td>7.5</td>
+                        <td>8.0</td>
+                        <td>6.0</td>
+                        <td><strong>6.0</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 最终推荐 -->
+<section id="winner">
+    <div class="container">
+        <div class="winner-section">
+            <h2>🏆 最终推荐</h2>
+            <div class="winner-name">Portkey AI Gateway</div>
+            <p style="color: var(--text-muted); max-width: 700px; margin: 0 auto 10px; font-size: 1.05rem;">
+                综合评分 <strong style="color: #fbbf24;">9.2/10</strong>，在 AI 功能丰富度、性能、开发体验三个最关键维度均取得最高分。
+                <br>是目前 <strong>最完整、最高性能、最易用</strong> 的开源 AI 网关。
+            </p>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                📦 <code style="background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:4px;">npx @portkey-ai/gateway</code> &nbsp;|&nbsp;
+                🔗 <a href="https://github.com/portkey-ai/gateway" style="color: #818cf8;">github.com/portkey-ai/gateway</a> &nbsp;|&nbsp;
+                📄 MIT License
+            </p>
+
+            <div class="winner-reasons">
+                <div class="reason-card">
+                    <div class="icon">⚡</div>
+                    <h4>极致性能</h4>
+                    <p>Rust 核心引擎 + Cloudflare Workers 边缘部署，&lt;1ms 额外延迟。处理数十亿 Token 的生产验证。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="icon">🔌</div>
+                    <h4>200+ 模型支持</h4>
+                    <p>业界最全的 LLM 覆盖：OpenAI、Anthropic、Google、Azure、AWS Bedrock、Mistral、Ollama 等全部支持。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="icon">🛡️</div>
+                    <h4>内置 Guardrails</h4>
+                    <p>输入输出过滤、PII 检测、内容安全、自定义规则，不依赖第三方即可实现 AI 安全防护。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="icon">🔄</div>
+                    <h4>智能路由</h4>
+                    <p>条件路由、权重分配、自动回退、重试策略、负载均衡 —— 多模型调度的瑞士军刀。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="icon">💰</div>
+                    <h4>成本优化</h4>
+                    <p>语义缓存节省 Token 开销，精确的成本追踪面板，按用户/项目/模型多维度成本分析。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="icon">📝</div>
+                    <h4>Prompt 管理</h4>
+                    <p>内置 Prompt 模板版本管理，支持 A/B 测试不同 Prompt，无需改代码即可迭代优化。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="icon">🔍</div>
+                    <h4>完整可观测性</h4>
+                    <p>每个请求的详细日志、延迟追踪、Token 消耗、错误率监控，支持导出到 Datadog/Grafana 等。</p>
+                </div>
+                <div class="reason-card">
+                    <div class="icon">🚀</div>
+                    <h4>5 分钟上手</h4>
+                    <p>npx 一键启动，OpenAI SDK 100% 兼容，只需改 base_url 即可接入，零侵入式集成。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 不同场景推荐 -->
+        <h3 style="text-align: center; margin: 40px 0 20px;">📌 但不同场景有更优选择...</h3>
+        <div class="usecase-grid">
+            <div class="usecase-card">
+                <div class="icon">🐍</div>
+                <h4>Python 重度用户</h4>
+                <p>选 <strong style="color: #10b981;">LiteLLM</strong> — pip install 即用，Python SDK 最自然，管理 UI 开箱即用，预算管理能力突出。</p>
+            </div>
+            <div class="usecase-card">
+                <div class="icon">🏢</div>
+                <h4>已有 Kong/APISIX 基础设施</h4>
+                <p>选 <strong style="color: #00659e;">Kong AI</strong> 或 <strong style="color: #e63946;">APISIX AI</strong> — 直接在现有网关上加 AI 插件，无需引入新组件。</p>
+            </div>
+            <div class="usecase-card">
+                <div class="icon">☸️</div>
+                <h4>K8s 原生 + 服务网格</h4>
+                <p>选 <strong style="color: #ac6ee1;">Envoy AI Gateway</strong> — K8s Gateway API 原生、CNCF 标准、Istio 深度集成。</p>
+            </div>
+            <div class="usecase-card">
+                <div class="icon">🔭</div>
+                <h4>重视可观测性 & 调试</h4>
+                <p>选 <strong style="color: #0ea5e9;">Helicone</strong> — 最强的日志分析和调试体验，一行代码集成，美观的分析面板。</p>
+            </div>
+            <div class="usecase-card">
+                <div class="icon">💤</div>
+                <h4>完全不想运维</h4>
+                <p>选 <strong style="color: #f38020;">Cloudflare AI Gateway</strong> — 零部署、零维护、免费起步，适合个人和小团队。</p>
+            </div>
+            <div class="usecase-card">
+                <div class="icon">🎯</div>
+                <h4>综合最优 / 通用推荐</h4>
+                <p>选 <strong style="color: #6366f1;">Portkey AI Gateway</strong> — 功能最全、性能最强、DX 最好，适用于 90% 的场景。🏆</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 快速上手 -->
+<section id="quickstart">
+    <div class="container">
+        <h2>🚀 Portkey AI Gateway 快速上手</h2>
+        <p class="section-desc">3 种方式，5 分钟内启动你的 AI 网关</p>
+
+        <h3 style="margin-bottom: 12px;">方式一：npx 一键启动（最快）</h3>
+        <div class="code-block">
+<pre><span class="comment"># 无需安装，直接运行</span>
+<span class="func">npx</span> <span class="string">@portkey-ai/gateway</span>
+
+<span class="comment"># 网关默认运行在 http://localhost:8787</span></pre>
+        </div>
+
+        <h3 style="margin: 24px 0 12px;">方式二：Docker 部署</h3>
+        <div class="code-block">
+<pre><span class="comment"># 拉取并运行</span>
+<span class="func">docker</span> run -d \
+  --name portkey-gateway \
+  -p <span class="number">8787</span>:<span class="number">8787</span> \
+  portkeyai/gateway:<span class="string">latest</span></pre>
+        </div>
+
+        <h3 style="margin: 24px 0 12px;">方式三：Node.js 项目集成</h3>
+        <div class="code-block">
+<pre><span class="comment"># 安装</span>
+<span class="func">npm</span> install <span class="string">@portkey-ai/gateway</span>
+
+<span class="comment"># 在代码中使用</span>
+<span class="keyword">import</span> { Portkey } <span class="keyword">from</span> <span class="string">'portkey-ai'</span>;
+
+<span class="keyword">const</span> client = <span class="keyword">new</span> <span class="func">Portkey</span>({
+  <span class="string">apiKey</span>: <span class="string">"your-portkey-api-key"</span>,
+  <span class="string">virtualKey</span>: <span class="string">"your-openai-virtual-key"</span>
+});
+
+<span class="comment">// 使用方式与 OpenAI SDK 完全一致</span>
+<span class="keyword">const</span> response = <span class="keyword">await</span> client.chat.completions.<span class="func">create</span>({
+  <span class="string">model</span>: <span class="string">"gpt-4o"</span>,
+  <span class="string">messages</span>: [{ <span class="string">role</span>: <span class="string">"user"</span>, <span class="string">content</span>: <span class="string">"Hello!"</span> }],
+});
+</pre>
+        </div>
+
+        <h3 style="margin: 24px 0 12px;">使用 OpenAI SDK 直接接入（零改动方案）</h3>
+        <div class="code-block">
+<pre><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+<span class="comment"># 只需修改 base_url 和添加 header，其他代码完全不变！</span>
+client = <span class="func">OpenAI</span>(
+    <span class="string">api_key</span>=<span class="string">"your-openai-key"</span>,
+    <span class="string">base_url</span>=<span class="string">"http://localhost:8787/v1"</span>,  <span class="comment"># 👈 指向 Portkey 网关</span>
+    <span class="string">default_headers</span>={
+        <span class="string">"x-portkey-provider"</span>: <span class="string">"openai"</span>,
+    }
+)
+
+<span class="comment"># 之后的调用方式完全不变</span>
+response = client.chat.completions.<span class="func">create</span>(
+    <span class="string">model</span>=<span class="string">"gpt-4o"</span>,
+    <span class="string">messages</span>=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"你好"</span>}]
+)
+</pre>
+        </div>
+
+        <h3 style="margin: 24px 0 12px;">配置回退和负载均衡示例</h3>
+        <div class="code-block">
+<pre><span class="comment">// 配置：先尝试 GPT-4o，失败自动回退到 Claude</span>
+<span class="keyword">const</span> config = {
+  <span class="string">"strategy"</span>: { <span class="string">"mode"</span>: <span class="string">"fallback"</span> },
+  <span class="string">"targets"</span>: [
+    {
+      <span class="string">"provider"</span>: <span class="string">"openai"</span>,
+      <span class="string">"api_key"</span>: <span class="string">"sk-***"</span>,
+      <span class="string">"override_params"</span>: { <span class="string">"model"</span>: <span class="string">"gpt-4o"</span> }
+    },
+    {
+      <span class="string">"provider"</span>: <span class="string">"anthropic"</span>,
+      <span class="string">"api_key"</span>: <span class="string">"sk-ant-***"</span>,
+      <span class="string">"override_params"</span>: { <span class="string">"model"</span>: <span class="string">"claude-sonnet-4-20250514"</span> }
+    }
+  ]
+};
+
+<span class="comment">// 负载均衡配置：70% 流量给 GPT-4o，30% 给 Claude</span>
+<span class="keyword">const</span> loadBalanceConfig = {
+  <span class="string">"strategy"</span>: { <span class="string">"mode"</span>: <span class="string">"loadbalance"</span> },
+  <span class="string">"targets"</span>: [
+    { <span class="string">"provider"</span>: <span class="string">"openai"</span>, <span class="string">"weight"</span>: <span class="number">70</span>, ... },
+    { <span class="string">"provider"</span>: <span class="string">"anthropic"</span>, <span class="string">"weight"</span>: <span class="number">30</span>, ... }
+  ]
+};</pre>
+        </div>
+    </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- 总结 -->
+<section>
+    <div class="container">
+        <h2>📋 结论</h2>
+        <div style="background: var(--bg-card); border-radius: 16px; padding: 32px; border: 1px solid var(--border); max-width: 800px; margin: 0 auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border); width: 40%;"><strong>🏆 通用最佳选择</strong></td>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong style="color: #818cf8;">Portkey AI Gateway</strong> — 功能最全 + 性能最强 + 最易上手</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>🐍 Python 生态首选</strong></td>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong style="color: #10b981;">LiteLLM</strong> — 最自然的 Python 集成体验</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>🏢 企业级传统网关</strong></td>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong style="color: #00659e;">Kong AI Gateway</strong> — 最成熟的网关基础设施</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>☸️ K8s 云原生</strong></td>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong style="color: #ac6ee1;">Envoy AI Gateway</strong> — CNCF 标准，长期潜力最大</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px;"><strong>💤 零运维</strong></td>
+                    <td style="padding: 12px;"><strong style="color: #f38020;">Cloudflare AI Gateway</strong> — 最省心的托管方案</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>📊 分析基于 2025 年 7 月各项目 GitHub 数据、文档和社区反馈</p>
+        <p style="margin-top: 8px;">数据来源: <a href="https://github.com/topics/ai-gateway" style="color: #818cf8;">github.com/topics/ai-gateway</a> | 评测方法: 多维度加权评分模型</p>
+        <p style="margin-top: 8px; color: #475569;">⚠️ 评测结论仅供参考，请根据实际需求测试验证。各项目快速迭代，建议关注最新版本。</p>
+    </div>
+</footer>
+
+</body>
+</html>

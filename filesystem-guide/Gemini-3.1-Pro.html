@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux文件系统极简指南：ZFS vs XFS vs ext4</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 25px;
+            width: 320px;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid;
+        }
+        .ext4 h2 { border-color: #28a745; color: #28a745; }
+        .xfs h2 { border-color: #fd7e14; color: #fd7e14; }
+        .zfs h2 { border-color: #007bff; color: #007bff; }
+        
+        .section-title {
+            font-weight: bold;
+            margin-top: 15px;
+            color: #555;
+        }
+        ul {
+            padding-left: 20px;
+            margin: 5px 0;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #d63384;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Linux文件系统极简指南</h1>
+
+    <div class="container">
+        <!-- ext4 -->
+        <div class="card ext4">
+            <h2>ext4 (通用之王)</h2>
+            <div class="section-title">🎯 使用场景</div>
+            <p>日常桌面、普通服务器、通用场景。稳定可靠，兼容性极佳，中小规模存储首选。</p>
+            
+            <div class="section-title">⚙️ 安装配置</div>
+            <ul>
+                <li><strong>安装：</strong>Linux内核自带，开箱即用。</li>
+                <li><strong>格式化：</strong><code>mkfs.ext4 /dev/sdX</code></li>
+                <li><strong>挂载：</strong>写入 <code>/etc/fstab</code></li>
+            </ul>
+
+            <div class="section-title">📦 偏好此系统的软件</div>
+            <p>绝大多数通用软件、<strong>Docker</strong> (overlay2底层)、轻量级Web服务及中小型数据库。</p>
+        </div>
+
+        <!-- XFS -->
+        <div class="card xfs">
+            <h2>XFS (性能巨兽)</h2>
+            <div class="section-title">🎯 使用场景</div>
+            <p>大文件处理、高并发I/O、企业级服务器。RHEL/CentOS等企业发行版的默认文件系统。</p>
+            
+            <div class="section-title">⚙️ 安装配置</div>
+            <ul>
+                <li><strong>安装：</strong>Linux内核自带，开箱即用。</li>
+                <li><strong>格式化：</strong><code>mkfs.xfs /dev/sdX</code></li>
+                <li><strong>挂载：</strong>写入 <code>/etc/fstab</code></li>
+            </ul>
+
+            <div class="section-title">📦 偏好此系统的软件</div>
+            <p><strong>MongoDB</strong> (官方强烈推荐)、大型关系型数据库 (PostgreSQL/MySQL)、大数据集群 (Hadoop)。</p>
+        </div>
+
+        <!-- ZFS -->
+        <div class="card zfs">
+            <h2>ZFS (存储管家)</h2>
+            <div class="section-title">🎯 使用场景</div>
+            <p>海量存储、NAS、需要极高数据安全性（防静默损坏）、自带软RAID、秒级快照与克隆。</p>
+            
+            <div class="section-title">⚙️ 安装配置</div>
+            <ul>
+                <li><strong>安装：</strong>需额外安装 (如 <code>apt install zfsutils-linux</code>)。</li>
+                <li><strong>创建池：</strong><code>zpool create mypool /dev/sdX</code></li>
+                <li><strong>挂载：</strong>自带卷管理，通常无需配置 fstab。</li>
+            </ul>
+
+            <div class="section-title">📦 偏好此系统的软件</div>
+            <p><strong>TrueNAS</strong> (核心基础)、<strong>Proxmox VE</strong> (虚拟化底层存储)、LXD/Incus (容器存储后端)。</p>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Gateway 开源项目分析与最佳选择</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f7f9fc;
+      color: #1f2937;
+      line-height: 1.7;
+    }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #0f172a, #1d4ed8);
+      color: white;
+      padding: 56px 32px;
+      border-radius: 20px;
+      margin-bottom: 32px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+    }
+    .hero h1 {
+      margin: 0 0 16px;
+      font-size: 36px;
+    }
+    .hero p {
+      margin: 0;
+      font-size: 18px;
+      opacity: 0.95;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.06);
+    }
+    h2 {
+      font-size: 24px;
+      margin-top: 0;
+      color: #111827;
+    }
+    h3 {
+      color: #1d4ed8;
+      margin-top: 24px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    .highlight {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 16px 18px;
+      border-radius: 10px;
+      margin-top: 16px;
+    }
+    .winner {
+      background: linear-gradient(135deg, #ecfeff, #eef2ff);
+      border: 1px solid #c7d2fe;
+    }
+    .tag {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    .footer {
+      text-align: center;
+      color: #6b7280;
+      margin-top: 40px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <h1>AI Gateway 开源项目分析</h1>
+      <p>
+        基于 GitHub AI Gateway 类项目的能力模型进行评估，从多模型兼容性、路由能力、可观测性、治理能力、
+        部署复杂度与社区成熟度等维度出发，给出最终最佳选择。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>什么是 AI Gateway？</h2>
+      <p>
+        AI Gateway 是面向大模型调用的统一接入层，作用类似传统 API Gateway，但专门为 LLM 场景做了增强。
+        它可以帮助企业统一接入 OpenAI、Anthropic、Gemini、Azure OpenAI、Groq、Ollama、vLLM 等模型服务，
+        同时提供路由、鉴权、限流、日志、成本控制、故障切换与可观测性能力。
+      </p>
+      <div>
+        <span class="tag">多模型统一接入</span>
+        <span class="tag">路由与回退</span>
+        <span class="tag">成本控制</span>
+        <span class="tag">日志与监控</span>
+        <span class="tag">安全治理</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>评估维度</h2>
+      <ul>
+        <li><strong>多模型兼容性：</strong>是否支持 OpenAI、Anthropic、Gemini、Azure、本地模型等</li>
+        <li><strong>路由能力：</strong>是否支持负载均衡、故障切换、A/B 测试、成本路由</li>
+        <li><strong>可观测性：</strong>是否有日志、Tracing、Token 统计、成本分析</li>
+        <li><strong>安全与治理：</strong>是否支持 API Key、RBAC、多租户、配额和审计</li>
+        <li><strong>部署复杂度：</strong>是否容易上手，是否支持 Docker/K8s</li>
+        <li><strong>性能与稳定性：</strong>是否支持缓存、重试、熔断和高并发代理</li>
+        <li><strong>社区活跃度：</strong>Stars、提交频率、Issue 响应、发布迭代</li>
+        <li><strong>企业适配度：</strong>是否适合 PoC、中小团队和生产环境</li>
+      </ul>
+    </section>
+
+    <section class="card winner">
+      <h2>最终推荐：LiteLLM</h2>
+      <p>
+        在当前开源 AI Gateway 生态中，<strong>LiteLLM</strong> 是综合能力最均衡、最值得优先采用的方案。
+        它既提供统一模型接入能力，也具备作为代理/网关部署的可行性，适合从快速原型到生产环境逐步演进。
+      </p>
+
+      <h3>推荐理由</h3>
+      <ul>
+        <li><strong>兼容性强：</strong>支持 OpenAI、Azure OpenAI、Anthropic、Gemini、Bedrock、Groq、Ollama、vLLM 等多种模型源</li>
+        <li><strong>统一接口：</strong>帮助团队以一致方式调用不同模型，大幅降低业务层改造成本</li>
+        <li><strong>网关能力成熟：</strong>支持模型映射、fallback、负载均衡、预算控制、限流与日志治理</li>
+        <li><strong>开发者体验好：</strong>学习成本相对较低，便于快速试点与上线</li>
+        <li><strong>社区成熟：</strong>认知度高、使用广、资料多，适合团队长期演进</li>
+      </ul>
+
+      <div class="highlight">
+        <strong>一句话结论：</strong><br/>
+        LiteLLM 是当前开源 AI Gateway 中，最兼顾“兼容性、开发效率、生产可用性和治理能力”的最佳综合选择。
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>适用场景</h2>
+      <ul>
+        <li>企业需要统一接入多个大模型厂商</li>
+        <li>研发团队希望保持 OpenAI API 风格，减少接口改造</li>
+        <li>需要做模型路由、降本策略、回退与限流</li>
+        <li>希望从 PoC 快速演进到生产环境</li>
+        <li>需要私有化部署或统一 AI 出口治理</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>需要注意的边界</h2>
+      <p>
+        LiteLLM 虽然是最佳综合选择，但并不意味着它在所有维度都绝对第一。
+        如果你的目标是超重型企业 API 治理，或者需要完整的 LLMOps 平台能力（例如评测、Prompt 管理、实验平台、全链路运营），
+        那么某些更平台化或企业化的项目可能更适合。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>结论</h2>
+      <p>
+        如果要从 GitHub 的 AI Gateway 类开源项目中选出一个最值得优先采用的方案，推荐选择
+        <strong>LiteLLM</strong>。它在多模型接入、统一代理、路由治理、开发体验与生产实用性之间达到了最佳平衡。
+      </p>
+    </section>
+
+    <div class="footer">
+      本页面为 AI Gateway 开源生态分析说明稿，可继续扩展为项目对比表、架构图或选型报告。
+    </div>
+  </div>
+</body>
+</html>

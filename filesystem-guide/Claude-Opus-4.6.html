@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux 文件系统对比：ext4 / XFS / ZFS</title>
+    <style>
+        :root {
+            --ext4-color: #4CAF50;
+            --xfs-color: #2196F3;
+            --zfs-color: #FF9800;
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --text: #c9d1d9;
+            --border: #30363d;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin: 30px 0;
+            background: linear-gradient(90deg, var(--ext4-color), var(--xfs-color), var(--zfs-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle { text-align: center; color: #8b949e; margin-bottom: 40px; font-size: 0.95em; }
+
+        /* 一句话总结 */
+        .tldr {
+            background: linear-gradient(135deg, #1a1e2e, #1e2636);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px 30px;
+            margin-bottom: 40px;
+        }
+        .tldr h2 { color: #f0f6fc; margin-bottom: 15px; font-size: 1.2em; }
+        .tldr-item { display: flex; align-items: flex-start; margin: 10px 0; }
+        .tldr-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85em;
+            min-width: 55px;
+            text-align: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .badge-ext4 { background: var(--ext4-color); color: #000; }
+        .badge-xfs { background: var(--xfs-color); color: #fff; }
+        .badge-zfs { background: var(--zfs-color); color: #000; }
+
+        /* 对比表格 */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            font-size: 0.9em;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+        .comparison-table th {
+            background: #21262d;
+            color: #f0f6fc;
+            position: sticky;
+            top: 0;
+        }
+        .comparison-table th:nth-child(2) { border-top: 3px solid var(--ext4-color); }
+        .comparison-table th:nth-child(3) { border-top: 3px solid var(--xfs-color); }
+        .comparison-table th:nth-child(4) { border-top: 3px solid var(--zfs-color); }
+        .comparison-table td { background: var(--card-bg); }
+        .comparison-table td:first-child { color: #8b949e; font-weight: 600; background: #21262d; }
+        .comparison-table tr:hover td { background: #1c2333; }
+
+        /* 场景卡片 */
+        .scene-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .scene-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            border-top: 4px solid;
+            transition: transform 0.2s;
+        }
+        .scene-card:hover { transform: translateY(-3px); }
+        .scene-card.ext4 { border-top-color: var(--ext4-color); }
+        .scene-card.xfs { border-top-color: var(--xfs-color); }
+        .scene-card.zfs { border-top-color: var(--zfs-color); }
+        .scene-card h3 { margin-bottom: 12px; font-size: 1.15em; }
+        .scene-card h3 .fs-tag {
+            font-size: 0.7em;
+            padding: 2px 8px;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+        .scene-card ul { padding-left: 20px; }
+        .scene-card li { margin: 4px 0; font-size: 0.9em; }
+
+        /* 命令块 */
+        .section-title {
+            font-size: 1.4em;
+            margin: 50px 0 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            color: #f0f6fc;
+        }
+        .section-desc { color: #8b949e; margin-bottom: 20px; }
+        .cmd-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .cmd-block {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .cmd-header {
+            padding: 10px 16px;
+            font-weight: bold;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .cmd-header.ext4-h { background: rgba(76,175,80,0.15); color: var(--ext4-color); }
+        .cmd-header.xfs-h { background: rgba(33,150,243,0.15); color: var(--xfs-color); }
+        .cmd-header.zfs-h { background: rgba(255,152,0,0.15); color: var(--zfs-color); }
+        .cmd-body {
+            padding: 16px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.82em;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+        .cmd-body .comment { color: #6a737d; }
+        .cmd-body .cmd { color: #79c0ff; }
+        .cmd-body .param { color: #a5d6ff; }
+        .cmd-body .path { color: #7ee787; }
+        .cmd-body .warn { color: #f85149; }
+
+        /* 软件对应 */
+        .software-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .sw-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .sw-icon {
+            font-size: 2em;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .sw-card .sw-name { font-weight: bold; color: #f0f6fc; }
+        .sw-card .sw-fs { font-size: 0.8em; margin-top: 2px; }
+        .sw-card .sw-reason { font-size: 0.8em; color: #8b949e; margin-top: 4px; }
+
+        /* 决策流程图 */
+        .flowchart {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .flow-node {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 8px;
+            margin: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        .flow-question {
+            background: #21262d;
+            border: 2px solid #58a6ff;
+            color: #58a6ff;
+            border-radius: 50px;
+        }
+        .flow-answer-ext4 { background: rgba(76,175,80,0.2); color: var(--ext4-color); border: 1px solid var(--ext4-color); }
+        .flow-answer-xfs { background: rgba(33,150,243,0.2); color: var(--xfs-color); border: 1px solid var(--xfs-color); }
+        .flow-answer-zfs { background: rgba(255,152,0,0.2); color: var(--zfs-color); border: 1px solid var(--zfs-color); }
+        .flow-arrow { color: #8b949e; font-size: 1.5em; display: block; margin: 5px 0; }
+        .flow-row { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+        .flow-branch { text-align: center; margin: 0 15px; }
+
+        /* 注意事项 */
+        .note-box {
+            background: rgba(255,152,0,0.08);
+            border-left: 4px solid var(--zfs-color);
+            border-radius: 0 8px 8px 0;
+            padding: 16px 20px;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+        .note-box.info {
+            background: rgba(33,150,243,0.08);
+            border-left-color: var(--xfs-color);
+        }
+        .note-box strong { color: #f0f6fc; }
+
+        /* 性能对比条 */
+        .perf-section { margin: 20px 0; }
+        .perf-item { margin: 14px 0; }
+        .perf-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+        }
+        .perf-bars { display: flex; gap: 6px; align-items: center; }
+        .perf-bar {
+            height: 22px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 0.7em;
+            font-weight: bold;
+            transition: width 0.8s ease;
+        }
+        .perf-bar.ext4-bar { background: linear-gradient(90deg, rgba(76,175,80,0.3), var(--ext4-color)); color: #000; }
+        .perf-bar.xfs-bar { background: linear-gradient(90deg, rgba(33,150,243,0.3), var(--xfs-color)); color: #fff; }
+        .perf-bar.zfs-bar { background: linear-gradient(90deg, rgba(255,152,0,0.3), var(--zfs-color)); color: #000; }
+        .perf-legend { display: flex; gap: 20px; justify-content: center; margin: 15px 0; font-size: 0.85em; }
+        .perf-legend span::before {
+            content: '●';
+            margin-right: 5px;
+        }
+        .legend-ext4::before { color: var(--ext4-color) !important; }
+        .legend-xfs::before { color: var(--xfs-color) !important; }
+        .legend-zfs::before { color: var(--zfs-color) !important; }
+
+        /* tabs */
+        .tabs { display: flex; gap: 0; margin-bottom: 0; }
+        .tab-btn {
+            padding: 10px 24px;
+            border: 1px solid var(--border);
+            border-bottom: none;
+            background: var(--bg);
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 0.9em;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s;
+        }
+        .tab-btn.active { background: var(--card-bg); color: #f0f6fc; font-weight: bold; }
+        .tab-content {
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0 8px 8px 8px;
+            padding: 24px;
+        }
+        .tab-content.active { display: block; }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 20px;
+            color: #484f58;
+            font-size: 0.85em;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .scene-grid, .cmd-grid, .software-grid { grid-template-columns: 1fr; }
+            .comparison-table { font-size: 0.8em; }
+            .comparison-table th, .comparison-table td { padding: 8px 10px; }
+            h1 { font-size: 1.4em; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🗂️ Linux 文件系统：ext4 / XFS / ZFS</h1>
+    <p class="subtitle">一页搞懂三大文件系统的选型、配置与实战</p>
+
+    <!-- 一句话总结 -->
+    <div class="tldr">
+        <h2>⚡ 30 秒速记</h2>
+        <div class="tldr-item">
+            <span class="tldr-badge badge-ext4">ext4</span>
+            <span>Linux 默认，稳如老狗 → 日常桌面/小服务器/系统盘，<b>不折腾首选</b></span>
+        </div>
+        <div class="tldr-item">
+            <span class="tldr-badge badge-xfs">XFS</span>
+            <span>大文件性能怪兽 → 视频存储/数据库/大文件高并发，<b>RHEL 默认</b></span>
+        </div>
+        <div class="tldr-item">
+            <span class="tldr-badge badge-zfs">ZFS</span>
+            <span>全能旗舰（快照+压缩+校验+RAID）→ NAS/备份/虚拟化，<b>数据安全狂选</b></span>
+        </div>
+    </div>
+
+    <!-- 核心对比表 -->
+    <h2 class="section-title">📊 核心参数对比</h2>
+    <div style="overflow-x:auto;">
+    <table class="comparison-table">
+        <tr>
+            <th>特性</th>
+            <th>ext4 🟢</th>
+            <th>XFS 🔵</th>
+            <th>ZFS 🟠</th>
+        </tr>
+        <tr>
+            <td>类型</td>
+            <td>传统日志文件系统</td>
+            <td>高性能日志文件系统</td>
+            <td>COW 文件系统 + 卷管理</td>
+        </tr>
+        <tr>
+            <td>最大文件</td>
+            <td>16 TB</td>
+            <td>8 EB</td>
+            <td>16 EB</td>
+        </tr>
+        <tr>
+            <td>最大分区</td>
+            <td>1 EB</td>
+            <td>8 EB</td>
+            <td>256 万亿 YB (理论无限)</td>
+        </tr>
+        <tr>
+            <td>缩小分区</td>
+            <td>✅ 支持</td>
+            <td>❌ 不支持</td>
+            <td>❌ 不支持</td>
+        </tr>
+        <tr>
+            <td>在线扩容</td>
+            <td>✅</td>
+            <td>✅</td>
+            <td>✅</td>
+        </tr>
+        <tr>
+            <td>快照</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>✅ 原生零成本快照</td>
+        </tr>
+        <tr>
+            <td>数据校验</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>✅ 端到端校验和</td>
+        </tr>
+        <tr>
+            <td>透明压缩</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>✅ lz4/zstd/gzip</td>
+        </tr>
+        <tr>
+            <td>内置 RAID</td>
+            <td>❌ (需 mdadm)</td>
+            <td>❌ (需 mdadm)</td>
+            <td>✅ RAID-Z1/Z2/Z3</td>
+        </tr>
+        <tr>
+            <td>去重</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td>✅ (内存消耗大)</td>
+        </tr>
+        <tr>
+            <td>小文件性能</td>
+            <td>⭐⭐⭐⭐⭐</td>
+            <td>⭐⭐⭐</td>
+            <td>⭐⭐⭐⭐</td>
+        </tr>
+        <tr>
+            <td>大文件性能</td>
+            <td>⭐⭐⭐</td>
+            <td>⭐⭐⭐⭐⭐</td>
+            <td>⭐⭐⭐⭐</td>
+        </tr>
+        <tr>
+            <td>并发写入</td>
+            <td>⭐⭐⭐</td>
+            <td>⭐⭐⭐⭐⭐</td>
+            <td>⭐⭐⭐⭐</td>
+        </tr>
+        <tr>
+            <td>内存需求</td>
+            <td>低</td>
+            <td>低</td>
+            <td>高 (建议 ≥8GB，每TB存储约1GB)</td>
+        </tr>
+        <tr>
+            <td>内核原生</td>
+            <td>✅ 内核内置</td>
+            <td>✅ 内核内置</td>
+            <td>⚠️ DKMS 模块 (许可证问题)</td>
+        </tr>
+        <tr>
+            <td>默认发行版</td>
+            <td>Debian/Ubuntu</td>
+            <td>RHEL/CentOS/Rocky</td>
+            <td>FreeBSD / Proxmox 可选</td>
+        </tr>
+    </table>
+    </div>
+
+    <!-- 性能直觉对比 -->
+    <h2 class="section-title">📈 性能直觉对比</h2>
+    <p class="section-desc">相对得分，帮助建立直觉（非精确基准测试）</p>
+    <div class="perf-legend">
+        <span class="legend-ext4">ext4</span>
+        <span class="legend-xfs">XFS</span>
+        <span class="legend-zfs">ZFS</span>
+    </div>
+    <div class="perf-section">
+        <div class="perf-item">
+            <div class="perf-label"><span>顺序写入 (大文件)</span></div>
+            <div class="perf-bars">
+                <div class="perf-bar ext4-bar" style="width:60%">ext4</div>
+                <div class="perf-bar xfs-bar" style="width:95%">XFS</div>
+                <div class="perf-bar zfs-bar" style="width:75%">ZFS</div>
+            </div>
+        </div>
+        <div class="perf-item">
+            <div class="perf-label"><span>随机读写 (小文件/数据库)</span></div>
+            <div class="perf-bars">
+                <div class="perf-bar ext4-bar" style="width:85%">ext4</div>
+                <div class="perf-bar xfs-bar" style="width:70%">XFS</div>
+                <div class="perf-bar zfs-bar" style="width:80%">ZFS</div>
+            </div>
+        </div>
+        <div class="perf-item">
+            <div class="perf-label"><span>高并发 (多线程写入)</span></div>
+            <div class="perf-bars">
+                <div class="perf-bar ext4-bar" style="width:60%">ext4</div>
+                <div class="perf-bar xfs-bar" style="width:95%">XFS</div>
+                <div class="perf-bar zfs-bar" style="width:80%">ZFS</div>
+            </div>
+        </div>
+        <div class="perf-item">
+            <div class="perf-label"><span>元数据操作 (大量小文件 mkdir/stat)</span></div>
+            <div class="perf-bars">
+                <div class="perf-bar ext4-bar" style="width:90%">ext4</div>
+                <div class="perf-bar xfs-bar" style="width:65%">XFS</div>
+                <div class="perf-bar zfs-bar" style="width:75%">ZFS</div>
+            </div>
+        </div>
+        <div class="perf-item">
+            <div class="perf-label"><span>数据安全性</span></div>
+            <div class="perf-bars">
+                <div class="perf-bar ext4-bar" style="width:60%">ext4</div>
+                <div class="perf-bar xfs-bar" style="width:65%">XFS</div>
+                <div class="perf-bar zfs-bar" style="width:98%">ZFS</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用场景 -->
+    <h2 class="section-title">🎯 典型使用场景</h2>
+    <div class="scene-grid">
+        <div class="scene-card ext4">
+            <h3>🟢 ext4 适合场景</h3>
+            <ul>
+                <li><b>系统根分区 / /boot</b> — GRUB 原生支持最好</li>
+                <li><b>桌面日常使用</b> — 稳定、零配置</li>
+                <li><b>小型 VPS / 云服务器</b> — 内存不多时</li>
+                <li><b>嵌入式 / 小存储</b> — 开销最小</li>
+                <li><b>需要缩小分区</b> — 唯一支持的</li>
+                <li><b>Docker/容器 overlay2</b> — 默认后端</li>
+            </ul>
+        </div>
+        <div class="scene-card xfs">
+            <h3>🔵 XFS 适合场景</h3>
+            <ul>
+                <li><b>视频编辑 / 媒体存储</b> — 大文件顺序读写王者</li>
+                <li><b>高并发数据库</b> — PostgreSQL/MySQL 数据目录</li>
+                <li><b>企业级文件服务器</b> — RHEL 官方默认</li>
+                <li><b>大规模并行写入</b> — 日志采集、监控数据</li>
+                <li><b>虚拟机磁盘镜像存储</b> — KVM/QEMU 宿主</li>
+                <li><b>HPC / 科学计算大文件</b></li>
+            </ul>
+        </div>
+        <div class="scene-card zfs">
+            <h3>🟠 ZFS 适合场景</h3>
+            <ul>
+                <li><b>NAS 存储</b> — TrueNAS 的灵魂</li>
+                <li><b>数据备份服务器</b> — 快照 + 增量发送</li>
+                <li><b>Proxmox VE 虚拟化</b> — 快照/克隆虚拟机</li>
+                <li><b>数据完整性要求极高</b> — 金融、医疗存档</li>
+                <li><b>自建 RAID</b> — 替代硬件 RAID 卡</li>
+                <li><b>数据压缩需求</b> — 日志、文本文件可省 50%+</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 安装配置 -->
+    <h2 class="section-title">🔧 安装与配置</h2>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('tab-ext4')">ext4</button>
+        <button class="tab-btn" onclick="showTab('tab-xfs')">XFS</button>
+        <button class="tab-btn" onclick="showTab('tab-zfs')">ZFS</button>
+    </div>
+
+    <!-- ext4 tab -->
+    <div class="tab-content active" id="tab-ext4">
+        <div class="cmd-grid">
+            <div class="cmd-block">
+                <div class="cmd-header ext4-h">📦 安装（通常已内置）</div>
+                <div class="cmd-body">
+<span class="comment"># 内核原生支持，无需安装</span>
+<span class="comment"># 工具包（一般已预装）:</span>
+<span class="cmd">sudo apt install</span> <span class="param">e2fsprogs</span>   <span class="comment"># Debian/Ubuntu</span>
+<span class="cmd">sudo dnf install</span> <span class="param">e2fsprogs</span>   <span class="comment"># RHEL/Fedora</span>
+                </div>
+            </div>
+            <div class="cmd-block">
+                <div class="cmd-header ext4-h">🔨 创建与挂载</div>
+                <div class="cmd-body">
+<span class="comment"># 格式化</span>
+<span class="cmd">sudo mkfs.ext4</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># 带标签格式化</span>
+<span class="cmd">sudo mkfs.ext4</span> <span class="param">-L "mydata"</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># 挂载</span>
+<span class="cmd">sudo mount</span> <span class="path">/dev/sdb1 /mnt/data</span>
+
+<span class="comment"># 永久挂载 - 编辑 /etc/fstab:</span>
+<span class="path">/dev/sdb1  /mnt/data  ext4  defaults  0  2</span>
+                </div>
+            </div>
+            <div class="cmd-block">
+                <div class="cmd-header ext4-h">⚙️ 优化调参</div>
+                <div class="cmd-body">
+<span class="comment"># 查看信息</span>
+<span class="cmd">sudo tune2fs -l</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># 禁用日志（U盘/SD卡减少写入）</span>
+<span class="cmd">sudo tune2fs -O ^has_journal</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># 取消保留空间（非系统盘）</span>
+<span class="cmd">sudo tune2fs -m 0</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># SSD 优化 fstab 选项:</span>
+<span class="path">defaults,noatime,discard</span>
+
+<span class="comment"># 检查修复</span>
+<span class="cmd">sudo fsck.ext4 -f</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># 在线扩容（先扩分区再扩FS）</span>
+<span class="cmd">sudo resize2fs</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># 缩小（需先卸载！）</span>
+<span class="cmd">sudo resize2fs</span> <span class="path">/dev/sdb1</span> <span class="param">50G</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- XFS tab -->
+    <div class="tab-content" id="tab-xfs">
+        <div class="cmd-grid">
+            <div class="cmd-block">
+                <div class="cmd-header xfs-h">📦 安装</div>
+                <div class="cmd-body">
+<span class="comment"># RHEL系已预装，Debian/Ubuntu需装工具:</span>
+<span class="cmd">sudo apt install</span> <span class="param">xfsprogs</span>     <span class="comment"># Debian/Ubuntu</span>
+<span class="cmd">sudo dnf install</span> <span class="param">xfsprogs</span>     <span class="comment"># RHEL/Fedora(通常已有)</span>
+                </div>
+            </div>
+            <div class="cmd-block">
+                <div class="cmd-header xfs-h">🔨 创建与挂载</div>
+                <div class="cmd-body">
+<span class="comment"># 格式化</span>
+<span class="cmd">sudo mkfs.xfs</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># 强制格式化（覆盖已有FS）</span>
+<span class="cmd">sudo mkfs.xfs -f</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># 带标签</span>
+<span class="cmd">sudo mkfs.xfs -L</span> <span class="param">"bigdata"</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># 挂载</span>
+<span class="cmd">sudo mount</span> <span class="path">/dev/sdb1 /mnt/data</span>
+
+<span class="comment"># 永久挂载 - /etc/fstab:</span>
+<span class="path">/dev/sdb1  /mnt/data  xfs  defaults,noatime  0  0</span>
+                </div>
+            </div>
+            <div class="cmd-block">
+                <div class="cmd-header xfs-h">⚙️ 优化调参</div>
+                <div class="cmd-body">
+<span class="comment"># 查看信息</span>
+<span class="cmd">xfs_info</span> <span class="path">/mnt/data</span>
+
+<span class="comment"># 在线扩容（不支持缩小！）</span>
+<span class="cmd">sudo xfs_growfs</span> <span class="path">/mnt/data</span>
+
+<span class="comment"># 修复（需卸载）</span>
+<span class="cmd">sudo xfs_repair</span> <span class="path">/dev/sdb1</span>
+
+<span class="comment"># 碎片整理（在线）</span>
+<span class="cmd">sudo xfs_fsr</span> <span class="path">/mnt/data</span>
+
+<span class="comment"># 冻结/解冻（一致性快照前用）</span>
+<span class="cmd">sudo xfs_freeze -f</span> <span class="path">/mnt/data</span>
+<span class="cmd">sudo xfs_freeze -u</span> <span class="path">/mnt/data</span>
+
+<span class="comment"># 大文件优化 fstab 选项:</span>
+<span class="path">defaults,noatime,inode64,logbufs=8</span>
+                </div>
+            </div>
+        </div>
+        <div class="note-box info">
+            <strong>⚠️ XFS 注意：</strong>不能缩小！创建前规划好大小。删除大量文件后空间不会立即释放给文件系统以外，需用 <code>xfs_fsr</code> 整理。
+        </div>
+    </div>
+
+    <!-- ZFS tab -->
+    <div class="tab-content" id="tab-zfs">
+        <div class="cmd-grid">
+            <div class="cmd-block">
+                <div class="cmd-header zfs-h">📦 安装</div>
+                <div class="cmd-body">
+<span class="comment"># === Ubuntu/Debian ===</span>
+<span class="cmd">sudo apt install</span> <span class="param">zfsutils-linux</span>
+
+<span class="comment"># === RHEL/CentOS/Rocky ===</span>
+<span class="cmd">sudo dnf install</span> <span class="param">https://zfsonlinux.org/epel/zfs-release-2-3.el9.noarch.rpm</span>
+<span class="cmd">sudo dnf install</span> <span class="param">zfs</span>
+<span class="cmd">sudo modprobe zfs</span>
+
+<span class="comment"># === Proxmox VE（已内置）===</span>
+<span class="comment"># 安装时可直接选 ZFS root</span>
+
+<span class="comment"># 验证</span>
+<span class="cmd">zfs version</span>
+                </div>
+            </div>
+            <div class="cmd-block">
+                <div class="cmd-header zfs-h">🔨 创建存储池</div>
+                <div class="cmd-body">
+<span class="comment"># 单盘池</span>
+<span class="cmd">sudo zpool create</span> <span class="param">mypool</span> <span class="path">/dev/sdb</span>
+
+<span class="comment"># 镜像（RAID1）</span>
+<span class="cmd">sudo zpool create</span> <span class="param">mypool mirror</span> <span class="path">/dev/sdb /dev/sdc</span>
+
+<span class="comment"># RAID-Z1（类RAID5，允许坏1盘）</span>
+<span class="cmd">sudo zpool create</span> <span class="param">mypool raidz</span> <span class="path">/dev/sd{b,c,d}</span>
+
+<span class="comment"># RAID-Z2（类RAID6，允许坏2盘）</span>
+<span class="cmd">sudo zpool create</span> <span class="param">mypool raidz2</span> <span class="path">/dev/sd{b,c,d,e}</span>
+
+<span class="comment"># 添加缓存盘（SSD加速读取）</span>
+<span class="cmd">sudo zpool add</span> <span class="param">mypool cache</span> <span class="path">/dev/nvme0n1</span>
+
+<span class="comment"># 添加日志盘（SSD加速同步写入）</span>
+<span class="cmd">sudo zpool add</span> <span class="param">mypool log</span> <span class="path">/dev/nvme0n2</span>
+                </div>
+            </div>
+            <div class="cmd-block">
+                <div class="cmd-header zfs-h">📁 创建数据集 & 配置</div>
+                <div class="cmd-body">
+<span class="comment"># 创建数据集（类似子卷/子分区）</span>
+<span class="cmd">sudo zfs create</span> <span class="param">mypool/documents</span>
+<span class="cmd">sudo zfs create</span> <span class="param">mypool/videos</span>
+<span class="cmd">sudo zfs create</span> <span class="param">mypool/backups</span>
+
+<span class="comment"># 开启压缩（强烈推荐！）</span>
+<span class="cmd">sudo zfs set</span> <span class="param">compression=lz4</span> <span class="path">mypool</span>
+<span class="comment"># 或使用 zstd（更好压缩率）</span>
+<span class="cmd">sudo zfs set</span> <span class="param">compression=zstd</span> <span class="path">mypool/backups</span>
+
+<span class="comment"># 设置配额</span>
+<span class="cmd">sudo zfs set</span> <span class="param">quota=500G</span> <span class="path">mypool/videos</span>
+
+<span class="comment"># 设置预留空间</span>
+<span class="cmd">sudo zfs set</span> <span class="param">reservation=100G</span> <span class="path">mypool/documents</span>
+
+<span class="comment"># 关闭 atime（性能优化）</span>
+<span class="cmd">sudo zfs set</span> <span class="param">atime=off</span> <span class="path">mypool</span>
+
+<span class="comment"># 设置自动挂载点</span>
+<span class="cmd">sudo zfs set</span> <span class="param">mountpoint=/data</span> <span class="path">mypool</span>
+                </div>
+            </div>
+            <div class="cmd-block">
+                <div class="cmd-header zfs-h">📸 快照与恢复（杀手特性）</div>
+                <div class="cmd-body">
+<span class="comment"># 创建快照（瞬间完成！）</span>
+<span class="cmd">sudo zfs snapshot</span> <span class="param">mypool/documents@2024-01-15</span>
+
+<span class="comment"># 查看快照</span>
+<span class="cmd">sudo zfs list -t snapshot</span>
+
+<span class="comment"># 回滚到快照</span>
+<span class="cmd">sudo zfs rollback</span> <span class="param">mypool/documents@2024-01-15</span>
+
+<span class="comment"># 克隆快照为新数据集</span>
+<span class="cmd">sudo zfs clone</span> <span class="param">mypool/documents@2024-01-15 mypool/docs-copy</span>
+
+<span class="comment"># 增量发送到远程（超强备份）</span>
+<span class="cmd">sudo zfs send -i</span> <span class="param">@snap1 mypool/data@snap2</span> | \
+  <span class="cmd">ssh</span> <span class="path">remote</span> <span class="cmd">zfs recv</span> <span class="param">backup/data</span>
+
+<span class="comment"># 自动快照（安装工具）</span>
+<span class="cmd">sudo apt install</span> <span class="param">zfs-auto-snapshot</span>
+                </div>
+            </div>
+            <div class="cmd-block">
+                <div class="cmd-header zfs-h">🔍 监控与维护</div>
+                <div class="cmd-body">
+<span class="comment"># 查看池状态</span>
+<span class="cmd">sudo zpool status</span>
+<span class="cmd">sudo zpool list</span>
+
+<span class="comment"># 查看数据集</span>
+<span class="cmd">sudo zfs list</span>
+
+<span class="comment"># 查看压缩率</span>
+<span class="cmd">sudo zfs get</span> <span class="param">compressratio</span> <span class="path">mypool</span>
+
+<span class="comment"># 数据校验（定期运行！）</span>
+<span class="cmd">sudo zpool scrub</span> <span class="param">mypool</span>
+
+<span class="comment"># 替换故障盘</span>
+<span class="cmd">sudo zpool replace</span> <span class="param">mypool</span> <span class="path">/dev/sdb /dev/sdf</span>
+
+<span class="comment"># 导出/导入池（迁移硬盘组）</span>
+<span class="cmd">sudo zpool export</span> <span class="param">mypool</span>
+<span class="cmd">sudo zpool import</span> <span class="param">mypool</span>
+                </div>
+            </div>
+        </div>
+        <div class="note-box">
+            <strong>🧠 ZFS 内存建议：</strong>ZFS 使用 ARC 缓存，默认占用 50% 内存。每 TB 存储建议 1GB 内存。生产环境建议 ≥ 16GB。可通过 <code>/etc/modprobe.d/zfs.conf</code> 限制：<code>options zfs zfs_arc_max=4294967296</code>（4GB）
+        </div>
+    </div>
+
+    <!-- 软件与文件系统对应 -->
+    <h2 class="section-title">🧩 软件/场景 → 推荐文件系统</h2>
+    <div class="software-grid">
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(33,150,243,0.15)">🐘</div>
+            <div>
+                <div class="sw-name">PostgreSQL</div>
+                <div class="sw-fs"><span class="tldr-badge badge-xfs" style="font-size:0.75em">XFS</span> 或 <span class="tldr-badge badge-ext4" style="font-size:0.75em">ext4</span></div>
+                <div class="sw-reason">XFS 大表/高并发优；ext4 小型部署稳</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(33,150,243,0.15)">🐬</div>
+            <div>
+                <div class="sw-name">MySQL / MariaDB</div>
+                <div class="sw-fs"><span class="tldr-badge badge-xfs" style="font-size:0.75em">XFS</span> 或 <span class="tldr-badge badge-ext4" style="font-size:0.75em">ext4</span></div>
+                <div class="sw-reason">InnoDB 大表文件用 XFS 更优</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(76,175,80,0.15)">🐳</div>
+            <div>
+                <div class="sw-name">Docker</div>
+                <div class="sw-fs"><span class="tldr-badge badge-ext4" style="font-size:0.75em">ext4</span> (overlay2) 或 <span class="tldr-badge badge-zfs" style="font-size:0.75em">ZFS</span></div>
+                <div class="sw-reason">默认 overlay2+ext4；ZFS 驱动支持快照/克隆</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(255,152,0,0.15)">🖥️</div>
+            <div>
+                <div class="sw-name">Proxmox VE</div>
+                <div class="sw-fs"><span class="tldr-badge badge-zfs" style="font-size:0.75em">ZFS</span></div>
+                <div class="sw-reason">快照/克隆虚拟机秒级完成，内置支持</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(255,152,0,0.15)">💾</div>
+            <div>
+                <div class="sw-name">TrueNAS</div>
+                <div class="sw-fs"><span class="tldr-badge badge-zfs" style="font-size:0.75em">ZFS</span></div>
+                <div class="sw-reason">TrueNAS 核心架构完全基于 ZFS</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(33,150,243,0.15)">🎬</div>
+            <div>
+                <div class="sw-name">视频编辑 / 媒体服务器</div>
+                <div class="sw-fs"><span class="tldr-badge badge-xfs" style="font-size:0.75em">XFS</span></div>
+                <div class="sw-reason">大文件顺序读写性能最佳</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(33,150,243,0.15)">📊</div>
+            <div>
+                <div class="sw-name">Elasticsearch</div>
+                <div class="sw-fs"><span class="tldr-badge badge-xfs" style="font-size:0.75em">XFS</span></div>
+                <div class="sw-reason">官方推荐，大索引文件+并发写入</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(33,150,243,0.15)">📝</div>
+            <div>
+                <div class="sw-name">Kafka / 日志采集</div>
+                <div class="sw-fs"><span class="tldr-badge badge-xfs" style="font-size:0.75em">XFS</span></div>
+                <div class="sw-reason">高吞吐顺序写入场景</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(255,152,0,0.15)">🔄</div>
+            <div>
+                <div class="sw-name">备份服务器 (rsync/restic)</div>
+                <div class="sw-fs"><span class="tldr-badge badge-zfs" style="font-size:0.75em">ZFS</span></div>
+                <div class="sw-reason">快照+压缩+校验+增量发送</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(76,175,80,0.15)">🖥️</div>
+            <div>
+                <div class="sw-name">桌面 Linux / 系统盘</div>
+                <div class="sw-fs"><span class="tldr-badge badge-ext4" style="font-size:0.75em">ext4</span></div>
+                <div class="sw-reason">稳定、GRUB 支持好、可缩小分区</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(33,150,243,0.15)">☁️</div>
+            <div>
+                <div class="sw-name">RHEL / CentOS / Rocky</div>
+                <div class="sw-fs"><span class="tldr-badge badge-xfs" style="font-size:0.75em">XFS</span></div>
+                <div class="sw-reason">默认文件系统，红帽官方优化支持</div>
+            </div>
+        </div>
+        <div class="sw-card">
+            <div class="sw-icon" style="background:rgba(255,152,0,0.15)">🗃️</div>
+            <div>
+                <div class="sw-name">Samba/NFS 文件共享</div>
+                <div class="sw-fs"><span class="tldr-badge badge-zfs" style="font-size:0.75em">ZFS</span> 或 <span class="tldr-badge badge-xfs" style="font-size:0.75em">XFS</span></div>
+                <div class="sw-reason">NAS 用 ZFS；单纯共享用 XFS</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 决策流程 -->
+    <h2 class="section-title">🧭 快速选型决策</h2>
+    <div class="flowchart">
+        <div class="flow-node flow-question">你的需求是什么？</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-row">
+            <div class="flow-branch">
+                <div style="color:#8b949e;font-size:0.85em;margin-bottom:8px">需要快照/RAID/校验？</div>
+                <div class="flow-arrow">↓ 是</div>
+                <div class="flow-node flow-answer-zfs">🟠 ZFS</div>
+                <div style="color:#8b949e;font-size:0.8em;margin-top:5px">NAS / 备份 / 虚拟化</div>
+            </div>
+            <div class="flow-branch">
+                <div style="color:#8b949e;font-size:0.85em;margin-bottom:8px">大文件/高并发/RHEL？</div>
+                <div class="flow-arrow">↓ 是</div>
+                <div class="flow-node flow-answer-xfs">🔵 XFS</div>
+                <div style="color:#8b949e;font-size:0.8em;margin-top:5px">数据库 / 媒体 / 企业</div>
+            </div>
+            <div class="flow-branch">
+                <div style="color:#8b949e;font-size:0.85em;margin-bottom:8px">通用/桌面/小VPS？</div>
+                <div class="flow-arrow">↓ 是</div>
+                <div class="flow-node flow-answer-ext4">🟢 ext4</div>
+                <div style="color:#8b949e;font-size:0.8em;margin-top:5px">桌面 / 系统盘 / 默认</div>
+            </div>
+        </div>
+        <div style="margin-top:20px; color:#8b949e; font-size:0.85em;">
+            💡 拿不准？ <b style="color:var(--ext4-color)">ext4</b> 永远不会出错。
+            追求性能选 <b style="color:var(--xfs-color)">XFS</b>。
+            追求功能选 <b style="color:var(--zfs-color)">ZFS</b>。
+        </div>
+    </div>
+
+    <!-- 常见组合 -->
+    <h2 class="section-title">🏗️ 实战常见组合</h2>
+    <div class="cmd-grid">
+        <div class="cmd-block">
+            <div class="cmd-header ext4-h">🖥️ 桌面/开发机</div>
+            <div class="cmd-body">
+<span class="path">/boot</span>   → <span class="param">ext4</span>  <span class="comment">(512MB, GRUB 兼容最好)</span>
+<span class="path">/</span>       → <span class="param">ext4</span>  <span class="comment">(50GB, 系统根分区)</span>
+<span class="path">/home</span>   → <span class="param">ext4</span>  <span class="comment">(剩余空间)</span>
+<span class="path">swap</span>    → <span class="param">swap</span>  <span class="comment">(内存等大或 swap file)</span>
+            </div>
+        </div>
+        <div class="cmd-block">
+            <div class="cmd-header xfs-h">🏢 数据库服务器 (RHEL)</div>
+            <div class="cmd-body">
+<span class="path">/boot</span>     → <span class="param">ext4</span>   <span class="comment">(1GB)</span>
+<span class="path">/</span>         → <span class="param">xfs</span>    <span class="comment">(50GB, RHEL默认)</span>
+<span class="path">/var/lib/pgsql</span> → <span class="param">xfs</span> <span class="comment">(独立SSD/NVMe)</span>
+<span class="path">/var/log</span>  → <span class="param">xfs</span>    <span class="comment">(独立盘, 避免日志撑爆系统)</span>
+            </div>
+        </div>
+        <div class="cmd-block">
+            <div class="cmd-header zfs-h">💾 NAS / 备份服务器</div>
+            <div class="cmd-body">
+<span class="path">/boot</span>    → <span class="param">ext4</span>            <span class="comment">(USB/独立小盘)</span>
+<span class="path">/</span>        → <span class="param">ext4 或 ZFS</span>     <span class="comment">(系统)</span>
+<span class="path">tank</span>     → <span class="param">ZFS RAIDZ1</span>     <span class="comment">(3-4块数据盘)</span>
+<span class="path">  ├─ tank/share</span>             <span class="comment">(Samba共享)</span>
+<span class="path">  ├─ tank/backup</span>            <span class="comment">(备份, 压缩=zstd)</span>
+<span class="path">  ├─ tank/media</span>             <span class="comment">(影音, 压缩=off)</span>
+<span class="path">  └─ tank/docker</span>            <span class="comment">(容器数据)</span>
+<span class="path">cache</span>    → <span class="param">SSD L2ARC</span>      <span class="comment">(读缓存加速)</span>
+            </div>
+        </div>
+        <div class="cmd-block">
+            <div class="cmd-header zfs-h">🖥️ Proxmox 虚拟化</div>
+            <div class="cmd-body">
+<span class="path">/boot</span>       → <span class="param">ext4</span>       <span class="comment">(安装时自动)</span>
+<span class="path">rpool</span>       → <span class="param">ZFS mirror</span> <span class="comment">(2×NVMe, 系统+虚拟机)</span>
+<span class="path">  ├─ rpool/ROOT</span>             <span class="comment">(PVE 系统)</span>
+<span class="path">  ├─ rpool/data</span>             <span class="comment">(VM 磁盘, zvol)</span>
+<span class="path">  └─ rpool/backup</span>           <span class="comment">(vzdump 备份)</span>
+<span class="comment"># 快照虚拟机：秒级完成</span>
+<span class="comment"># 克隆虚拟机：零拷贝</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速命令对照 -->
+    <h2 class="section-title">⌨️ 常用命令速查</h2>
+    <div style="overflow-x:auto;">
+    <table class="comparison-table">
+        <tr>
+            <th>操作</th>
+            <th>ext4</th>
+            <th>XFS</th>
+            <th>ZFS</th>
+        </tr>
+        <tr>
+            <td>格式化</td>
+            <td><code>mkfs.ext4 /dev/sdb1</code></td>
+            <td><code>mkfs.xfs /dev/sdb1</code></td>
+            <td><code>zpool create pool /dev/sdb</code></td>
+        </tr>
+        <tr>
+            <td>查看信息</td>
+            <td><code>tune2fs -l</code></td>
+            <td><code>xfs_info</code></td>
+            <td><code>zpool status</code> / <code>zfs list</code></td>
+        </tr>
+        <tr>
+            <td>扩容</td>
+            <td><code>resize2fs</code></td>
+            <td><code>xfs_growfs</code></td>
+            <td><code>zpool add</code></td>
+        </tr>
+        <tr>
+            <td>缩小</td>
+            <td><code>resize2fs /dev/x 50G</code></td>
+            <td>❌ 不支持</td>
+            <td>❌ 不支持</td>
+        </tr>
+        <tr>
+            <td>修复</td>
+            <td><code>fsck.ext4</code></td>
+            <td><code>xfs_repair</code></td>
+            <td><code>zpool scrub</code></td>
+        </tr>
+        <tr>
+            <td>碎片整理</td>
+            <td><code>e4defrag</code></td>
+            <td><code>xfs_fsr</code></td>
+            <td>COW 架构，无需整理</td>
+        </tr>
+        <tr>
+            <td>快照</td>
+            <td>❌</td>
+            <td>❌</td>
+            <td><code>zfs snapshot pool/ds@name</code></td>
+        </tr>
+    </table>
+    </div>
+
+    <footer>
+        📄 Linux 文件系统速查手册 | 收藏此页以备不时之需 | 最后更新: 2024
+    </footer>
+</div>
+
+<script>
+function showTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

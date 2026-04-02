@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linux 文件系统简明指南：ZFS / XFS / ext4</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC",
+                   "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      line-height: 1.7;
+      margin: 0;
+      background: #f7f9fc;
+      color: #222;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 24px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    h1, h2, h3 {
+      color: #1f3c88;
+    }
+    .tip {
+      background: #eef6ff;
+      border-left: 4px solid #4a90e2;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+    .warn {
+      background: #fff6e8;
+      border-left: 4px solid #f5a623;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+    th, td {
+      border: 1px solid #dbe3ef;
+      padding: 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #eaf1fb;
+    }
+    code, pre {
+      font-family: Consolas, Monaco, monospace;
+    }
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 14px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    .card {
+      background: #f9fbff;
+      border: 1px solid #dbe8ff;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 18px 0;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    .footer {
+      margin-top: 28px;
+      font-size: 14px;
+      color: #666;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      margin-right: 6px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: white;
+      background: #4a90e2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Linux 文件系统简明指南：ZFS / XFS / ext4</h1>
+
+    <div class="tip">
+      一句话先记住：<br>
+      <strong>ext4 = 最通用</strong>，<strong>XFS = 大文件/高性能</strong>，<strong>ZFS = 数据安全/高级存储</strong>
+    </div>
+
+    <h2>1. 最简短结论</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>文件系统</th>
+          <th>最适合</th>
+          <th>优点</th>
+          <th>缺点</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>ext4</strong></td>
+          <td>系统盘、通用服务器、普通 Linux</td>
+          <td>稳定、简单、兼容性最好</td>
+          <td>高级功能少</td>
+        </tr>
+        <tr>
+          <td><strong>XFS</strong></td>
+          <td>大文件、数据库、日志、媒体存储</td>
+          <td>高吞吐、扩容方便、适合大容量</td>
+          <td>不能直接缩容</td>
+        </tr>
+        <tr>
+          <td><strong>ZFS</strong></td>
+          <td>NAS、备份、虚拟化、重要数据</td>
+          <td>快照、校验、自修复、RAID 功能强</td>
+          <td>内存占用高、配置较复杂</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. 使用场景</h2>
+
+    <div class="card">
+      <h3>ext4</h3>
+      <ul>
+        <li>Linux 默认/常见系统盘</li>
+        <li>云服务器</li>
+        <li>普通网站、应用服务器</li>
+        <li>小中型数据库也能用</li>
+      </ul>
+      <p><strong>适合：</strong> 想省心、兼容性高。</p>
+    </div>
+
+    <div class="card">
+      <h3>XFS</h3>
+      <ul>
+        <li>大文件存储</li>
+        <li>视频、日志、备份仓库</li>
+        <li>高并发写入</li>
+        <li>企业数据盘</li>
+      </ul>
+      <p><strong>适合：</strong> 大容量、高吞吐、持续写入场景。</p>
+    </div>
+
+    <div class="card">
+      <h3>ZFS</h3>
+      <ul>
+        <li>NAS / 家庭存储</li>
+        <li>重要数据归档</li>
+        <li>虚拟机存储</li>
+        <li>需要快照、校验、RAID、压缩</li>
+      </ul>
+      <p><strong>适合：</strong> 数据安全优先、需要高级存储功能。</p>
+    </div>
+
+    <h2>3. 安装与基础配置</h2>
+
+    <h3>3.1 ext4</h3>
+    <p><span class="tag">最简单</span></p>
+    <pre># 安装工具（一般系统已自带）
+sudo apt install e2fsprogs -y
+# 或
+sudo yum install e2fsprogs -y
+
+# 格式化
+sudo mkfs.ext4 /dev/sdb1
+
+# 挂载
+sudo mkdir -p /data
+sudo mount /dev/sdb1 /data
+
+# 开机自动挂载
+sudo blkid /dev/sdb1
+# 编辑 /etc/fstab，添加：
+UUID=xxxx-xxxx /data ext4 defaults 0 2</pre>
+
+    <h3>3.2 XFS</h3>
+    <p><span class="tag">适合数据盘</span></p>
+    <pre># 安装工具
+sudo apt install xfsprogs -y
+# 或
+sudo yum install xfsprogs -y
+
+# 格式化
+sudo mkfs.xfs -f /dev/sdb1
+
+# 挂载
+sudo mkdir -p /data
+sudo mount /dev/sdb1 /data
+
+# 开机自动挂载
+sudo blkid /dev/sdb1
+# /etc/fstab:
+UUID=xxxx-xxxx /data xfs defaults 0 0</pre>
+
+    <div class="warn">
+      注意：<strong>XFS 一般只能扩容，不能方便地缩容</strong>。
+    </div>
+
+    <h3>3.3 ZFS</h3>
+    <p><span class="tag">功能最强</span></p>
+    <pre># Ubuntu / Debian
+sudo apt update
+sudo apt install zfsutils-linux -y
+
+# Rocky / Alma / RHEL 常需额外仓库（不同版本方法不同）
+# 安装后创建存储池（示例）
+sudo zpool create tank /dev/sdb /dev/sdc
+
+# 查看
+sudo zpool status
+sudo zfs list
+
+# 创建文件系统
+sudo zfs create tank/data
+
+# 挂载点
+sudo zfs set mountpoint=/data tank/data
+
+# 开启压缩（常用）
+sudo zfs set compression=lz4 tank/data
+
+# 创建快照
+sudo zfs snapshot tank/data@init</pre>
+
+    <div class="tip">
+      ZFS 不只是“文件系统”，更像“卷管理 + RAID + 文件系统”一体。
+    </div>
+
+    <h2>4. 哪些软件/场景更适合哪种文件系统</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>软件 / 场景</th>
+          <th>推荐文件系统</th>
+          <th>原因</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Linux 系统盘</td>
+          <td><strong>ext4</strong></td>
+          <td>最稳、兼容性最好、安装器支持最好</td>
+        </tr>
+        <tr>
+          <td>Docker 普通宿主机</td>
+          <td><strong>ext4 / XFS</strong></td>
+          <td>都常见；XFS 常用于数据盘，ext4 更通用</td>
+        </tr>
+        <tr>
+          <td>Docker Overlay2</td>
+          <td><strong>XFS（ftype=1）/ ext4</strong></td>
+          <td>XFS 常见于企业环境；需满足 overlay2 要求</td>
+        </tr>
+        <tr>
+          <td>Kubernetes 节点</td>
+          <td><strong>ext4 / XFS</strong></td>
+          <td>稳定，适合容器运行时和数据卷</td>
+        </tr>
+        <tr>
+          <td>MySQL / PostgreSQL</td>
+          <td><strong>XFS / ext4</strong></td>
+          <td>XFS 对大数据和高并发写入较好；ext4 也很稳</td>
+        </tr>
+        <tr>
+          <td>Elasticsearch / 日志系统</td>
+          <td><strong>XFS</strong></td>
+          <td>大文件、持续写入、吞吐好</td>
+        </tr>
+        <tr>
+          <td>NAS（TrueNAS、家庭存储）</td>
+          <td><strong>ZFS</strong></td>
+          <td>快照、校验、校验修复、RAID-Z 强</td>
+        </tr>
+        <tr>
+          <td>Proxmox / 虚拟化存储</td>
+          <td><strong>ZFS / XFS</strong></td>
+          <td>ZFS 适合快照和冗余；XFS 适合普通高性能数据盘</td>
+        </tr>
+        <tr>
+          <td>备份服务器</td>
+          <td><strong>ZFS</strong></td>
+          <td>数据完整性强，支持快照、压缩</td>
+        </tr>
+        <tr>
+          <td>视频/图片/对象大文件存储</td>
+          <td><strong>XFS</strong></td>
+          <td>适合大文件和大容量卷</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>5. 选择建议</h2>
+    <ul>
+      <li><strong>不会错的默认选择：</strong> ext4</li>
+      <li><strong>数据盘、大文件、日志多：</strong> XFS</li>
+      <li><strong>最重视数据安全、快照、NAS：</strong> ZFS</li>
+    </ul>
+
+    <h2>6. 一句话记忆法</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>文件系统</th>
+          <th>记忆法</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>ext4</td>
+          <td>“默认款，最省心”</td>
+        </tr>
+        <tr>
+          <td>XFS</td>
+          <td>“大文件、高吞吐”</td>
+        </tr>
+        <tr>
+          <td>ZFS</td>
+          <td>“数据安全功能王”</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>7. 最后建议</h2>
+    <div class="tip">
+      如果你是初学者：<strong>系统盘用 ext4，数据盘用 XFS，做 NAS/备份再考虑 ZFS</strong>。
+    </div>
+
+    <div class="footer">
+      你可以把本页保存为 <code>zfs_xfs_ext4_guide.html</code>，双击浏览器打开即可查看。
+    </div>
+  </div>
+</body>
+</html>

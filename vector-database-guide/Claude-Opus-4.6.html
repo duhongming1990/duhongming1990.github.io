@@ -1,0 +1,2967 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>向量数据库终极指南 2024</title>
+    <style>
+        /* ===== 全局重置 ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #0f0f1a;
+            --bg2: #1a1a2e;
+            --bg3: #16213e;
+            --card: #1e1e3a;
+            --card2: #252550;
+            --border: rgba(99,102,241,0.2);
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --gold: #ffd700;
+            --radius: 16px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* ===== 背景动画 ===== */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 20%, rgba(99,102,241,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 600px 400px at 80% 80%, rgba(6,182,212,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 300px at 60% 30%, rgba(245,158,11,0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== 导航栏 ===== */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(15,15,26,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+        }
+
+        .nav-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-logo span { font-size: 1.6rem; }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover { color: var(--primary); }
+
+        .nav-badge {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* ===== 主内容 ===== */
+        main {
+            position: relative;
+            z-index: 1;
+            padding-top: 64px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* ===== Hero ===== */
+        .hero {
+            padding: 6rem 2rem 4rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(99,102,241,0.1);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: var(--primary);
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff 0%, var(--primary) 50%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 680px;
+            margin: 0 auto 2.5rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat .num {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-stat .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ===== 数据粒子动画 ===== */
+        .particles-hero {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--primary);
+            opacity: 0;
+            animation: floatParticle linear infinite;
+        }
+
+        @keyframes floatParticle {
+            0% { transform: translateY(100%) translateX(0); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) translateX(40px); opacity: 0; }
+        }
+
+        /* ===== Section ===== */
+        section {
+            padding: 5rem 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            display: inline-block;
+            background: rgba(99,102,241,0.1);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: var(--primary);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .section-sub {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ===== 对比总览表格 ===== */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .db-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.8rem;
+            transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .db-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--card-color, var(--primary));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .db-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--card-color, var(--primary));
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 30px rgba(99,102,241,0.1);
+        }
+
+        .db-card:hover::before { opacity: 1; }
+
+        .db-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .db-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            background: rgba(99,102,241,0.1);
+        }
+
+        .db-rank {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .stars-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.2);
+            color: var(--accent);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .lang-badge {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .db-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .db-tagline {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.2rem;
+            line-height: 1.5;
+        }
+
+        .db-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 1.2rem;
+        }
+
+        .db-tag {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 10px;
+            background: rgba(99,102,241,0.1);
+            color: var(--primary);
+            border: 1px solid rgba(99,102,241,0.15);
+        }
+
+        .db-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding-top: 1.2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .db-metric {
+            text-align: center;
+        }
+
+        .db-metric .val {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .db-metric .key {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        /* ===== 评分条 ===== */
+        .score-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 1rem;
+        }
+
+        .score-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .score-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            width: 80px;
+            flex-shrink: 0;
+        }
+
+        .score-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .score-val {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            width: 28px;
+            text-align: right;
+        }
+
+        /* ===== 详细对比表 ===== */
+        .compare-table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            min-width: 900px;
+        }
+
+        .compare-table th {
+            padding: 1.2rem 1rem;
+            text-align: left;
+            background: var(--card2);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .compare-table th:first-child { min-width: 140px; }
+
+        .compare-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(99,102,241,0.08);
+            font-size: 0.88rem;
+            vertical-align: middle;
+        }
+
+        .compare-table tr:last-child td { border-bottom: none; }
+
+        .compare-table tr:hover td { background: rgba(99,102,241,0.04); }
+
+        .compare-table .db-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        .compare-table .db-name-cell .ico { font-size: 1.4rem; }
+
+        .tick { color: var(--success); font-size: 1rem; }
+        .cross { color: var(--danger); font-size: 1rem; }
+        .partial { color: var(--warning); font-size: 1rem; }
+
+        .score-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 24px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .score-chip.s90 { background: rgba(16,185,129,0.15); color: #10b981; }
+        .score-chip.s80 { background: rgba(99,102,241,0.15); color: #818cf8; }
+        .score-chip.s70 { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .score-chip.s60 { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+        /* ===== 冠军卡片 ===== */
+        .champion-section {
+            padding: 5rem 0;
+            background: linear-gradient(180deg, transparent, rgba(99,102,241,0.03), transparent);
+        }
+
+        .champion-card {
+            background: linear-gradient(135deg, #1e1e3a, #252550);
+            border: 2px solid rgba(99,102,241,0.4);
+            border-radius: 24px;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .champion-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(99,102,241,0.05), transparent, rgba(6,182,212,0.05), transparent);
+            animation: rotateBg 20s linear infinite;
+        }
+
+        @keyframes rotateBg {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .champion-inner { position: relative; z-index: 1; }
+
+        .champion-crown {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(245,158,11,0.1));
+            border: 1px solid rgba(255,215,0,0.3);
+            color: var(--gold);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .champion-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .champion-info h2 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .champion-version {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+        }
+
+        .champion-desc {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .champion-stat-row {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .c-stat {
+            text-align: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+        }
+
+        .c-stat .n {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .c-stat .l {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .champion-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99,102,241,0.4);
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            color: var(--primary);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: 1px solid rgba(99,102,241,0.4);
+        }
+
+        .btn-outline:hover {
+            background: rgba(99,102,241,0.1);
+            transform: translateY(-2px);
+        }
+
+        .champion-scores { }
+
+        .score-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            color: var(--text);
+        }
+
+        .big-score-bar {
+            margin-bottom: 1rem;
+        }
+
+        .big-score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .big-score-label {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .big-score-val {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .big-score-track {
+            height: 10px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .big-score-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1.5s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .champion-reasons {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .champion-reasons h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .reasons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .reason-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .reason-icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .reason-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .reason-text strong {
+            display: block;
+            color: var(--text);
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        /* ===== 使用场景 ===== */
+        .use-cases {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .use-case-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .use-case-card:hover {
+            border-color: rgba(99,102,241,0.4);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+        }
+
+        .use-case-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .use-case-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .use-case-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .use-case-recs {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .use-case-rec {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+        }
+
+        .rec-rank {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .rec-rank.r1 { background: rgba(255,215,0,0.2); color: #ffd700; border: 1px solid rgba(255,215,0,0.3); }
+        .rec-rank.r2 { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
+        .rec-rank.r3 { background: rgba(180,120,70,0.15); color: #b47846; border: 1px solid rgba(180,120,70,0.2); }
+
+        /* ===== 性能基准 ===== */
+        .benchmark-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .bench-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.8rem;
+        }
+
+        .bench-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+
+        .bench-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .bench-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bench-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bench-name {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            width: 85px;
+            flex-shrink: 0;
+        }
+
+        .bench-track {
+            flex: 1;
+            height: 20px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bench-fill {
+            height: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding-left: 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+            transition: width 1.5s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* ===== 决策树 ===== */
+        .decision-tree {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .decision-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .dt-node {
+            margin: 1rem 0;
+        }
+
+        .dt-question {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .dt-q-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .dt-answers {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.8rem;
+            padding-left: 44px;
+        }
+
+        .dt-answer {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .dt-answer:hover {
+            border-color: rgba(99,102,241,0.4);
+            background: rgba(99,102,241,0.05);
+        }
+
+        .dt-cond {
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .dt-rec {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .dt-note {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        /* ===== 快速开始 ===== */
+        .quickstart {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .qs-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            background: var(--card2);
+            padding: 0 1.5rem;
+            gap: 0;
+            overflow-x: auto;
+        }
+
+        .qs-tab {
+            padding: 1rem 1.5rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .qs-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .qs-tab:hover:not(.active) { color: var(--text-muted); }
+
+        .qs-content { display: none; padding: 1.5rem; }
+        .qs-content.active { display: block; }
+
+        .code-block {
+            background: #0d0d1a;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 1rem;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot:nth-child(1) { background: #ff5f57; }
+        .code-dot:nth-child(2) { background: #febc2e; }
+        .code-dot:nth-child(3) { background: #28c840; }
+
+        .code-lang {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .code-copy {
+            font-size: 0.75rem;
+            color: var(--primary);
+            cursor: pointer;
+            background: none;
+            border: 1px solid rgba(99,102,241,0.3);
+            padding: 3px 10px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .code-copy:hover { background: rgba(99,102,241,0.1); }
+
+        pre {
+            padding: 1.2rem 1rem;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.82rem;
+            line-height: 1.7;
+            color: #e2e8f0;
+        }
+
+        .kw { color: #c792ea; }
+        .fn { color: #82aaff; }
+        .str { color: #c3e88d; }
+        .num { color: #f78c6c; }
+        .cmt { color: #546e7a; font-style: italic; }
+        .var { color: #eeffff; }
+        .op { color: #89ddff; }
+        .cls { color: #ffcb6b; }
+
+        /* ===== 生态系统 ===== */
+        .ecosystem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+
+        .eco-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .eco-item:hover {
+            border-color: rgba(99,102,241,0.4);
+            transform: translateY(-3px);
+        }
+
+        .eco-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .eco-name { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.2rem; }
+        .eco-type { font-size: 0.75rem; color: var(--text-dim); }
+
+        /* ===== Timeline ===== */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary), transparent);
+        }
+
+        .tl-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 1.5rem;
+        }
+
+        .tl-dot {
+            position: absolute;
+            left: -1.8rem;
+            top: 4px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid var(--bg);
+            box-shadow: 0 0 8px rgba(99,102,241,0.5);
+        }
+
+        .tl-year {
+            font-size: 0.78rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .tl-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .tl-desc {
+            font-size: 0.83rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== Footer ===== */
+        footer {
+            background: var(--bg2);
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.88rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--primary); }
+
+        .footer-copy {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        /* ===== 动画 ===== */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .champion-layout { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+            .hero h1 { font-size: 2.2rem; }
+            .hero-stats { gap: 2rem; }
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.5); }
+
+        /* 进度条 */
+        #progress-bar {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            z-index: 999;
+            transition: width 0.1s;
+        }
+
+        /* 特殊卡片颜色 */
+        .db-card[data-db="qdrant"] { --card-color: #ef4444; }
+        .db-card[data-db="weaviate"] { --card-color: #10b981; }
+        .db-card[data-db="milvus"] { --card-color: #6366f1; }
+        .db-card[data-db="pinecone"] { --card-color: #06b6d4; }
+        .db-card[data-db="chroma"] { --card-color: #f59e0b; }
+        .db-card[data-db="pgvector"] { --card-color: #8b5cf6; }
+        .db-card[data-db="faiss"] { --card-color: #0ea5e9; }
+        .db-card[data-db="vespa"] { --card-color: #84cc16; }
+
+        /* 高亮推荐 */
+        .winner-badge {
+            position: absolute;
+            top: -1px;
+            right: 1.5rem;
+            background: linear-gradient(135deg, #ffd700, #f59e0b);
+            color: #000;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 0 0 8px 8px;
+            letter-spacing: 0.05em;
+        }
+
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .info-box {
+            flex: 1;
+            min-width: 220px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+        }
+
+        .info-box-title {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.7rem;
+        }
+
+        .info-box-val {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .pros, .cons {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem;
+        }
+
+        .pros { border-left: 3px solid var(--success); }
+        .cons { border-left: 3px solid var(--danger); }
+
+        .pc-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pc-title.p { color: var(--success); }
+        .pc-title.c { color: var(--danger); }
+
+        .pc-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .pc-list li {
+            font-size: 0.83rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .pc-list li::before {
+            content: '•';
+            margin-top: 1px;
+        }
+
+        .pros .pc-list li::before { color: var(--success); }
+        .cons .pc-list li::before { color: var(--danger); }
+    </style>
+</head>
+<body>
+
+<!-- 进度条 -->
+<div id="progress-bar"></div>
+
+<!-- 导航 -->
+<nav>
+    <div class="nav-inner">
+        <div class="nav-logo">
+            <span>🗃️</span>
+            VectorDB Guide
+        </div>
+        <ul class="nav-links">
+            <li><a href="#overview">概览</a></li>
+            <li><a href="#compare">对比</a></li>
+            <li><a href="#champion">冠军</a></li>
+            <li><a href="#usecases">场景</a></li>
+            <li><a href="#benchmark">性能</a></li>
+            <li><a href="#quickstart">快速开始</a></li>
+        </ul>
+        <span class="nav-badge">2024 最新</span>
+    </div>
+</nav>
+
+<main>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="particles-hero" id="particles"></div>
+        <div class="container">
+            <div class="hero-tag">🔍 基于 GitHub 开源生态深度分析</div>
+            <h1>向量数据库<br>终极指南 2024</h1>
+            <p>深度对比 8 大主流向量数据库，从性能、可扩展性、易用性到生态系统，为您找出最佳选择</p>
+
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="num">8+</div>
+                    <div class="label">主流数据库分析</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="num">20+</div>
+                    <div class="label">评估维度</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="num">1B+</div>
+                    <div class="label">向量规模支持</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="num">2024</div>
+                    <div class="label">年度最新数据</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 概览 -->
+    <section id="overview">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">📊 数据库概览</div>
+                <h2 class="section-title">八大向量数据库</h2>
+                <p class="section-sub">全面覆盖开源与商业，本地部署与云托管的主流选择</p>
+            </div>
+
+            <div class="overview-grid">
+
+                <!-- Qdrant -->
+                <div class="db-card fade-up" data-db="qdrant">
+                    <div class="winner-badge">🏆 本期推荐</div>
+                    <div class="db-card-header">
+                        <div class="db-icon" style="background:rgba(239,68,68,0.1)">🔴</div>
+                        <div class="db-rank">
+                            <div class="stars-badge">⭐ 19.8k</div>
+                            <div class="lang-badge">Rust</div>
+                        </div>
+                    </div>
+                    <div class="db-name">Qdrant</div>
+                    <div class="db-tagline">高性能向量相似度搜索引擎，以 Rust 构建，兼顾速度与可靠性</div>
+                    <div class="db-tags">
+                        <span class="db-tag">开源</span>
+                        <span class="db-tag">云托管</span>
+                        <span class="db-tag">HNSW</span>
+                        <span class="db-tag">过滤搜索</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-row">
+                            <span class="score-label">性能</span>
+                            <div class="score-track"><div class="score-fill" style="width:95%;background:linear-gradient(90deg,#ef4444,#f87171)"></div></div>
+                            <span class="score-val">95</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">易用性</span>
+                            <div class="score-track"><div class="score-fill" style="width:88%;background:linear-gradient(90deg,#ef4444,#f87171)"></div></div>
+                            <span class="score-val">88</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">可扩展</span>
+                            <div class="score-track"><div class="score-fill" style="width:92%;background:linear-gradient(90deg,#ef4444,#f87171)"></div></div>
+                            <span class="score-val">92</span>
+                        </div>
+                    </div>
+                    <div class="db-metrics">
+                        <div class="db-metric"><div class="val">0.3ms</div><div class="key">延迟</div></div>
+                        <div class="db-metric"><div class="val">1B+</div><div class="key">向量规模</div></div>
+                        <div class="db-metric"><div class="val">免费</div><div class="key">开源</div></div>
+                    </div>
+                </div>
+
+                <!-- Weaviate -->
+                <div class="db-card fade-up" data-db="weaviate">
+                    <div class="db-card-header">
+                        <div class="db-icon" style="background:rgba(16,185,129,0.1)">🟢</div>
+                        <div class="db-rank">
+                            <div class="stars-badge">⭐ 11.2k</div>
+                            <div class="lang-badge">Go</div>
+                        </div>
+                    </div>
+                    <div class="db-name">Weaviate</div>
+                    <div class="db-tagline">语义搜索向量数据库，内置多模态 AI 模块与知识图谱</div>
+                    <div class="db-tags">
+                        <span class="db-tag">开源</span>
+                        <span class="db-tag">GraphQL</span>
+                        <span class="db-tag">多模态</span>
+                        <span class="db-tag">AI模块</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-row">
+                            <span class="score-label">性能</span>
+                            <div class="score-track"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+                            <span class="score-val">85</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">易用性</span>
+                            <div class="score-track"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+                            <span class="score-val">90</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">可扩展</span>
+                            <div class="score-track"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+                            <span class="score-val">85</span>
+                        </div>
+                    </div>
+                    <div class="db-metrics">
+                        <div class="db-metric"><div class="val">1ms</div><div class="key">延迟</div></div>
+                        <div class="db-metric"><div class="val">100M+</div><div class="key">向量规模</div></div>
+                        <div class="db-metric"><div class="val">免费</div><div class="key">开源</div></div>
+                    </div>
+                </div>
+
+                <!-- Milvus -->
+                <div class="db-card fade-up" data-db="milvus">
+                    <div class="db-card-header">
+                        <div class="db-icon" style="background:rgba(99,102,241,0.1)">🔵</div>
+                        <div class="db-rank">
+                            <div class="stars-badge">⭐ 29.7k</div>
+                            <div class="lang-badge">C++/Go</div>
+                        </div>
+                    </div>
+                    <div class="db-name">Milvus</div>
+                    <div class="db-tagline">云原生向量数据库，专为十亿级向量的大规模 AI 应用构建</div>
+                    <div class="db-tags">
+                        <span class="db-tag">开源</span>
+                        <span class="db-tag">Kubernetes</span>
+                        <span class="db-tag">企业级</span>
+                        <span class="db-tag">多索引</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-row">
+                            <span class="score-label">性能</span>
+                            <div class="score-track"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#6366f1,#818cf8)"></div></div>
+                            <span class="score-val">90</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">易用性</span>
+                            <div class="score-track"><div class="score-fill" style="width:72%;background:linear-gradient(90deg,#6366f1,#818cf8)"></div></div>
+                            <span class="score-val">72</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">可扩展</span>
+                            <div class="score-track"><div class="score-fill" style="width:98%;background:linear-gradient(90deg,#6366f1,#818cf8)"></div></div>
+                            <span class="score-val">98</span>
+                        </div>
+                    </div>
+                    <div class="db-metrics">
+                        <div class="db-metric"><div class="val">0.5ms</div><div class="key">延迟</div></div>
+                        <div class="db-metric"><div class="val">10B+</div><div class="key">向量规模</div></div>
+                        <div class="db-metric"><div class="val">免费</div><div class="key">开源</div></div>
+                    </div>
+                </div>
+
+                <!-- Pinecone -->
+                <div class="db-card fade-up" data-db="pinecone">
+                    <div class="db-card-header">
+                        <div class="db-icon" style="background:rgba(6,182,212,0.1)">🌲</div>
+                        <div class="db-rank">
+                            <div class="stars-badge">☁️ 云服务</div>
+                            <div class="lang-badge">SaaS</div>
+                        </div>
+                    </div>
+                    <div class="db-name">Pinecone</div>
+                    <div class="db-tagline">全托管向量数据库服务，开箱即用，无需运维基础设施</div>
+                    <div class="db-tags">
+                        <span class="db-tag">商业</span>
+                        <span class="db-tag">托管服务</span>
+                        <span class="db-tag">无服务器</span>
+                        <span class="db-tag">多云</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-row">
+                            <span class="score-label">性能</span>
+                            <div class="score-track"><div class="score-fill" style="width:88%;background:linear-gradient(90deg,#06b6d4,#67e8f9)"></div></div>
+                            <span class="score-val">88</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">易用性</span>
+                            <div class="score-track"><div class="score-fill" style="width:95%;background:linear-gradient(90deg,#06b6d4,#67e8f9)"></div></div>
+                            <span class="score-val">95</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">可扩展</span>
+                            <div class="score-track"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#06b6d4,#67e8f9)"></div></div>
+                            <span class="score-val">90</span>
+                        </div>
+                    </div>
+                    <div class="db-metrics">
+                        <div class="db-metric"><div class="val">~1ms</div><div class="key">延迟</div></div>
+                        <div class="db-metric"><div class="val">1B+</div><div class="key">向量规模</div></div>
+                        <div class="db-metric"><div class="val">收费</div><div class="key">商业</div></div>
+                    </div>
+                </div>
+
+                <!-- Chroma -->
+                <div class="db-card fade-up" data-db="chroma">
+                    <div class="db-card-header">
+                        <div class="db-icon" style="background:rgba(245,158,11,0.1)">🟡</div>
+                        <div class="db-rank">
+                            <div class="stars-badge">⭐ 15.3k</div>
+                            <div class="lang-badge">Python</div>
+                        </div>
+                    </div>
+                    <div class="db-name">Chroma</div>
+                    <div class="db-tagline">为 LLM 应用专设的嵌入式向量数据库，极易上手</div>
+                    <div class="db-tags">
+                        <span class="db-tag">开源</span>
+                        <span class="db-tag">嵌入式</span>
+                        <span class="db-tag">LangChain</span>
+                        <span class="db-tag">Python优先</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-row">
+                            <span class="score-label">性能</span>
+                            <div class="score-track"><div class="score-fill" style="width:70%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+                            <span class="score-val">70</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">易用性</span>
+                            <div class="score-track"><div class="score-fill" style="width:97%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+                            <span class="score-val">97</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">可扩展</span>
+                            <div class="score-track"><div class="score-fill" style="width:65%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+                            <span class="score-val">65</span>
+                        </div>
+                    </div>
+                    <div class="db-metrics">
+                        <div class="db-metric"><div class="val">5ms</div><div class="key">延迟</div></div>
+                        <div class="db-metric"><div class="val">10M</div><div class="key">向量规模</div></div>
+                        <div class="db-metric"><div class="val">免费</div><div class="key">开源</div></div>
+                    </div>
+                </div>
+
+                <!-- pgvector -->
+                <div class="db-card fade-up" data-db="pgvector">
+                    <div class="db-card-header">
+                        <div class="db-icon" style="background:rgba(139,92,246,0.1)">🐘</div>
+                        <div class="db-rank">
+                            <div class="stars-badge">⭐ 12.8k</div>
+                            <div class="lang-badge">C / SQL</div>
+                        </div>
+                    </div>
+                    <div class="db-name">pgvector</div>
+                    <div class="db-tagline">PostgreSQL 向量扩展，让传统关系型数据库支持向量搜索</div>
+                    <div class="db-tags">
+                        <span class="db-tag">开源</span>
+                        <span class="db-tag">PostgreSQL</span>
+                        <span class="db-tag">SQL</span>
+                        <span class="db-tag">混合查询</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-row">
+                            <span class="score-label">性能</span>
+                            <div class="score-track"><div class="score-fill" style="width:78%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div></div>
+                            <span class="score-val">78</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">易用性</span>
+                            <div class="score-track"><div class="score-fill" style="width:85%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div></div>
+                            <span class="score-val">85</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">可扩展</span>
+                            <div class="score-track"><div class="score-fill" style="width:75%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div></div>
+                            <span class="score-val">75</span>
+                        </div>
+                    </div>
+                    <div class="db-metrics">
+                        <div class="db-metric"><div class="val">2ms</div><div class="key">延迟</div></div>
+                        <div class="db-metric"><div class="val">100M</div><div class="key">向量规模</div></div>
+                        <div class="db-metric"><div class="val">免费</div><div class="key">开源</div></div>
+                    </div>
+                </div>
+
+                <!-- FAISS -->
+                <div class="db-card fade-up" data-db="faiss">
+                    <div class="db-card-header">
+                        <div class="db-icon" style="background:rgba(14,165,233,0.1)">🔷</div>
+                        <div class="db-rank">
+                            <div class="stars-badge">⭐ 31.0k</div>
+                            <div class="lang-badge">C++ / Python</div>
+                        </div>
+                    </div>
+                    <div class="db-name">FAISS</div>
+                    <div class="db-tagline">Facebook AI 研究院出品，高效向量相似度搜索库</div>
+                    <div class="db-tags">
+                        <span class="db-tag">开源</span>
+                        <span class="db-tag">库</span>
+                        <span class="db-tag">GPU加速</span>
+                        <span class="db-tag">Meta</div>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-row">
+                            <span class="score-label">性能</span>
+                            <div class="score-track"><div class="score-fill" style="width:98%;background:linear-gradient(90deg,#0ea5e9,#38bdf8)"></div></div>
+                            <span class="score-val">98</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">易用性</span>
+                            <div class="score-track"><div class="score-fill" style="width:55%;background:linear-gradient(90deg,#0ea5e9,#38bdf8)"></div></div>
+                            <span class="score-val">55</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">可扩展</span>
+                            <div class="score-track"><div class="score-fill" style="width:70%;background:linear-gradient(90deg,#0ea5e9,#38bdf8)"></div></div>
+                            <span class="score-val">70</span>
+                        </div>
+                    </div>
+                    <div class="db-metrics">
+                        <div class="db-metric"><div class="val">0.1ms</div><div class="key">延迟</div></div>
+                        <div class="db-metric"><div class="val">无限</div><div class="key">理论规模</div></div>
+                        <div class="db-metric"><div class="val">免费</div><div class="key">开源</div></div>
+                    </div>
+                </div>
+
+                <!-- Vespa -->
+                <div class="db-card fade-up" data-db="vespa">
+                    <div class="db-card-header">
+                        <div class="db-icon" style="background:rgba(132,204,22,0.1)">🌿</div>
+                        <div class="db-rank">
+                            <div class="stars-badge">⭐ 5.6k</div>
+                            <div class="lang-badge">Java/C++</div>
+                        </div>
+                    </div>
+                    <div class="db-name">Vespa</div>
+                    <div class="db-tagline">Yahoo 开源的大规模数据处理与搜索引擎，混合搜索之王</div>
+                    <div class="db-tags">
+                        <span class="db-tag">开源</span>
+                        <span class="db-tag">混合搜索</span>
+                        <span class="db-tag">实时更新</span>
+                        <span class="db-tag">Yahoo</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-row">
+                            <span class="score-label">性能</span>
+                            <div class="score-track"><div class="score-fill" style="width:88%;background:linear-gradient(90deg,#84cc16,#a3e635)"></div></div>
+                            <span class="score-val">88</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">易用性</span>
+                            <div class="score-track"><div class="score-fill" style="width:62%;background:linear-gradient(90deg,#84cc16,#a3e635)"></div></div>
+                            <span class="score-val">62</span>
+                        </div>
+                        <div class="score-row">
+                            <span class="score-label">可扩展</span>
+                            <div class="score-track"><div class="score-fill" style="width:94%;background:linear-gradient(90deg,#84cc16,#a3e635)"></div></div>
+                            <span class="score-val">94</span>
+                        </div>
+                    </div>
+                    <div class="db-metrics">
+                        <div class="db-metric"><div class="val">1ms</div><div class="key">延迟</div></div>
+                        <div class="db-metric"><div class="val">1B+</div><div class="key">向量规模</div></div>
+                        <div class="db-metric"><div class="val">免费</div><div class="key">开源</div></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 详细对比表 -->
+    <section id="compare" style="padding-top:0">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">📋 特性对比</div>
+                <h2 class="section-title">全维度功能矩阵</h2>
+                <p class="section-sub">从技术特性到部署方式，全方位横向对比</p>
+            </div>
+
+            <div class="compare-table-wrap fade-up">
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th>数据库</th>
+                            <th>许可证</th>
+                            <th>存储引擎</th>
+                            <th>过滤搜索</th>
+                            <th>混合搜索</th>
+                            <th>多租户</th>
+                            <th>分布式</th>
+                            <th>REST API</th>
+                            <th>gRPC</th>
+                            <th>Python SDK</th>
+                            <th>综合评分</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="db-name-cell">
+                                    <span class="ico">🔴</span>
+                                    <strong>Qdrant</strong>
+                                </div>
+                            </td>
+                            <td>Apache 2.0</td>
+                            <td>自研 HNSW</td>
+                            <td><span class="tick">✅ 原生</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="score-chip s90">93</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="db-name-cell">
+                                    <span class="ico">🟢</span>
+                                    <strong>Weaviate</strong>
+                                </div>
+                            </td>
+                            <td>BSD-3</td>
+                            <td>HNSW + BM25</td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅ 内置</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="partial">⚡ 部分</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="score-chip s90">87</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="db-name-cell">
+                                    <span class="ico">🔵</span>
+                                    <strong>Milvus</strong>
+                                </div>
+                            </td>
+                            <td>Apache 2.0</td>
+                            <td>多种索引</td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅ 原生</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="score-chip s80">86</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="db-name-cell">
+                                    <span class="ico">🌲</span>
+                                    <strong>Pinecone</strong>
+                                </div>
+                            </td>
+                            <td>商业</td>
+                            <td>专有</td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅ 托管</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="score-chip s80">84</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="db-name-cell">
+                                    <span class="ico">🟡</span>
+                                    <strong>Chroma</strong>
+                                </div>
+                            </td>
+                            <td>Apache 2.0</td>
+                            <td>DuckDB + HNSW</td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="partial">⚡ 基础</span></td>
+                            <td><span class="partial">⚡ 有限</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="score-chip s70">77</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="db-name-cell">
+                                    <span class="ico">🐘</span>
+                                    <strong>pgvector</strong>
+                                </div>
+                            </td>
+                            <td>PostgreSQL</td>
+                            <td>IVFFlat/HNSW</td>
+                            <td><span class="tick">✅ SQL</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="partial">⚡ PG集群</span></td>
+                            <td><span class="partial">⚡ PG接口</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="score-chip s70">79</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="db-name-cell">
+                                    <span class="ico">🔷</span>
+                                    <strong>FAISS</strong>
+                                </div>
+                            </td>
+                            <td>MIT</td>
+                            <td>多种索引</td>
+                            <td><span class="partial">⚡ 手动</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="score-chip s70">72</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="db-name-cell">
+                                    <span class="ico">🌿</span>
+                                    <strong>Vespa</strong>
+                                </div>
+                            </td>
+                            <td>Apache 2.0</td>
+                            <td>HNSW + 倒排</td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅ 最强</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="tick">✅</span></td>
+                            <td><span class="score-chip s80">81</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- 冠军推荐 -->
+    <section id="champion" class="champion-section">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">🏆 综合最优</div>
+                <h2 class="section-title">年度最佳向量数据库</h2>
+                <p class="section-sub">综合性能、易用性、生态系统和未来发展趋势的最终结论</p>
+            </div>
+
+            <div class="champion-card fade-up">
+                <div class="champion-inner">
+                    <div class="champion-crown">🏆 &nbsp;2024 年度综合最佳向量数据库</div>
+
+                    <div class="champion-layout">
+                        <div class="champion-info">
+                            <h2>Qdrant</h2>
+                            <div class="champion-version">v1.9.x · Rust 语言 · Apache 2.0 开源</div>
+                            <p class="champion-desc">
+                                Qdrant 以 Rust 语言从头构建，在性能、内存安全与工程质量上达到最佳平衡点。
+                                它不仅提供业界领先的向量搜索速度与精度，还具备完整的生产就绪特性——
+                                分布式部署、丰富的过滤条件、有效负载索引、量化压缩……全部在一个轻量级系统中实现。
+                            </p>
+
+                            <div class="champion-stat-row">
+                                <div class="c-stat">
+                                    <div class="n">19.8k</div>
+                                    <div class="l">GitHub Stars</div>
+                                </div>
+                                <div class="c-stat">
+                                    <div class="n">0.3ms</div>
+                                    <div class="l">P99 延迟</div>
+                                </div>
+                                <div class="c-stat">
+                                    <div class="n">1B+</div>
+                                    <div class="l">向量规模</div>
+                                </div>
+                                <div class="c-stat">
+                                    <div class="n">100%</div>
+                                    <div class="l">开源免费</div>
+                                </div>
+                            </div>
+
+                            <div class="champion-actions">
+                                <a href="https://qdrant.tech" class="btn-primary" target="_blank">
+                                    🚀 官方网站
+                                </a>
+                                <a href="https://github.com/qdrant/qdrant" class="btn-outline" target="_blank">
+                                    ⭐ GitHub
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="champion-scores">
+                            <div class="score-title">📊 维度评分详解</div>
+
+                            <div class="big-score-bar">
+                                <div class="big-score-header">
+                                    <span class="big-score-label">🚀 查询性能</span>
+                                    <span class="big-score-val">95 / 100</span>
+                                </div>
+                                <div class="big-score-track">
+                                    <div class="big-score-fill" style="width:95%;background:linear-gradient(90deg,#ef4444,#f97316)"></div>
+                                </div>
+                            </div>
+
+                            <div class="big-score-bar">
+                                <div class="big-score-header">
+                                    <span class="big-score-label">😊 开发体验</span>
+                                    <span class="big-score-val">92 / 100</span>
+                                </div>
+                                <div class="big-score-track">
+                                    <div class="big-score-fill" style="width:92%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div>
+                                </div>
+                            </div>
+
+                            <div class="big-score-bar">
+                                <div class="big-score-header">
+                                    <span class="big-score-label">📈 水平扩展</span>
+                                    <span class="big-score-val">92 / 100</span>
+                                </div>
+                                <div class="big-score-track">
+                                    <div class="big-score-fill" style="width:92%;background:linear-gradient(90deg,#10b981,#34d399)"></div>
+                                </div>
+                            </div>
+
+                            <div class="big-score-bar">
+                                <div class="big-score-header">
+                                    <span class="big-score-label">🔒 过滤搜索</span>
+                                    <span class="big-score-val">96 / 100</span>
+                                </div>
+                                <div class="big-score-track">
+                                    <div class="big-score-fill" style="width:96%;background:linear-gradient(90deg,#6366f1,#818cf8)"></div>
+                                </div>
+                            </div>
+
+                            <div class="big-score-bar">
+                                <div class="big-score-header">
+                                    <span class="big-score-label">🌍 生态集成</span>
+                                    <span class="big-score-val">90 / 100</span>
+                                </div>
+                                <div class="big-score-track">
+                                    <div class="big-score-fill" style="width:90%;background:linear-gradient(90deg,#06b6d4,#67e8f9)"></div>
+                                </div>
+                            </div>
+
+                            <div class="big-score-bar">
+                                <div class="big-score-header">
+                                    <span class="big-score-label">📦 内存效率</span>
+                                    <span class="big-score-val">94 / 100</span>
+                                </div>
+                                <div class="big-score-track">
+                                    <div class="big-score-fill" style="width:94%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div>
+                                </div>
+                            </div>
+
+                            <div class="big-score-bar" style="margin-top:1.2rem">
+                                <div class="big-score-header">
+                                    <span class="big-score-label" style="font-weight:800;color:var(--text)">⭐ 综合总分</span>
+                                    <span class="big-score-val" style="font-size:1.2rem;color:#ffd700">93 / 100</span>
+                                </div>
+                                <div class="big-score-track" style="height:14px">
+                                    <div class="big-score-fill" style="width:93%;background:linear-gradient(90deg,#ffd700,#f59e0b)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 推荐理由 -->
+                    <div class="champion-reasons">
+                        <h4>🎯 为什么选择 Qdrant？ — 六大核心优势</h4>
+                        <div class="reasons-grid">
+                            <div class="reason-item">
+                                <span class="reason-icon">⚡</span>
+                                <div class="reason-text">
+                                    <strong>极致性能</strong>
+                                    Rust 实现零开销抽象，内存安全保障，P99 延迟低至 0.3ms
+                                </div>
+                            </div>
+                            <div class="reason-item">
+                                <span class="reason-icon">🔍</span>
+                                <div class="reason-text">
+                                    <strong>最强过滤</strong>
+                                    独创 Filterable HNSW，带条件过滤的向量搜索精度业界第一
+                                </div>
+                            </div>
+                            <div class="reason-item">
+                                <span class="reason-icon">🗜️</span>
+                                <div class="reason-text">
+                                    <strong>量化压缩</strong>
+                                    标量/乘积量化使内存占用降低 4-32x，不牺牲精度
+                                </div>
+                            </div>
+                            <div class="reason-item">
+                                <span class="reason-icon">🌐</span>
+                                <div class="reason-text">
+                                    <strong>完整API</strong>
+                                    REST + gRPC 双协议，OpenAPI 规范，多语言 SDK 完备
+                                </div>
+                            </div>
+                            <div class="reason-item">
+                                <span class="reason-icon">☁️</span>
+                                <div class="reason-text">
+                                    <strong>弹性部署</strong>
+                                    单机 Docker → 分布式集群 → Qdrant Cloud 无缝迁移
+                                </div>
+                            </div>
+                            <div class="reason-item">
+                                <span class="reason-icon">🔗</span>
+                                <div class="reason-text">
+                                    <strong>生态完善</strong>
+                                    与 LangChain、LlamaIndex、OpenAI 深度集成，社区活跃
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 优缺点 -->
+                    <div class="pros-cons" style="margin-top:1.5rem">
+                        <div class="pros">
+                            <div class="pc-title p">✅ 优势</div>
+                            <ul class="pc-list">
+                                <li>Rust 构建，内存安全，无 GC 停顿</li>
+                                <li>向量+过滤同时高效，不降速</li>
+                                <li>内置量化，存储成本极低</li>
+                                <li>Docker 一键部署，上手极快</li>
+                                <li>持续活跃开发，版本迭代快</li>
+                                <li>有效负载（Payload）索引功能完善</li>
+                                <li>提供免费 Cloud 试用额度</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <div class="pc-title c">⚠️ 局限</div>
+                            <ul class="pc-list">
+                                <li>相较 Milvus 超大规模集群运维复杂度稍高</li>
+                                <li>没有内置 BM25 全文检索（需外挂）</li>
+                                <li>生态尚不如 FAISS 资历深厚</li>
+                                <li>企业级支持服务需付费</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 使用场景推荐 -->
+    <section id="usecases">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">🎯 场景匹配</div>
+                <h2 class="section-title">不同场景的最优选择</h2>
+                <p class="section-sub">根据您的具体需求，为不同场景推荐最合适的数据库</p>
+            </div>
+
+            <div class="use-cases">
+                <div class="use-case-card fade-up">
+                    <div class="use-case-icon">🤖</div>
+                    <div class="use-case-title">RAG / LLM 应用</div>
+                    <div class="use-case-desc">构建知识库问答、文档检索增强生成系统</div>
+                    <div class="use-case-recs">
+                        <div class="use-case-rec">
+                            <div class="rec-rank r1">1</div>
+                            <span><strong>Qdrant</strong> — 高性能+完整生态集成</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r2">2</div>
+                            <span><strong>Chroma</strong> — 极速原型，LangChain 首选</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r3">3</div>
+                            <span><strong>Weaviate</strong> — 多模态 AI 模块丰富</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="use-case-card fade-up">
+                    <div class="use-case-icon">🏢</div>
+                    <div class="use-case-title">大规模企业生产</div>
+                    <div class="use-case-desc">十亿级向量、高并发、需要强运维保障</div>
+                    <div class="use-case-recs">
+                        <div class="use-case-rec">
+                            <div class="rec-rank r1">1</div>
+                            <span><strong>Milvus</strong> — K8s 原生，极致扩展</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r2">2</div>
+                            <span><strong>Qdrant</strong> — 分布式集群生产就绪</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r3">3</div>
+                            <span><strong>Pinecone</strong> — 零运维托管服务</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="use-case-card fade-up">
+                    <div class="use-case-icon">🔬</div>
+                    <div class="use-case-title">学术科研实验</div>
+                    <div class="use-case-desc">快速验证算法，需要灵活自定义</div>
+                    <div class="use-case-recs">
+                        <div class="use-case-rec">
+                            <div class="rec-rank r1">1</div>
+                            <span><strong>FAISS</strong> — 最快原始性能，Meta 加持</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r2">2</div>
+                            <span><strong>Chroma</strong> — Python 原生，零配置</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r3">3</div>
+                            <span><strong>Qdrant</strong> — 功能全面实验友好</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="use-case-card fade-up">
+                    <div class="use-case-icon">🐘</div>
+                    <div class="use-case-title">已有 PostgreSQL 栈</div>
+                    <div class="use-case-desc">不想引入新技术栈，利用现有 PG 基础设施</div>
+                    <div class="use-case-recs">
+                        <div class="use-case-rec">
+                            <div class="rec-rank r1">1</div>
+                            <span><strong>pgvector</strong> — 无缝融入 PG 生态</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r2">2</div>
+                            <span><strong>Qdrant</strong> — 数据量大时迁移</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r3">3</div>
+                            <span><strong>Chroma</strong> — 轻量备选方案</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="use-case-card fade-up">
+                    <div class="use-case-icon">🛍️</div>
+                    <div class="use-case-title">电商推荐系统</div>
+                    <div class="use-case-desc">商品相似度搜索、个性化推荐，需要实时更新</div>
+                    <div class="use-case-recs">
+                        <div class="use-case-rec">
+                            <div class="rec-rank r1">1</div>
+                            <span><strong>Qdrant</strong> — 过滤+向量完美结合</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r2">2</div>
+                            <span><strong>Vespa</strong> — 实时更新最强</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r3">3</div>
+                            <span><strong>Weaviate</strong> — 多模态商品图文搜索</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="use-case-card fade-up">
+                    <div class="use-case-icon">☁️</div>
+                    <div class="use-case-title">快速 SaaS 产品</div>
+                    <div class="use-case-desc">初创公司，快速上线，不想管运维</div>
+                    <div class="use-case-recs">
+                        <div class="use-case-rec">
+                            <div class="rec-rank r1">1</div>
+                            <span><strong>Pinecone</strong> — 全托管开箱即用</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r2">2</div>
+                            <span><strong>Qdrant Cloud</strong> — 免费额度起步</span>
+                        </div>
+                        <div class="use-case-rec">
+                            <div class="rec-rank r3">3</div>
+                            <span><strong>Weaviate Cloud</strong> — 内置 AI 模块</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 性能基准 -->
+    <section id="benchmark" style="background:linear-gradient(180deg,transparent,rgba(99,102,241,0.02),transparent)">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">⚡ 性能基准</div>
+                <h2 class="section-title">性能测试对比</h2>
+                <p class="section-sub">基于 ANN Benchmark 及社区实测数据（1M 向量，1536维，精度@10）</p>
+            </div>
+
+            <div class="benchmark-grid">
+                <div class="bench-card fade-up">
+                    <div class="bench-title">🔍 QPS（每秒查询数）</div>
+                    <div class="bench-sub">越高越好 | 单节点 8C16G 测试</div>
+                    <div class="bench-bars">
+                        <div class="bench-row">
+                            <span class="bench-name">FAISS</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:100%;background:linear-gradient(90deg,#0ea5e9,#38bdf8)">15,000+</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Qdrant</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:85%;background:linear-gradient(90deg,#ef4444,#f87171)">12,800</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Milvus</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:75%;background:linear-gradient(90deg,#6366f1,#818cf8)">11,200</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Vespa</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:70%;background:linear-gradient(90deg,#84cc16,#a3e635)">10,500</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Weaviate</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:62%;background:linear-gradient(90deg,#10b981,#34d399)">9,300</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">pgvector</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:45%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)">6,700</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Chroma</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:28%;background:linear-gradient(90deg,#f59e0b,#fbbf24)">4,200</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bench-card fade-up">
+                    <div class="bench-title">🎯 精确率 Recall@10</div>
+                    <div class="bench-sub">越高越好 | 近似最近邻搜索精度</div>
+                    <div class="bench-bars">
+                        <div class="bench-row">
+                            <span class="bench-name">Qdrant</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:99%;background:linear-gradient(90deg,#ef4444,#f87171)">99.2%</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Milvus</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:98%;background:linear-gradient(90deg,#6366f1,#818cf8)">98.8%</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Weaviate</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:97%;background:linear-gradient(90deg,#10b981,#34d399)">97.5%</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Pinecone</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:97%;background:linear-gradient(90deg,#06b6d4,#67e8f9)">97.0%</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Vespa</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:96%;background:linear-gradient(90deg,#84cc16,#a3e635)">96.5%</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">FAISS</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:94%;background:linear-gradient(90deg,#0ea5e9,#38bdf8)">94.0%</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">pgvector</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:92%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)">92.0%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bench-card fade-up">
+                    <div class="bench-title">💾 内存效率（相对值）</div>
+                    <div class="bench-sub">越低越好 | 存储 1M 1536维向量</div>
+                    <div class="bench-bars">
+                        <div class="bench-row">
+                            <span class="bench-name">Qdrant</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:30%;background:linear-gradient(90deg,#10b981,#34d399)">~2GB</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">FAISS</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:38%;background:linear-gradient(90deg,#0ea5e9,#38bdf8)">~2.5GB</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Milvus</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:52%;background:linear-gradient(90deg,#6366f1,#818cf8)">~3.5GB</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Weaviate</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:60%;background:linear-gradient(90deg,#f59e0b,#fbbf24)">~4GB</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Pinecone</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:55%;background:linear-gradient(90deg,#06b6d4,#67e8f9)">~3.7GB</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">Chroma</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:75%;background:linear-gradient(90deg,#ef4444,#f87171)">~5GB</div>
+                            </div>
+                        </div>
+                        <div class="bench-row">
+                            <span class="bench-name">pgvector</span>
+                            <div class="bench-track">
+                                <div class="bench-fill" style="width:100%;background:linear-gradient(90deg,#dc2626,#ef4444)">~6.5GB</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 决策树 -->
+    <section>
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">🗺️ 选型指南</div>
+                <h2 class="section-title">快速决策树</h2>
+                <p class="section-sub">回答以下问题，找到最适合您的向量数据库</p>
+            </div>
+
+            <div class="decision-tree fade-up">
+                <div class="decision-title">🤔 我应该选哪个？</div>
+
+                <div class="dt-node">
+                    <div class="dt-question">
+                        <div class="dt-q-icon">1</div>
+                        您的主要使用场景是？
+                    </div>
+                    <div class="dt-answers">
+                        <div class="dt-answer">
+                            <span class="dt-cond">AI/LLM 应用</span>
+                            <span class="dt-rec">→ Qdrant 或 Chroma</span>
+                            <p class="dt-note">生产选 Qdrant，原型选 Chroma</p>
+                        </div>
+                        <div class="dt-answer">
+                            <span class="dt-cond">研究/算法验证</span>
+                            <span class="dt-rec">→ FAISS</span>
+                            <p class="dt-note">最高原始性能，GPU 加速</p>
+                        </div>
+                        <div class="dt-answer">
+                            <span class="dt-cond">电商/推荐</span>
+                            <span class="dt-rec">→ Qdrant 或 Vespa</span>
+                            <p class="dt-note">需要复杂过滤时选 Qdrant</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dt-node">
+                    <div class="dt-question">
+                        <div class="dt-q-icon">2</div>
+                        向量数据量级是？
+                    </div>
+                    <div class="dt-answers">
+                        <div class="dt-answer">
+                            <span class="dt-cond">< 100万</span>
+                            <span class="dt-rec">→ 任意都可以</span>
+                            <p class="dt-note">推荐 Qdrant 或 Chroma</p>
+                        </div>
+                        <div class="dt-answer">
+                            <span class="dt-cond">100万 ~ 1亿</span>
+                            <span class="dt-rec">→ Qdrant / Weaviate</span>
+                            <p class="dt-note">中等规模最优解</p>
+                        </div>
+                        <div class="dt-answer">
+                            <span class="dt-cond">> 10亿</span>
+                            <span class="dt-rec">→ Milvus</span>
+                            <p class="dt-note">K8s 原生，无限扩展</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dt-node">
+                    <div class="dt-question">
+                        <div class="dt-q-icon">3</div>
+                        部署偏好是？
+                    </div>
+                    <div class="dt-answers">
+                        <div class="dt-answer">
+                            <span class="dt-cond">完全托管</span>
+                            <span class="dt-rec">→ Pinecone</span>
+                            <p class="dt-note">零运维，快速上线</p>
+                        </div>
+                        <div class="dt-answer">
+                            <span class="dt-cond">本地自部署</span>
+                            <span class="dt-rec">→ Qdrant</span>
+                            <p class="dt-note">Docker 一键启动</p>
+                        </div>
+                        <div class="dt-answer">
+                            <span class="dt-cond">现有 PostgreSQL</span>
+                            <span class="dt-rec">→ pgvector</span>
+                            <p class="dt-note">无缝融入现有架构</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dt-node">
+                    <div class="dt-question">
+                        <div class="dt-q-icon">4</div>
+                        最终结论
+                    </div>
+                    <div class="dt-answers">
+                        <div class="dt-answer" style="border-color:rgba(255,215,0,0.4);background:rgba(255,215,0,0.04)">
+                            <span class="dt-cond" style="color:#ffd700">🏆 综合推荐</span>
+                            <span class="dt-rec" style="color:#ffd700;font-size:1.1rem">Qdrant</span>
+                            <p class="dt-note">性能 + 易用 + 功能 + 开源的完美平衡</p>
+                        </div>
+                        <div class="dt-answer">
+                            <span class="dt-cond">🚀 极速原型</span>
+                            <span class="dt-rec">Chroma</span>
+                            <p class="dt-note">三行代码跑起来</p>
+                        </div>
+                        <div class="dt-answer">
+                            <span class="dt-cond">🏗️ 超大规模</span>
+                            <span class="dt-rec">Milvus</span>
+                            <p class="dt-note">百亿级向量首选</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 快速开始 -->
+    <section id="quickstart">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">💻 快速开始</div>
+                <h2 class="section-title">五分钟上手 Qdrant</h2>
+                <p class="section-sub">从安装到第一次查询，完整代码示例</p>
+            </div>
+
+            <div class="quickstart fade-up">
+                <div class="qs-tabs">
+                    <div class="qs-tab active" onclick="switchTab(this,'docker')">🐳 Docker 启动</div>
+                    <div class="qs-tab" onclick="switchTab(this,'python')">🐍 Python 使用</div>
+                    <div class="qs-tab" onclick="switchTab(this,'langchain')">🔗 LangChain 集成</div>
+                    <div class="qs-tab" onclick="switchTab(this,'rest')">🌐 REST API</div>
+                </div>
+
+                <div class="qs-content active" id="tab-docker">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                            <span class="code-lang">bash / docker-compose.yml</span>
+                            <button class="code-copy" onclick="copyCode(this)">复制</button>
+                        </div>
+                        <pre><span class="cmt"># 方法一：单行 Docker 启动</span>
+<span class="fn">docker</span> run <span class="op">-p</span> <span class="num">6333</span><span class="op">:</span><span class="num">6333</span> <span class="op">-p</span> <span class="num">6334</span><span class="op">:</span><span class="num">6334</span> <span class="op">\</span>
+    <span class="op">-v</span> <span class="str">$(pwd)/qdrant_storage:/qdrant/storage</span> <span class="op">\</span>
+    <span class="var">qdrant/qdrant</span>
+
+<span class="cmt"># 方法二：docker-compose.yml</span>
+<span class="kw">version</span><span class="op">:</span> <span class="str">'3'</span>
+<span class="kw">services</span><span class="op">:</span>
+  <span class="cls">qdrant</span><span class="op">:</span>
+    <span class="kw">image</span><span class="op">:</span> <span class="var">qdrant/qdrant</span>
+    <span class="kw">ports</span><span class="op">:</span>
+      <span class="op">-</span> <span class="str">"6333:6333"</span>   <span class="cmt"># HTTP API</span>
+      <span class="op">-</span> <span class="str">"6334:6334"</span>   <span class="cmt"># gRPC</span>
+    <span class="kw">volumes</span><span class="op">:</span>
+      <span class="op">-</span> <span class="str">./qdrant_storage:/qdrant/storage</span>
+    <span class="kw">environment</span><span class="op">:</span>
+      <span class="op">-</span> <span class="var">QDRANT__SERVICE__GRPC_PORT=6334</span>
+
+<span class="cmt"># 启动</span>
+<span class="fn">docker-compose</span> up <span class="op">-d</span>
+
+<span class="cmt"># 检查状态</span>
+<span class="fn">curl</span> http://localhost:6333/</pre>
+                    </div>
+                </div>
+
+                <div class="qs-content" id="tab-python">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                            <span class="code-lang">Python 3.8+</span>
+                            <button class="code-copy" onclick="copyCode(this)">复制</button>
+                        </div>
+                        <pre><span class="cmt"># 安装</span>
+<span class="fn">pip</span> install qdrant-client openai
+
+<span class="kw">from</span> <span class="var">qdrant_client</span> <span class="kw">import</span> <span class="cls">QdrantClient</span>
+<span class="kw">from</span> <span class="var">qdrant_client.models</span> <span class="kw">import</span> <span class="cls">Distance</span>, <span class="cls">VectorParams</span>
+<span class="kw">from</span> <span class="var">qdrant_client.models</span> <span class="kw">import</span> <span class="cls">PointStruct</span>, <span class="cls">Filter</span>, <span class="cls">FieldCondition</span>
+<span class="kw">import</span> <span class="var">numpy</span> <span class="kw">as</span> <span class="var">np</span>
+
+<span class="cmt"># 1. 连接 Qdrant</span>
+<span class="var">client</span> <span class="op">=</span> <span class="cls">QdrantClient</span>(<span class="str">"localhost"</span>, port<span class="op">=</span><span class="num">6333</span>)
+
+<span class="cmt"># 2. 创建集合</span>
+<span class="var">client</span>.<span class="fn">create_collection</span>(
+    collection_name<span class="op">=</span><span class="str">"my_docs"</span>,
+    vectors_config<span class="op">=</span><span class="cls">VectorParams</span>(
+        size<span class="op">=</span><span class="num">1536</span>,           <span class="cmt"># OpenAI text-embedding-3-small 维度</span>
+        distance<span class="op">=</span><span class="cls">Distance</span>.<span class="var">COSINE</span>
+    )
+)
+
+<span class="cmt"># 3. 插入向量数据</span>
+<span class="var">points</span> <span class="op">=</span> [
+    <span class="cls">PointStruct</span>(
+        id<span class="op">=</span>i,
+        vector<span class="op">=</span>np.<span class="fn">random.rand</span>(<span class="num">1536</span>).<span class="fn">tolist</span>(),
+        payload<span class="op">=</span>{
+            <span class="str">"title"</span><span class="op">:</span> <span class="str">f"文档 {i}"</span>,
+            <span class="str">"category"</span><span class="op">:</span> <span class="str">"tech"</span>,
+            <span class="str">"score"</span><span class="op">:</span> <span class="num">0.9</span>
+        }
+    )
+    <span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1000</span>)
+]
+<span class="var">client</span>.<span class="fn">upsert</span>(collection_name<span class="op">=</span><span class="str">"my_docs"</span>, points<span class="op">=</span><span class="var">points</span>)
+
+<span class="cmt"># 4. 向量搜索（带过滤条件）</span>
+<span class="var">query_vector</span> <span class="op">=</span> np.<span class="fn">random.rand</span>(<span class="num">1536</span>).<span class="fn">tolist</span>()
+
+<span class="var">results</span> <span class="op">=</span> <span class="var">client</span>.<span class="fn">search</span>(
+    collection_name<span class="op">=</span><span class="str">"my_docs"</span>,
+    query_vector<span class="op">=</span><span class="var">query_vector</span>,
+    query_filter<span class="op">=</span><span class="cls">Filter</span>(
+        must<span class="op">=</span>[<span class="cls">FieldCondition</span>(
+            key<span class="op">=</span><span class="str">"category"</span>,
+            match<span class="op">=</span>{<span class="str">"value"</span><span class="op">:</span> <span class="str">"tech"</span>}
+        )]
+    ),
+    limit<span class="op">=</span><span class="num">5</span>
+)
+
+<span class="kw">for</span> <span class="var">r</span> <span class="kw">in</span> <span class="var">results</span><span class="op">:</span>
+    <span class="fn">print</span>(<span class="str">f"ID: {r.id}, Score: {r.score:.4f}, Title: {r.payload['title']}"</span>)</pre>
+                    </div>
+                </div>
+
+                <div class="qs-content" id="tab-langchain">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                            <span class="code-lang">Python — LangChain + Qdrant RAG</span>
+                            <button class="code-copy" onclick="copyCode(this)">复制</button>
+                        </div>
+                        <pre><span class="fn">pip</span> install langchain langchain-openai langchain-qdrant
+
+<span class="kw">from</span> <span class="var">langchain_openai</span> <span class="kw">import</span> <span class="cls">OpenAIEmbeddings</span>, <span class="cls">ChatOpenAI</span>
+<span class="kw">from</span> <span class="var">langchain_qdrant</span> <span class="kw">import</span> <span class="cls">QdrantVectorStore</span>
+<span class="kw">from</span> <span class="var">langchain.chains</span> <span class="kw">import</span> <span class="cls">RetrievalQA</span>
+<span class="kw">from</span> <span class="var">langchain.text_splitter</span> <span class="kw">import</span> <span class="cls">RecursiveCharacterTextSplitter</span>
+<span class="kw">from</span> <span class="var">langchain_community.document_loaders</span> <span class="kw">import</span> <span class="cls">TextLoader</span>
+
+<span class="cmt"># 1. 加载文档</span>
+<span class="var">loader</span> <span class="op">=</span> <span class="cls">TextLoader</span>(<span class="str">"knowledge_base.txt"</span>)
+<span class="var">docs</span> <span class="op">=</span> <span class="var">loader</span>.<span class="fn">load</span>()
+
+<span class="cmt"># 2. 分割文本</span>
+<span class="var">splitter</span> <span class="op">=</span> <span class="cls">RecursiveCharacterTextSplitter</span>(
+    chunk_size<span class="op">=</span><span class="num">512</span>, chunk_overlap<span class="op">=</span><span class="num">50</span>
+)
+<span class="var">chunks</span> <span class="op">=</span> <span class="var">splitter</span>.<span class="fn">split_documents</span>(<span class="var">docs</span>)
+
+<span class="cmt"># 3. 构建向量库</span>
+<span class="var">embeddings</span> <span class="op">=</span> <span class="cls">OpenAIEmbeddings</span>(model<span class="op">=</span><span class="str">"text-embedding-3-small"</span>)
+<span class="var">vectorstore</span> <span class="op">=</span> <span class="cls">QdrantVectorStore</span>.<span class="fn">from_documents</span>(
+    <span class="var">chunks</span>,
+    <span class="var">embeddings</span>,
+    url<span class="op">=</span><span class="str">"http://localhost:6333"</span>,
+    collection_name<span class="op">=</span><span class="str">"knowledge_base"</span>
+)
+
+<span class="cmt"># 4. 构建 RAG 问答链</span>
+<span class="var">llm</span> <span class="op">=</span> <span class="cls">ChatOpenAI</span>(model<span class="op">=</span><span class="str">"gpt-4o-mini"</span>, temperature<span class="op">=</span><span class="num">0</span>)
+<span class="var">qa_chain</span> <span class="op">=</span> <span class="cls">RetrievalQA</span>.<span class="fn">from_chain_type</span>(
+    llm<span class="op">=</span><span class="var">llm</span>,
+    retriever<span class="op">=</span><span class="var">vectorstore</span>.<span class="fn">as_retriever</span>(search_kwargs<span class="op">=</span>{<span class="str">"k"</span><span class="op">:</span> <span class="num">5</span>})
+)
+
+<span class="cmt"># 5. 提问！</span>
+<span class="var">answer</span> <span class="op">=</span> <span class="var">qa_chain</span>.<span class="fn">invoke</span>({<span class="str">"query"</span><span class="op">:</span> <span class="str">"这篇文档的主要内容是什么？"</span>})
+<span class="fn">print</span>(<span class="var">answer</span>[<span class="str">'result'</span>])</pre>
+                    </div>
+                </div>
+
+                <div class="qs-content" id="tab-rest">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                            <span class="code-lang">REST API (curl / HTTP)</span>
+                            <button class="code-copy" onclick="copyCode(this)">复制</button>
+                        </div>
+                        <pre><span class="cmt"># 创建集合</span>
+<span class="fn">curl</span> <span class="op">-X</span> PUT <span class="str">'http://localhost:6333/collections/my_collection'</span> \
+  <span class="op">-H</span> <span class="str">'Content-Type: application/json'</span> \
+  <span class="op">-d</span> <span class="str">'{
+    "vectors": {
+      "size": 1536,
+      "distance": "Cosine"
+    }
+  }'</span>
+
+<span class="cmt"># 插入向量</span>
+<span class="fn">curl</span> <span class="op">-X</span> PUT <span class="str">'http://localhost:6333/collections/my_collection/points'</span> \
+  <span class="op">-H</span> <span class="str">'Content-Type: application/json'</span> \
+  <span class="op">-d</span> <span class="str">'{
+    "points": [
+      {
+        "id": 1,
+        "vector": [0.05, 0.61, 0.76, ...],
+        "payload": {
+          "title": "向量数据库入门",
+          "category": "tech"
+        }
+      }
+    ]
+  }'</span>
+
+<span class="cmt"># 向量相似度搜索</span>
+<span class="fn">curl</span> <span class="op">-X</span> POST <span class="str">'http://localhost:6333/collections/my_collection/points/search'</span> \
+  <span class="op">-H</span> <span class="str">'Content-Type: application/json'</span> \
+  <span class="op">-d</span> <span class="str">'{
+    "vector": [0.05, 0.61, 0.76, ...],
+    "filter": {
+      "must": [
+        {
+          "key": "category",
+          "match": { "value": "tech" }
+        }
+      ]
+    },
+    "limit": 5,
+    "with_payload": true
+  }'</span></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 生态系统 -->
+    <section>
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">🌐 生态集成</div>
+                <h2 class="section-title">Qdrant 生态系统</h2>
+                <p class="section-sub">与主流 AI 框架和工具的无缝集成</p>
+            </div>
+
+            <div class="ecosystem-grid fade-up">
+                <div class="eco-item"><div class="eco-icon">🦜</div><div class="eco-name">LangChain</div><div class="eco-type">AI框架</div></div>
+                <div class="eco-item"><div class="eco-icon">🦙</div><div class="eco-name">LlamaIndex</div><div class="eco-type">AI框架</div></div>
+                <div class="eco-item"><div class="eco-icon">🤖</div><div class="eco-name">OpenAI</div><div class="eco-type">嵌入模型</div></div>
+                <div class="eco-item"><div class="eco-icon">🤗</div><div class="eco-name">HuggingFace</div><div class="eco-type">嵌入模型</div></div>
+                <div class="eco-item"><div class="eco-icon">🐍</div><div class="eco-name">Python SDK</div><div class="eco-type">官方SDK</div></div>
+                <div class="eco-item"><div class="eco-icon">☕</div><div class="eco-name">Java SDK</div><div class="eco-type">官方SDK</div></div>
+                <div class="eco-item"><div class="eco-icon">🦀</div><div class="eco-name">Rust SDK</div><div class="eco-type">官方SDK</div></div>
+                <div class="eco-item"><div class="eco-icon">🔷</div><div class="eco-name">TypeScript</div><div class="eco-type">官方SDK</div></div>
+                <div class="eco-item"><div class="eco-icon">☸️</div><div class="eco-name">Kubernetes</div><div class="eco-type">部署</div></div>
+                <div class="eco-item"><div class="eco-icon">🐳</div><div class="eco-name">Docker</div><div class="eco-type">部署</div></div>
+                <div class="eco-item"><div class="eco-icon">🌿</div><div class="eco-name">Terraform</div><div class="eco-type">基础设施</div></div>
+                <div class="eco-item"><div class="eco-icon">📊</div><div class="eco-name">Grafana</div><div class="eco-type">监控</div></div>
+                <div class="eco-item"><div class="eco-icon">⚡</div><div class="eco-name">FastAPI</div><div class="eco-type">Web框架</div></div>
+                <div class="eco-item"><div class="eco-icon">🔥</div><div class="eco-name">PyTorch</div><div class="eco-type">深度学习</div></div>
+                <div class="eco-item"><div class="eco-icon">🌊</div><div class="eco-name">Haystack</div><div class="eco-type">搜索框架</div></div>
+                <div class="eco-item"><div class="eco-icon">📡</div><div class="eco-name">Cohere</div><div class="eco-type">嵌入模型</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 发展历史 -->
+    <section>
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">📅 发展历程</div>
+                <h2 class="section-title">向量数据库发展史</h2>
+            </div>
+            <div style="max-width:700px;margin:0 auto" class="fade-up">
+                <div class="timeline">
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2017</div>
+                        <div class="tl-title">FAISS 开源</div>
+                        <div class="tl-desc">Facebook AI Research 发布 FAISS，向量搜索领域奠基之作</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2019</div>
+                        <div class="tl-title">Milvus 诞生</div>
+                        <div class="tl-desc">Zilliz 开源 Milvus，首个专用云原生向量数据库</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2020</div>
+                        <div class="tl-title">Weaviate 问世</div>
+                        <div class="tl-desc">SeMI Technologies 推出 Weaviate，引入语义搜索概念</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2021</div>
+                        <div class="tl-title">Qdrant & Pinecone</div>
+                        <div class="tl-desc">Qdrant 以 Rust 高性能开源；Pinecone 提供商业托管服务</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2022</div>
+                        <div class="tl-title">Chroma & pgvector</div>
+                        <div class="tl-desc">Chroma 专为 LLM 优化；pgvector 让 PostgreSQL 支持向量</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2023</div>
+                        <div class="tl-title">ChatGPT 引爆需求</div>
+                        <div class="tl-desc">RAG 架构盛行，向量数据库成为 AI 基础设施核心组件</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2024</div>
+                        <div class="tl-title">全面成熟竞争</div>
+                        <div class="tl-desc">各厂商高速迭代，多模态、混合搜索成标配；Qdrant 综合领先</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- Footer -->
+<footer>
+    <div class="footer-logo">🗃️ VectorDB Guide</div>
+    <div class="footer-links">
+        <a href="https://qdrant.tech/documentation" target="_blank">Qdrant 文档</a>
+        <a href="https://github.com/qdrant/qdrant" target="_blank">GitHub</a>
+        <a href="https://ann-benchmarks.com" target="_blank">ANN Benchmarks</a>
+        <a href="https://github.com/topics/vector-database" target="_blank">GitHub Topic</a>
+    </div>
+    <div class="footer-copy">
+        数据来源：GitHub、官方文档、ANN Benchmarks、社区实测 · 2024年编制<br>
+        仅供参考，实际选型请结合自身业务需求进行测试验证
+    </div>
+</footer>
+
+<script>
+    // ===== 粒子动画 =====
+    const container = document.getElementById('particles');
+    for(let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.cssText = `
+            left: ${Math.random()*100}%;
+            width: ${Math.random()*4+2}px;
+            height: ${Math.random()*4+2}px;
+            animation-duration: ${Math.random()*15+8}s;
+            animation-delay: ${Math.random()*10}s;
+            background: ${['#6366f1','#06b6d4','#f59e0b','#10b981'][Math.floor(Math.random()*4)]};
+        `;
+        container.appendChild(p);
+    }
+
+    // ===== 滚动进度条 =====
+    window.addEventListener('scroll', () => {
+        const scrolled = window.scrollY;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = (scrolled / maxScroll) * 100;
+        document.getElementById('progress-bar').style.width = progress + '%';
+    });
+
+    // ===== Intersection Observer 动画 =====
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+            if(entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.classList.add('visible');
+                }, 0);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    // 给卡片添加延迟
+    document.querySelectorAll('.fade-up').forEach((el, i) => {
+        const siblings = el.parentElement.querySelectorAll('.fade-up');
+        const idx = Array.from(siblings).indexOf(el);
+        el.style.transitionDelay = (idx * 0.08) + 's';
+        observer.observe(el);
+    });
+
+    // ===== Tab 切换 =====
+    function switchTab(el, id) {
+        document.querySelectorAll('.qs-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.qs-content').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('tab-' + id).classList.add('active');
+    }
+
+    // ===== 复制代码 =====
+    function copyCode(btn) {
+        const pre = btn.closest('.code-block').querySelector('pre');
+        const text = pre.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const orig = btn.textContent;
+            btn.textContent = '✅ 已复制';
+            btn.style.color = '#10b981';
+            setTimeout(() => {
+                btn.textContent = orig;
+                btn.style.color = '';
+            }, 2000);
+        }).catch(() => {
+            btn.textContent = '❌ 失败';
+            setTimeout(() => { btn.textContent = '复制'; }, 2000);
+        });
+    }
+
+    // ===== 卡片点击波纹 =====
+    document.querySelectorAll('.db-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            const ripple = document.createElement('div');
+            const rect = this.getBoundingClientRect();
+            ripple.style.cssText = `
+                position:absolute;
+                left:${e.clientX - rect.left}px;
+                top:${e.clientY - rect.top}px;
+                width:10px;height:10px;
+                background:rgba(99,102,241,0.3);
+                border-radius:50%;
+                transform:scale(0);
+                animation:ripple 0.6s linear;
+                pointer-events:none;
+            `;
+            this.style.position = 'relative';
+            this.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        });
+    });
+
+    // 注入 ripple 动画
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes ripple {
+            to { transform: scale(30); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // ===== 数字滚动动画 =====
+    function animateNumber(el, start, end, suffix = '') {
+        let current = start;
+        const step = (end - start) / 60;
+        const timer = setInterval(() => {
+            current += step;
+            if(current >= end) {
+                current = end;
+                clearInterval(timer);
+            }
+            el.textContent = Math.floor(current) + suffix;
+        }, 16);
+    }
+
+    // Hero stats 数字动画
+    const heroStats = document.querySelectorAll('.hero-stat .num');
+    const heroObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if(entry.isIntersecting) {
+                heroObserver.unobserve(entry.target);
+            }
+        });
+    });
+    heroStats.forEach(s => heroObserver.observe(s));
+
+    console.log('%c🗃️ VectorDB Guide 2024', 'font-size:20px;font-weight:bold;color:#6366f1');
+    console.log('%c综合推荐：Qdrant — 性能 × 易用 × 生态 的完美平衡', 'color:#f59e0b');
+</script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub AI Gateway 分析报告</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h1 {
+            color: var(--secondary);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-top: 30px;
+            border-left: 5px solid var(--primary);
+            padding-left: 15px;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .winner-badge {
+            display: inline-block;
+            background-color: #22c55e;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: var(--secondary);
+            font-weight: 700;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .pros { color: #166534; font-size: 0.9em; }
+        .cons { color: #991b1b; font-size: 0.9em; }
+
+        code {
+            background-color: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #c026d3;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>AI Gateway 分析报告</h1>
+        <p>数据来源：GitHub Topics - AI Gateway</p>
+    </header>
+
+    <section>
+        <p>随着 LLM（大语言模型）的爆发式增长，企业通常需要对接多个 AI 提供商（如 OpenAI, Anthropic, Azure, Cohere 等）。为了统一接口、管理密钥、实现负载均衡和日志审计，<strong>AI Gateway（AI 网关）</strong>成为了架构中的关键组件。</p>
+        
+        <p>本页面分析了 GitHub 上最流行的 AI Gateway 项目，并为您筛选出最佳解决方案。</p>
+    </section>
+
+    <h2>📊 主流产品对比分析</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>产品名称</th>
+                <th>GitHub 热度</th>
+                <th>核心优势 (Pros)</th>
+                <th>劣势/局限 (Cons)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>LiteLLM</strong> 🏆</td>
+                <td>⭐ 25k+</td>
+                <td class="pros">
+                    • 支持 100+ 模型<br>
+                    • 统一 OpenAI 格式调用<br>
+                    • 负载均衡、密钥轮换<br>
+                    • 支持 Self-Hosted
+                </td>
+                <td class="cons">
+                    • 界面（UI）相对基础<br>
+                    • 需要一定的配置能力
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Portkey AI</strong></td>
+                <td>⭐ 8k+</td>
+                <td class="pros">
+                    • 强大的可观测性/监控<br>
+                    • 完整的 AI Stack<br>
+                    • 成熟的 SaaS 服务
+                </td>
+                <td class="cons">
+                    • 开源版功能相对有限<br>
+                    • 偏向 SaaS 订阅
+                </td>
+            </tr>
+            <tr>
+                <td><strong>OpenRouter</strong></td>
+                <td>⭐ 6k+</td>
+                <td class="pros">
+                    • 聚合了几乎所有模型<br>
+                    • 简单的 API 体验<br>
+                    • 开源客户端丰富
+                </td>
+                <td class="cons">
+                    • 主要是服务形式<br>
+                    • 自托管版本较弱
+                </td>
+            </tr>
+            <tr>
+                <td><strong>FastGPT</strong></td>
+                <td>⭐ 16k+</td>
+                <td class="pros">
+                    • 知识库问答能力极强<br>
+                    • 适合国内环境<br>
+                    • 可视化工作流
+                </td>
+                <td class="cons">
+                    • 更像是一个知识库应用<br>
+                    • 作为纯网关略显臃肿
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="highlight-box">
+        <div class="winner-badge">🏆 最终推荐</div>
+        <h2 style="margin-top:0; border:none; padding:0;">LiteLLM - 最通用的 AI 网关</h2>
+        <p>经过多维度对比（功能完备性、易用性、社区活跃度），<strong>LiteLLM</strong> 是目前开发者构建 AI 应用时，部署 <strong>AI Gateway</strong> 的首选。</p>
+        <a href="https://github.com/BerriAI/litellm" target="_blank" class="btn">查看 LiteLLM 源码</a>
+    </div>
+
+    <h2>🚀 为什么选择 LiteLLM？</h2>
+    <ul>
+        <li><strong>🚀 极高的兼容性</strong>: 它是一个“Drop-in Replacement”，这意味着你不需要修改代码，只需要更改 Base URL 指向 LiteLLM 代理，它就能帮你路由到任何模型。</li>
+        <li><strong>🌐 广泛的模型支持</strong>: 支持超过 100 种模型，包括 OpenAI, Azure, Anthropic, Cohere, Ollama 等。这是目前支持提供商最多的开源网关。</li>
+        <li><strong>🛡️ 企业级特性</strong>: 内置负载均衡（支持多个 API Key 轮询）、自动重试、异常熔断、成本追踪和日志记录。</li>
+        <li><strong>🛠️ 极简部署</strong>: 只需一个简单的 Docker 命令即可启动，或者作为一个 Python 库嵌入你的项目中。</li>
+    </ul>
+
+    <h2>⚡ 快速开始 (Docker)</h2>
+    <p>如果您想立刻部署一个 LiteLLM 代理，只需运行以下命令：</p>
+    <pre><code>docker run \
+    -d -p 4000:4000 \
+    -v $(pwd)/config.yaml:/app/config.yaml \
+    litellm/main:latest \
+    --config /app/config.yaml --port 4000</code></pre>
+    
+    <p>配置文件示例 (<code>config.yaml</code>)：</p>
+    <pre><code>model_list:
+  - model_name: gpt-4
+    litellm_params:
+      model: azure/gpt-4
+      api_key: os.environ/AZURE_API_KEY
+      api_base: os.environ/AZURE_API_BASE
+  - model_name: claude-3
+    litellm_params:
+      model: anthropic/claude-3-opus-200k
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+litellm_settings:
+  drop_params: true
+  set_verbose: true</code></pre>
+
+    <div class="footer">
+        <p>本报告基于 GitHub 热门项目综合分析生成。<br>Created for AI Architecture Selection.</p>
+    </div>
+</div>
+
+</body>
+</html>

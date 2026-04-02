@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux 文件系统速查指南</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #e2e8f0;
+            --accent-ext4: #22c55e;
+            --accent-xfs: #3b82f6;
+            --accent-zfs: #a855f7;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 30px; font-size: 1.5rem; color: #f8fafc; }
+        .container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .card { background-color: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.2s; border-top: 4px solid #333; }
+        .card:hover { transform: translateY(-5px); }
+        .card h2 { margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        .tag { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .section-title { font-size: 0.85rem; color: #94a3b8; margin: 15px 0 5px; font-weight: bold; border-bottom: 1px solid #334155; padding-bottom: 5px; }
+        pre { background-color: #0f172a; padding: 10px; border-radius: 6px; font-size: 0.85rem; overflow-x: auto; color: #cbd5e1; border: 1px solid #334155; }
+        ul { padding-left: 20px; margin: 5px 0; line-height: 1.6; }
+        li::marker { color: #64748b; }
+        
+        /* Specific Colors */
+        .ext4 { border-color: var(--accent-ext4); }
+        .ext4 h2 { color: var(--accent-ext4); }
+        .ext4 .tag { background-color: rgba(34, 197, 94, 0.2); color: var(--accent-ext4); }
+        
+        .xfs { border-color: var(--accent-xfs); }
+        .xfs h2 { color: var(--accent-xfs); }
+        .xfs .tag { background-color: rgba(59, 130, 246, 0.2); color: var(--accent-xfs); }
+        
+        .zfs { border-color: var(--accent-zfs); }
+        .zfs h2 { color: var(--accent-zfs); }
+        .zfs .tag { background-color: rgba(168, 85, 247, 0.2); color: var(--accent-zfs); }
+    </style>
+</head>
+<body>
+
+<h1>Linux 文件系统速查：ZFS vs XFS vs ext4</h1>
+
+<div class="container">
+    <!-- EXT4 -->
+    <div class="card ext4">
+        <h2>ext4 <span class="tag">稳定 兼容</span></h2>
+        <div class="section-title">🎯 使用场景</div>
+        <ul>
+            <li><strong>通用首选：</strong>绝大多数Linux发行版默认。</li>
+            <li><strong>小文件多：</strong>源代码、配置文件、邮件服务。</li>
+            <li><strong>兼容性：</strong>需要与旧系统或Windows工具交互。</li>
+        </ul>
+        
+        <div class="section-title">⚡ 安装配置</div>
+        <pre># 1. 创建文件系统
+mkfs.ext4 /dev/sdb1
+
+# 2. 挂载
+mount /dev/sdb1 /mnt/data
+
+# 3. 开机挂载 (/etc/fstab)
+UUID=xxxx  /mnt/data  ext4  defaults  0 0</pre>
+
+        <div class="section-title">📦 典型软件/系统</div>
+        <ul>
+            <li>Ubuntu / Debian / Mint</li>
+            <li>传统 LAMP 服务器</li>
+            <li>家用 Linux 工作站</li>
+        </ul>
+    </div>
+
+    <!-- XFS -->
+    <div class="card xfs">
+        <h2>XFS <span class="tag">高并发 大文件</span></h2>
+        <div class="section-title">🎯 使用场景</div>
+        <ul>
+            <li><strong>大文件：</strong>视频剪辑、渲染、大型归档。</li>
+            <li><strong>高并发 I/O：</strong>大型数据库、虚拟化镜像。</li>
+            <li><strong>只能扩大：</strong>支持在线扩容，不能缩容。</li>
+        </ul>
+
+        <div class="section-title">⚡ 安装配置</div>
+        <pre># 1. 创建文件系统
+mkfs.xfs /dev/sdb1
+
+# 2. 挂载
+mount /dev/sdb1 /mnt/data
+
+# 3. 在线扩容 (如果LV变大)
+xfs_growfs /mnt/data</pre>
+
+        <div class="section-title">📦 典型软件/系统</div>
+        <ul>
+            <li>RHEL / CentOS / Rocky Linux</li>
+            <li>MySQL / MariaDB (大表)</li>
+            <li>GlusterFS (大文件存储)</li>
+        </ul>
+    </div>
+
+    <!-- ZFS -->
+    <div class="card zfs">
+        <h2>ZFS <span class="tag">企业级 数据完整</span></h2>
+        <div class="section-title">🎯 使用场景</div>
+        <ul>
+            <li><strong>数据安全：</strong>自带校验和，防止数据静默损坏。</li>
+            <li><strong>存储阵列：</strong>软RAID (RAID-Z)，NAS存储。</li>
+            <li><strong>快照备份：</strong>秒级快照，复制增量备份。</li>
+        </ul>
+
+        <div class="section-title">⚡ 安装配置</div>
+        <pre># 1. 安装 (Ubuntu为例)
+apt install zfsutils-linux
+
+# 2. 创建存储池 (RAIDZ)
+zpool create mypool raidz sdb sdc sdd
+
+# 3. 创建文件系统(数据集)
+zfs create mypool/data
+
+# 4. 开启压缩
+zfs set compression=lz4 mypool/data</pre>
+
+        <div class="section-title">📦 典型软件/系统</div>
+        <ul>
+            <li>TrueNAS / Proxmox VE</li>
+            <li>高性能 NFS 服务器</li>
+            <li>Nextcloud 私有云</li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>
