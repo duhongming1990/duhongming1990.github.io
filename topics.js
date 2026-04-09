@@ -46,4 +46,12 @@ const TOPICS = [
       { label: 'GLM-5',           src: 'ai-gateway-guide/GLM-5.html' },
     ]
   },
+  {
+    name: '网格网络对比',
+    pages: [
+      { label: 'GPT-5.4',         src: 'net-mesh-compare/GPT-5.4.html' },
+      { label: 'Gemini-3.1-Pro',  src: 'net-mesh-compare/Gemini-3.1-Pro.html' },
+      { label: 'Claude-Opus-4.6', src: 'net-mesh-compare/Claude-Opus-4.6.html' },
+    ]
+  },
 ];
