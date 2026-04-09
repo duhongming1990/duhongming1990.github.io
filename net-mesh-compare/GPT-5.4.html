@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>frp / Headscale / ZeroTier / WireGuard / EasyTier 组网对比</title>
+  <style>
+    :root{
+      --bg:#07111f;
+      --bg2:#0b1830;
+      --card:#0f1f3d;
+      --card2:#11264a;
+      --text:#eaf2ff;
+      --muted:#97acd3;
+      --line:rgba(130,180,255,.18);
+      --cyan:#5ee7ff;
+      --blue:#4da3ff;
+      --violet:#8a7dff;
+      --green:#3ee08f;
+      --yellow:#ffcf5a;
+      --red:#ff6b81;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --glow:0 0 30px rgba(94,231,255,.12);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family: "Segoe UI", "PingFang SC","Microsoft YaHei",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(77,163,255,.15), transparent 30%),
+        radial-gradient(circle at 80% 10%, rgba(138,125,255,.12), transparent 28%),
+        radial-gradient(circle at 50% 80%, rgba(62,224,143,.08), transparent 30%),
+        linear-gradient(180deg, #050c18 0%, #081325 35%, #07111f 100%);
+      line-height:1.7;
+    }
+
+    .grid-bg::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(circle at center, black 45%, transparent 90%);
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .container{
+      width:min(1200px, calc(100% - 32px));
+      margin:0 auto;
+      position:relative;
+      z-index:1;
+    }
+
+    .hero{
+      padding:80px 0 48px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero::after{
+      content:"";
+      position:absolute;
+      width:480px;height:480px;
+      right:-120px;top:-60px;
+      background:radial-gradient(circle, rgba(94,231,255,.16), transparent 60%);
+      filter:blur(8px);
+      pointer-events:none;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 14px;
+      border:1px solid rgba(94,231,255,.28);
+      background:rgba(94,231,255,.08);
+      color:var(--cyan);
+      border-radius:999px;
+      font-size:14px;
+      box-shadow: var(--glow);
+      margin-bottom:18px;
+    }
+
+    .hero h1{
+      font-size: clamp(30px, 5vw, 56px);
+      line-height:1.1;
+      margin:0 0 18px;
+      letter-spacing:.5px;
+    }
+
+    .gradient-text{
+      background:linear-gradient(90deg,var(--cyan),#8ec5ff 35%,#a999ff 75%,#6df0b0);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+
+    .hero p{
+      max-width:920px;
+      color:var(--muted);
+      font-size:18px;
+      margin:0 0 28px;
+    }
+
+    .hero-actions{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      display:inline-block;
+      padding:12px 18px;
+      border-radius:14px;
+      text-decoration:none;
+      font-weight:600;
+      transition:.25s ease;
+      border:1px solid var(--line);
+    }
+
+    .btn-primary{
+      color:#05111f;
+      background:linear-gradient(135deg,var(--cyan),#90bfff);
+      box-shadow:0 8px 28px rgba(94,231,255,.22);
+    }
+    .btn-primary:hover{transform:translateY(-2px)}
+
+    .btn-secondary{
+      color:var(--text);
+      background:rgba(255,255,255,.04);
+      backdrop-filter: blur(10px);
+    }
+    .btn-secondary:hover{
+      background:rgba(255,255,255,.08);
+      transform:translateY(-2px);
+    }
+
+    .nav{
+      position:sticky;
+      top:0;
+      z-index:10;
+      backdrop-filter: blur(14px);
+      background:rgba(6,14,28,.65);
+      border-bottom:1px solid var(--line);
+    }
+
+    .nav-inner{
+      width:min(1200px, calc(100% - 32px));
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+      padding:14px 0;
+    }
+
+    .logo{
+      font-weight:800;
+      letter-spacing:.5px;
+      color:var(--text);
+    }
+
+    .logo span{color:var(--cyan)}
+
+    .nav-links{
+      display:flex;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+    .nav-links a{
+      color:var(--muted);
+      text-decoration:none;
+      font-size:14px;
+    }
+    .nav-links a:hover{color:var(--cyan)}
+
+    section{
+      padding:28px 0;
+    }
+
+    .section-title{
+      font-size:30px;
+      margin:0 0 10px;
+    }
+
+    .section-desc{
+      color:var(--muted);
+      margin:0 0 22px;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(12,1fr);
+      gap:18px;
+    }
+
+    .card{
+      grid-column:span 12;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:22px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:auto -40px -40px auto;
+      width:140px;
+      height:140px;
+      background:radial-gradient(circle, rgba(94,231,255,.12), transparent 65%);
+      pointer-events:none;
+    }
+
+    .span-6{grid-column:span 6}
+    .span-4{grid-column:span 4}
+    .span-8{grid-column:span 8}
+    .span-12{grid-column:span 12}
+
+    h2,h3,h4{margin-top:0}
+    h3{
+      font-size:22px;
+      margin-bottom:12px;
+    }
+
+    .tag{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:999px;
+      font-size:12px;
+      margin-right:8px;
+      margin-bottom:10px;
+      border:1px solid var(--line);
+      color:#cfe3ff;
+      background:rgba(255,255,255,.04);
+    }
+
+    .kpi{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:14px;
+      margin-top:20px;
+    }
+
+    .kpi .item{
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(255,255,255,.03);
+    }
+
+    .kpi .num{
+      font-size:28px;
+      font-weight:800;
+      color:var(--cyan);
+      line-height:1.1;
+    }
+
+    .kpi .label{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    .table-wrap{
+      overflow:auto;
+      border-radius:18px;
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:980px;
+      background:rgba(255,255,255,.02);
+    }
+
+    th,td{
+      padding:16px 14px;
+      border-bottom:1px solid var(--line);
+      text-align:left;
+      vertical-align:top;
+    }
+
+    th{
+      background:rgba(77,163,255,.08);
+      color:#dff0ff;
+      font-size:14px;
+    }
+
+    td{
+      color:#dce8ff;
+      font-size:14px;
+    }
+
+    tr:hover td{
+      background:rgba(255,255,255,.025);
+    }
+
+    .score{
+      font-weight:700;
+      padding:3px 10px;
+      border-radius:999px;
+      display:inline-block;
+      font-size:12px;
+    }
+    .high{background:rgba(62,224,143,.14); color:#8cf0bb; border:1px solid rgba(62,224,143,.28)}
+    .mid{background:rgba(255,207,90,.12); color:#ffd978; border:1px solid rgba(255,207,90,.25)}
+    .low{background:rgba(255,107,129,.12); color:#ff9bae; border:1px solid rgba(255,107,129,.22)}
+
+    ul{
+      padding-left:18px;
+      margin:10px 0 0;
+    }
+
+    .timeline{
+      position:relative;
+      margin-top:10px;
+    }
+
+    .timeline::before{
+      content:"";
+      position:absolute;
+      left:14px; top:0; bottom:0;
+      width:2px;
+      background:linear-gradient(180deg,var(--cyan),transparent);
+    }
+
+    .timeline-item{
+      position:relative;
+      padding-left:42px;
+      margin:18px 0;
+    }
+
+    .timeline-item::before{
+      content:"";
+      position:absolute;
+      left:7px; top:7px;
+      width:16px;height:16px;
+      border-radius:50%;
+      background:var(--cyan);
+      box-shadow:0 0 0 5px rgba(94,231,255,.14);
+    }
+
+    .pill-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .pill{
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      color:#d5e5ff;
+      font-size:13px;
+    }
+
+    .matrix{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:14px;
+      margin-top:18px;
+    }
+
+    .matrix .mcard{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      background:rgba(255,255,255,.03);
+    }
+
+    .mcard h4{
+      margin:0 0 10px;
+      font-size:18px;
+    }
+
+    .bar{
+      height:8px;
+      background:rgba(255,255,255,.08);
+      border-radius:999px;
+      overflow:hidden;
+      margin:8px 0 12px;
+    }
+
+    .bar span{
+      display:block;
+      height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg,var(--cyan),var(--violet));
+    }
+
+    .footer{
+      padding:40px 0 70px;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .note{
+      border-left:4px solid var(--cyan);
+      padding:14px 16px;
+      background:rgba(94,231,255,.06);
+      border-radius:12px;
+      color:#d7edff;
+    }
+
+    .architecture{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:16px;
+      margin-top:18px;
+    }
+    .arch-box{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:18px;
+      background:rgba(255,255,255,.03);
+      position:relative;
+    }
+    .arch-box h4{margin-bottom:8px}
+
+    @media (max-width: 1024px){
+      .span-6,.span-4,.span-8{grid-column:span 12}
+      .matrix{grid-template-columns:repeat(2,1fr)}
+      .architecture{grid-template-columns:1fr}
+      .kpi{grid-template-columns:repeat(2,1fr)}
+    }
+
+    @media (max-width: 640px){
+      .nav-inner{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .hero{
+        padding-top:56px;
+      }
+      .hero p{
+        font-size:16px;
+      }
+      .kpi,.matrix{grid-template-columns:1fr}
+      .section-title{font-size:24px}
+    }
+  </style>
+</head>
+<body class="grid-bg">
+
+  <div class="nav">
+    <div class="nav-inner">
+      <div class="logo">Net<span>Mesh</span> Compare</div>
+      <div class="nav-links">
+        <a href="#overview">概览</a>
+        <a href="#products">产品定位</a>
+        <a href="#compare">核心对比</a>
+        <a href="#scenes">场景建议</a>
+        <a href="#conclusion">选型结论</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="hero">
+    <div class="container">
+      <div class="badge">⚡ 现代组网方案对比 · 内网穿透 / VPN / Overlay / Mesh</div>
+      <h1>
+        <span class="gradient-text">frp、Headscale、ZeroTier、WireGuard、EasyTier</span><br/>
+        组网能力与选型策略全景对比
+      </h1>
+      <p>
+        本页聚焦五类常见远程访问与虚拟组网方案，从
+        <strong>产品定位、网络模型、部署复杂度、性能、控制力、安全性、NAT 穿透能力、适用场景</strong>
+        等维度进行系统比较。目标不是简单列“哪个好”，而是帮助你根据实际需求做出合理选型。
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#compare">查看核心对比</a>
+        <a class="btn btn-secondary" href="#conclusion">直接看结论</a>
+      </div>
+
+      <div class="kpi">
+        <div class="item">
+          <div class="num">5 类</div>
+          <div class="label">主流远程组网方案</div>
+        </div>
+        <div class="item">
+          <div class="num">8+ 维</div>
+          <div class="label">关键选型维度</div>
+        </div>
+        <div class="item">
+          <div class="num">场景化</div>
+          <div class="label">按需求而非按热度选型</div>
+        </div>
+        <div class="item">
+          <div class="num">实战向</div>
+          <div class="label">强调可落地与可维护性</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section id="overview">
+      <h2 class="section-title">一、先说结论：它们不是同一类工具</h2>
+      <p class="section-desc">
+        很多人会把 frp、WireGuard、ZeroTier、Headscale、EasyTier 放在一起比较，但实际上它们解决的问题并不完全相同。
+      </p>
+
+      <div class="cards">
+        <div class="card span-4">
+          <h3>frp</h3>
+          <span class="tag">内网穿透</span>
+          <span class="tag">端口转发</span>
+          <p>
+            frp 的核心价值是：<strong>把内网服务暴露出来</strong>。适合把家里 NAS、开发环境、摄像头、面板、SSH、Web 服务映射到公网或中转服务器。
+          </p>
+          <ul>
+            <li>本质更像反向代理 / 穿透工具</li>
+            <li>不等于完整的“虚拟局域网”</li>
+            <li>适合“访问某个服务”，而不是“整体组网”</li>
+          </ul>
+        </div>
+
+        <div class="card span-4">
+          <h3>WireGuard</h3>
+          <span class="tag">轻量 VPN</span>
+          <span class="tag">高性能</span>
+          <p>
+            WireGuard 是一个<strong>协议与 VPN 隧道方案</strong>，强调简洁、高性能、现代密码学。适合自建站点到站点、设备到设备的安全隧道。
+          </p>
+          <ul>
+            <li>性能优异、开销低</li>
+            <li>控制力极强</li>
+            <li>但需要自己设计网络与管理分发</li>
+          </ul>
+        </div>
+
+        <div class="card span-4">
+          <h3>ZeroTier / Headscale / EasyTier</h3>
+          <span class="tag">Overlay 网络</span>
+          <span class="tag">虚拟组网</span>
+          <p>
+            这三类更偏向于<strong>构建跨公网的虚拟局域网 / Mesh 网络</strong>。目标是让多设备看起来像在同一个私有网络里。
+          </p>
+          <ul>
+            <li>更适合“多设备互联”</li>
+            <li>节点管理体验更完整</li>
+            <li>对异地组网更友好</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="products">
+      <h2 class="section-title">二、产品定位拆解</h2>
+      <p class="section-desc">先明确每个方案的“主战场”，再谈优劣才有意义。</p>
+
+      <div class="cards">
+        <div class="card span-12">
+          <div class="architecture">
+            <div class="arch-box">
+              <h4>frp：服务暴露型</h4>
+              <p>通过公网服务器或中继节点，把内网中的某个 TCP/UDP/HTTP/HTTPS 服务暴露到外部。</p>
+              <div class="pill-row">
+                <span class="pill">SSH 暴露</span>
+                <span class="pill">NAS 访问</span>
+                <span class="pill">开发调试</span>
+                <span class="pill">Webhook 回调</span>
+              </div>
+            </div>
+            <div class="arch-box">
+              <h4>WireGuard：隧道型</h4>
+              <p>建立点对点或站点到站点隧道，提供底层加密链路，网络规划与策略通常由使用者自行控制。</p>
+              <div class="pill-row">
+                <span class="pill">自建 VPN</span>
+                <span class="pill">站点互联</span>
+                <span class="pill">安全远程办公</span>
+              </div>
+            </div>
+            <div class="arch-box">
+              <h4>ZeroTier / Headscale / EasyTier：组网型</h4>
+              <p>目标是降低虚拟网络的搭建和管理成本，实现设备发现、跨 NAT 连接、统一身份与节点组织。</p>
+              <div class="pill-row">
+                <span class="pill">多地设备互通</span>
+                <span class="pill">家庭实验室</span>
+                <span class="pill">跨网段组网</span>
+                <span class="pill">异地办公</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card span-6">
+          <h3>Headscale 是什么？</h3>
+          <p>
+            Headscale 本质上是 <strong>Tailscale 控制平面的开源自托管实现</strong>。它通常与客户端配合使用，底层依赖 WireGuard 建立安全隧道。
+          </p>
+          <ul>
+            <li>优点：自托管、控制权更强、节点管理更现代</li>
+            <li>重点：它不是单独的 VPN 协议，而是“基于 WireGuard 的控制平面与组网管理能力”</li>
+            <li>适合：想要 Tailscale 类体验，但不希望完全依赖官方控制面</li>
+          </ul>
+        </div>
+
+        <div class="card span-6">
+          <h3>EasyTier 是什么？</h3>
+          <p>
+            EasyTier 可以理解为更偏向<strong>易用型 P2P/虚拟组网</strong> 的方案，强调快速接入、跨平台、穿透能力与较低上手门槛。
+          </p>
+          <ul>
+            <li>适合快速把多台机器纳入同一网络</li>
+            <li>通常比纯 WireGuard 更省心</li>
+            <li>适合中小规模、个人或轻量团队场景</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="compare">
+      <h2 class="section-title">三、核心对比总表</h2>
+      <p class="section-desc">以下评价基于典型使用方式，重点看“更适合做什么”，不是绝对优劣排名。</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>方案</th>
+              <th>核心定位</th>
+              <th>部署复杂度</th>
+              <th>控制力</th>
+              <th>NAT 穿透/异地互联</th>
+              <th>性能</th>
+              <th>节点管理</th>
+              <th>典型短板</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>frp</strong></td>
+              <td>内网穿透、端口映射、服务暴露</td>
+              <td><span class="score mid">中等</span></td>
+              <td><span class="score high">高</span></td>
+              <td><span class="score mid">依赖中转更稳</span></td>
+              <td><span class="score mid">中等</span></td>
+              <td><span class="score low">弱</span></td>
+              <td>不擅长完整虚拟局域网；节点一多管理不优雅</td>
+            </tr>
+            <tr>
+              <td><strong>WireGuard</strong></td>
+              <td>底层 VPN 隧道、站点互联</td>
+              <td><span class="score mid">中等偏高</span></td>
+              <td><span class="score high">很高</span></td>
+              <td><span class="score mid">可实现，但需自行设计</span></td>
+              <td><span class="score high">很高</span></td>
+              <td><span class="score low">原生较弱</span></td>
+              <td>纯原生方案管理成本高，尤其节点增多时</td>
+            </tr>
+            <tr>
+              <td><strong>Headscale</strong></td>
+              <td>自托管控制平面 + WireGuard 组网</td>
+              <td><span class="score mid">中等</span></td>
+              <td><span class="score high">高</span></td>
+              <td><span class="score high">较强</span></td>
+              <td><span class="score high">高</span></td>
+              <td><span class="score high">强</span></td>
+              <td>需要自建控制面；生态体验依赖客户端配合</td>
+            </tr>
+            <tr>
+              <td><strong>ZeroTier</strong></td>
+              <td>虚拟局域网 / Overlay 网络</td>
+              <td><span class="score high">低</span></td>
+              <td><span class="score mid">中等</span></td>
+              <td><span class="score high">强</span></td>
+              <td><span class="score mid">中高</span></td>
+              <td><span class="score high">强</span></td>
+              <td>一定程度依赖平台机制；完全自控性不如纯自建方案</td>
+            </tr>
+            <tr>
+              <td><strong>EasyTier</strong></td>
+              <td>轻量易用的虚拟组网 / P2P Mesh</td>
+              <td><span class="score high">低</span></td>
+              <td><span class="score mid">中高</span></td>
+              <td><span class="score high">强</span></td>
+              <td><span class="score mid">中高</span></td>
+              <td><span class="score mid">中高</span></td>
+              <td>长期生态成熟度、企业级配套能力需结合版本与社区现状评估</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="cards">
+        <div class="card span-8">
+          <h3>四、按关键维度逐项分析</h3>
+
+          <div class="timeline">
+            <div class="timeline-item">
+              <strong>1. 如果你的目标是“访问内网某个服务”</strong>
+              <p>
+                优先考虑 <strong>frp</strong>。因为它直接解决“从公网访问内网端口”的问题，成本明确、链路清晰，配置后就能访问指定服务。
+                如果只是要暴露 SSH、RDP、Web、NAS 面板，frp 往往比完整组网更直接。
+              </p>
+            </div>
+
+            <div class="timeline-item">
+              <strong>2. 如果你的目标是“让多台设备像在一个局域网里”</strong>
+              <p>
+                优先看 <strong>ZeroTier、Headscale、EasyTier</strong>。这类方案更适合异地设备互相访问、跨网段管理、远程办公、家庭实验室等场景。
+                它们关注的是“网络整体连通性”，而不是单个端口暴露。
+              </p>
+            </div>
+
+            <div class="timeline-item">
+              <strong>3. 如果你最在意性能、简洁与底层掌控</strong>
+              <p>
+                <strong>WireGuard</strong> 更有优势。它协议简洁、性能优秀、代码体量相对克制，适合有网络基础、希望完全自控的用户或团队。
+                但要注意：WireGuard 强在“隧道”，不天然等于“好用的节点管理平台”。
+              </p>
+            </div>
+
+            <div class="timeline-item">
+              <strong>4. 如果你希望“既有 WireGuard 性能，又有更现代的管理方式”</strong>
+              <p>
+                <strong>Headscale</strong> 是一个很好的平衡点。底层仍然是 WireGuard 的安全与性能，上层加入更方便的节点注册、组织、ACL 管理与自托管能力。
+              </p>
+            </div>
+
+            <div class="timeline-item">
+              <strong>5. 如果你更看重“开箱即用”和“少折腾”</strong>
+              <p>
+                <strong>ZeroTier / EasyTier</strong> 通常更友好。尤其在个人用户、小团队、家庭场景下，快速把设备拉进同一虚拟网络，比自己规划 WireGuard 路由更省心。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card span-4">
+          <h3>一句话理解</h3>
+          <ul>
+            <li><strong>frp：</strong>把服务“暴露出去”</li>
+            <li><strong>WireGuard：</strong>把隧道“搭起来”</li>
+            <li><strong>Headscale：</strong>把 WireGuard “管起来”</li>
+            <li><strong>ZeroTier：</strong>把虚拟局域网“快速建起来”</li>
+            <li><strong>EasyTier：</strong>把轻量 Mesh “更容易用起来”</li>
+          </ul>
+
+          <div class="note" style="margin-top:16px;">
+            选型错误最常见的原因，不是工具不好，而是把“服务穿透需求”误当成“完整组网需求”，或反过来。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">五、能力雷达式比较</h2>
+      <p class="section-desc">以下是偏经验化的相对评分，用于帮助快速建立直觉。</p>
+
+      <div class="matrix">
+        <div class="mcard">
+          <h4>frp</h4>
+          易用性
+          <div class="bar"><span style="width:72%"></span></div>
+          组网能力
+          <div class="bar"><span style="width:38%"></span></div>
+          服务暴露
+          <div class="bar"><span style="width:96%"></span></div>
+          控制力
+          <div class="bar"><span style="width:86%"></span></div>
+          大规模管理
+          <div class="bar"><span style="width:40%"></span></div>
+        </div>
+
+        <div class="mcard">
+          <h4>WireGuard</h4>
+          易用性
+          <div class="bar"><span style="width:65%"></span></div>
+          组网能力
+          <div class="bar"><span style="width:76%"></span></div>
+          服务暴露
+          <div class="bar"><span style="width:48%"></span></div>
+          控制力
+          <div class="bar"><span style="width:98%"></span></div>
+          大规模管理
+          <div class="bar"><span style="width:45%"></span></div>
+        </div>
+
+        <div class="mcard">
+          <h4>Headscale</h4>
+          易用性
+          <div class="bar"><span style="width:78%"></span></div>
+          组网能力
+          <div class="bar"><span style="width:90%"></span></div>
+          服务暴露
+          <div class="bar"><span style="width:58%"></span></div>
+          控制力
+          <div class="bar"><span style="width:90%"></span></div>
+          大规模管理
+          <div class="bar"><span style="width:84%"></span></div>
+        </div>
+
+        <div class="mcard">
+          <h4>ZeroTier</h4>
+          易用性
+          <div class="bar"><span style="width:90%"></span></div>
+          组网能力
+          <div class="bar"><span style="width:88%"></span></div>
+          服务暴露
+          <div class="bar"><span style="width:55%"></span></div>
+          控制力
+          <div class="bar"><span style="width:72%"></span></div>
+          大规模管理
+          <div class="bar"><span style="width:82%"></span></div>
+        </div>
+
+        <div class="mcard">
+          <h4>EasyTier</h4>
+          易用性
+          <div class="bar"><span style="width:88%"></span></div>
+          组网能力
+          <div class="bar"><span style="width:86%"></span></div>
+          服务暴露
+          <div class="bar"><span style="width:50%"></span></div>
+          控制力
+          <div class="bar"><span style="width:78%"></span></div>
+          大规模管理
+          <div class="bar"><span style="width:76%"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="scenes">
+      <h2 class="section-title">六、典型场景推荐</h2>
+      <p class="section-desc">从实际问题倒推方案，比从工具出发更有效。</p>
+
+      <div class="cards">
+        <div class="card span-6">
+          <h3>场景 A：我只想远程 SSH / RDP / 访问 NAS</h3>
+          <p><strong>推荐：frp 优先</strong></p>
+          <ul>
+            <li>目标明确：访问单个或少量服务</li>
+            <li>部署逻辑简单：客户端 + 服务端即可</li>
+            <li>不必引入完整虚拟局域网的复杂度</li>
+          </ul>
+        </div>
+
+        <div class="card span-6">
+          <h3>场景 B：家庭多设备、异地电脑、手机、NAS 互联</h3>
+          <p><strong>推荐：ZeroTier / EasyTier / Headscale</strong></p>
+          <ul>
+            <li>需要多节点长期在线互访</li>
+            <li>不只是访问某一个端口</li>
+            <li>更适合统一纳入虚拟网络管理</li>
+          </ul>
+        </div>
+
+        <div class="card span-6">
+          <h3>场景 C：公司分支机构、办公室与机房站点互联</h3>
+          <p><strong>推荐：WireGuard 或 Headscale</strong></p>
+          <ul>
+            <li>对稳定性、性能、路由策略要求更高</li>
+            <li>往往需要可控的 ACL、网段规划、审计策略</li>
+            <li>偏工程化部署时，纯 WireGuard 或 Headscale 更合适</li>
+          </ul>
+        </div>
+
+        <div class="card span-6">
+          <h3>场景 D：希望完全自控，不依赖第三方云控制面</h3>
+          <p><strong>推荐：WireGuard / Headscale / frp</strong></p>
+          <ul>
+            <li>自建控制面、自建中继、自建认证策略</li>
+            <li>适合关注数据主权与内部合规的用户</li>
+            <li>代价是维护成本上升</li>
+          </ul>
+        </div>
+
+        <div class="card span-12">
+          <h3>场景 E：开发测试、临时联调、快速拉通环境</h3>
+          <p>
+            如果是<strong>临时把开发服务暴露给外部</strong>，frp 非常高效；  
+            如果是<strong>开发机、测试机、数据库、CI 节点之间形成私网联通</strong>，则更适合 Headscale / ZeroTier / EasyTier。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">七、为什么说“有理有据”地选型很重要</h2>
+      <p class="section-desc">因为每个方案的设计目标不同，盲目追求“最火”往往会带来后期运维问题。</p>
+
+      <div class="cards">
+        <div class="card span-4">
+          <h3>frp 的强项</h3>
+          <ul>
+            <li>面向服务暴露的效率高</li>
+            <li>模型直观，便于定位问题</li>
+            <li>适合公网入口统一收敛</li>
+          </ul>
+        </div>
+        <div class="card span-4">
+          <h3>WireGuard 的强项</h3>
+          <ul>
+            <li>协议现代、性能优秀</li>
+            <li>配置直接，链路可预测</li>
+            <li>适合做底层基础设施</li>
+          </ul>
+        </div>
+        <div class="card span-4">
+          <h3>Overlay 方案的强项</h3>
+          <ul>
+            <li>跨 NAT 与跨地域更省心</li>
+            <li>更适合设备规模增长</li>
+            <li>节点组织与权限管理体验更完整</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="conclusion">
+      <h2 class="section-title">八、最终选型建议</h2>
+      <p class="section-desc">如果你时间有限，直接看这部分即可。</p>
+
+      <div class="cards">
+        <div class="card span-12">
+          <h3>推荐结论（简版）</h3>
+          <ul>
+            <li><strong>只做内网穿透：</strong>选 <strong>frp</strong></li>
+            <li><strong>追求高性能自建 VPN：</strong>选 <strong>WireGuard</strong></li>
+            <li><strong>想要自托管 + 更现代的 WireGuard 组网体验：</strong>选 <strong>Headscale</strong></li>
+            <li><strong>想快速实现跨地域虚拟局域网、少折腾：</strong>选 <strong>ZeroTier</strong></li>
+            <li><strong>想兼顾易用性、轻量化与快速 Mesh 组网：</strong>选 <strong>EasyTier</strong></li>
+          </ul>
+        </div>
+
+        <div class="card span-6">
+          <h3>我会怎么选</h3>
+          <ul>
+            <li>个人远程访问 NAS/SSH：<strong>frp</strong></li>
+            <li>家庭实验室多设备互联：<strong>ZeroTier / EasyTier</strong></li>
+            <li>技术团队自建安全互联：<strong>Headscale</strong></li>
+            <li>企业级站点互联底座：<strong>WireGuard</strong></li>
+          </ul>
+        </div>
+
+        <div class="card span-6">
+          <h3>最常见误区</h3>
+          <ul>
+            <li>把 frp 当成完整 VPN 用</li>
+            <li>把 WireGuard 当成带完整控制面的成品平台看待</li>
+            <li>忽视 NAT、路由、ACL、节点规模带来的后期维护成本</li>
+            <li>只看部署难度，不看长期运维复杂度</li>
+          </ul>
+        </div>
+
+        <div class="card span-12">
+          <div class="note">
+            <strong>一句总评：</strong>
+            <strong>frp</strong> 更适合“把服务带出来”，
+            <strong>WireGuard</strong> 更适合“把隧道搭扎实”，
+            <strong>Headscale / ZeroTier / EasyTier</strong> 更适合“把一组设备组织成可管理的虚拟网络”。
+            真正优秀的方案，不是“功能最多”，而是“与你的需求边界最匹配”。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      本页面适合作为技术选型展示页、知识分享页、博客专题页使用。<br/>
+      如需，我还可以继续为你生成：
+      <strong>带 SVG 拓扑图版本、带动画版本、带图标版本、企业官网风版本、Vue/React 组件化版本</strong>。
+    </div>
+  </main>
+</body>
+</html>

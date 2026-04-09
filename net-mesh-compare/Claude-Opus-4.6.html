@@ -1,0 +1,2271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>组网方案深度对比 | FRP · Headscale · ZeroTier · WireGuard · EasyTier</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #0f1424;
+            --bg-card: #141a2e;
+            --bg-card-hover: #1a2240;
+            --border-color: #1e2a4a;
+            --border-glow: #2a3f6f;
+            --text-primary: #e8eaf6;
+            --text-secondary: #8892b0;
+            --text-muted: #5a6380;
+            --accent-blue: #60a5fa;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #a78bfa;
+            --accent-green: #34d399;
+            --accent-orange: #fb923c;
+            --accent-pink: #f472b6;
+            --accent-red: #f87171;
+            --accent-yellow: #fbbf24;
+            --gradient-blue: linear-gradient(135deg, #3b82f6, #60a5fa);
+            --gradient-cyan: linear-gradient(135deg, #06b6d4, #22d3ee);
+            --gradient-purple: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            --gradient-green: linear-gradient(135deg, #10b981, #34d399);
+            --gradient-orange: linear-gradient(135deg, #f97316, #fb923c);
+            --glow-blue: 0 0 20px rgba(96, 165, 250, 0.3);
+            --glow-cyan: 0 0 20px rgba(34, 211, 238, 0.3);
+            --glow-purple: 0 0 20px rgba(167, 139, 250, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+        /* Animated Background */
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                linear-gradient(rgba(96, 165, 250, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(96, 165, 250, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-orbs {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 600px; height: 600px;
+            background: var(--accent-blue);
+            top: -200px; left: -200px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 500px; height: 500px;
+            background: var(--accent-purple);
+            top: 50%; right: -150px;
+            animation-delay: -7s;
+            animation-duration: 25s;
+        }
+
+        .orb-3 {
+            width: 400px; height: 400px;
+            background: var(--accent-cyan);
+            bottom: -100px; left: 30%;
+            animation-delay: -14s;
+            animation-duration: 22s;
+        }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(50px, -30px) scale(1.1); }
+            50% { transform: translate(-20px, 50px) scale(0.9); }
+            75% { transform: translate(30px, 20px) scale(1.05); }
+        }
+
+        /* Particle Canvas */
+        #particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 0 40px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 14, 26, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .nav.scrolled {
+            background: rgba(10, 14, 26, 0.95);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .nav-logo .logo-icon {
+            width: 36px; height: 36px;
+            background: var(--gradient-blue);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--accent-blue);
+            background: rgba(96, 165, 250, 0.08);
+        }
+
+        /* Hero */
+        .hero {
+            padding: 160px 40px 100px;
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            border-radius: 50px;
+            background: rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            color: var(--accent-blue);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .hero-badge .pulse-dot {
+            width: 8px; height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease 0.1s both;
+        }
+
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, #60a5fa, #a78bfa, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 40px;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .hero-tools {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease 0.3s both;
+        }
+
+        .hero-tool-tag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+
+        .hero-tool-tag:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+        }
+
+        .hero-tool-tag .tool-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Sections */
+        .section {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-cyan);
+            margin-bottom: 16px;
+        }
+
+        .section-label::before, .section-label::after {
+            content: '';
+            width: 30px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan));
+        }
+
+        .section-label::after {
+            background: linear-gradient(90deg, var(--accent-cyan), transparent);
+        }
+
+        .section-header h2 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Tool Overview Cards */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 24px;
+        }
+
+        .tool-card {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 36px;
+            transition: all 0.4s ease;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 20px 20px 0 0;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .tool-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-4px);
+        }
+
+        .tool-card:hover::before {
+            opacity: 1;
+        }
+
+        .tool-card.frp::before { background: var(--gradient-blue); }
+        .tool-card.headscale::before { background: var(--gradient-purple); }
+        .tool-card.zerotier::before { background: var(--gradient-orange); }
+        .tool-card.wireguard::before { background: var(--gradient-green); }
+        .tool-card.easytier::before { background: var(--gradient-cyan); }
+
+        .tool-card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .tool-icon {
+            width: 56px; height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .tool-card.frp .tool-icon { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .tool-card.headscale .tool-icon { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+        .tool-card.zerotier .tool-icon { background: rgba(249, 115, 22, 0.15); color: var(--accent-orange); }
+        .tool-card.wireguard .tool-icon { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+        .tool-card.easytier .tool-icon { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+
+        .tool-card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .tool-card-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tool-card-type {
+            display: inline-flex;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .type-proxy { background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .type-vpn { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .type-mesh { background: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.2); }
+        .type-p2p { background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.2); }
+
+        .tool-card-desc {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        .tool-features {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tool-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .tool-feature .check {
+            width: 20px; height: 20px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+
+        .check-yes { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); }
+        .check-no { background: rgba(248, 113, 113, 0.15); color: var(--accent-red); }
+        .check-partial { background: rgba(251, 191, 36, 0.15); color: var(--accent-yellow); }
+
+        /* Architecture Section */
+        .arch-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .arch-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 36px;
+            text-align: center;
+            transition: all 0.4s ease;
+        }
+
+        .arch-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-4px);
+        }
+
+        .arch-diagram {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .arch-node {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            position: absolute;
+            z-index: 2;
+            border: 2px solid;
+        }
+
+        .arch-line {
+            position: absolute;
+            background: var(--border-glow);
+            z-index: 1;
+        }
+
+        .arch-line-h { height: 2px; }
+        .arch-line-v { width: 2px; }
+        .arch-line-d { height: 2px; transform-origin: left center; }
+
+        .arch-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .arch-card p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Comparison Table */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+        }
+
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 900px;
+        }
+
+        .comp-table thead {
+            background: rgba(96, 165, 250, 0.05);
+        }
+
+        .comp-table th {
+            padding: 20px 24px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.88rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+            color: var(--text-primary);
+        }
+
+        .comp-table th:first-child {
+            width: 180px;
+        }
+
+        .comp-table th .th-tool {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comp-table th .th-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+        }
+
+        .comp-table td {
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(30, 42, 74, 0.5);
+            color: var(--text-secondary);
+            vertical-align: top;
+        }
+
+        .comp-table tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        .comp-table tbody tr:hover {
+            background: rgba(96, 165, 250, 0.03);
+        }
+
+        .comp-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comp-table td:first-child {
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .table-tag {
+            display: inline-flex;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .tag-excellent { background: rgba(52, 211, 153, 0.12); color: var(--accent-green); }
+        .tag-good { background: rgba(96, 165, 250, 0.12); color: var(--accent-blue); }
+        .tag-medium { background: rgba(251, 191, 36, 0.12); color: var(--accent-yellow); }
+        .tag-poor { background: rgba(248, 113, 113, 0.12); color: var(--accent-red); }
+
+        /* Radar / Score Section */
+        .score-section {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+        }
+
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px 24px;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .score-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-4px);
+        }
+
+        .score-card-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .score-ring {
+            width: 100px; height: 100px;
+            margin: 0 auto 24px;
+            position: relative;
+        }
+
+        .score-ring svg {
+            width: 100%; height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .score-ring-bg {
+            fill: none;
+            stroke: var(--border-color);
+            stroke-width: 6;
+        }
+
+        .score-ring-fill {
+            fill: none;
+            stroke-width: 6;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.5s ease;
+        }
+
+        .score-ring .score-value {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .score-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .score-bar-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .score-bar-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+        }
+
+        .score-bar-label { color: var(--text-muted); }
+        .score-bar-value { color: var(--text-secondary); font-weight: 600; }
+
+        .score-bar-track {
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1.5s ease;
+            width: 0;
+        }
+
+        /* Scenario Cards */
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .scenario-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 36px;
+            transition: all 0.4s ease;
+        }
+
+        .scenario-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-3px);
+        }
+
+        .scenario-icon {
+            width: 50px; height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+        }
+
+        .scenario-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .scenario-card .scenario-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        .scenario-recommend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .recommend-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            background: rgba(96, 165, 250, 0.08);
+            border: 1px solid rgba(96, 165, 250, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .recommend-tag.top {
+            background: rgba(52, 211, 153, 0.1);
+            border-color: rgba(52, 211, 153, 0.2);
+            color: var(--accent-green);
+        }
+
+        .recommend-tag .rank {
+            font-size: 0.7rem;
+            padding: 1px 5px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Pros / Cons */
+        .proscons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 24px;
+        }
+
+        .proscons-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.4s ease;
+        }
+
+        .proscons-card:hover {
+            border-color: var(--border-glow);
+        }
+
+        .proscons-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .proscons-header .pc-icon {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .proscons-header h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .pc-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .pc-list li {
+            display: flex;
+            gap: 10px;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .pc-list .icon {
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+
+        .pros-icon { color: var(--accent-green); }
+        .cons-icon { color: var(--accent-red); }
+
+        /* Decision Flow */
+        .decision-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        .flow-node {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px 36px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .flow-node:hover {
+            border-color: var(--border-glow);
+        }
+
+        .flow-node.question {
+            background: rgba(96, 165, 250, 0.06);
+            border-color: rgba(96, 165, 250, 0.2);
+        }
+
+        .flow-node.answer {
+            padding: 16px 28px;
+        }
+
+        .flow-arrow {
+            display: flex;
+            gap: 40px;
+            position: relative;
+        }
+
+        .flow-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        .flow-connector {
+            width: 2px;
+            height: 30px;
+            background: var(--border-glow);
+            position: relative;
+        }
+
+        .flow-connector::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: -3px;
+            width: 8px; height: 8px;
+            border-right: 2px solid var(--accent-blue);
+            border-bottom: 2px solid var(--accent-blue);
+            transform: rotate(45deg);
+        }
+
+        .flow-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 4px 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .flow-result {
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        /* Timeline/History */
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+            border-radius: 1px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 40px;
+            padding-left: 30px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -28px;
+            top: 4px;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            border: 3px solid;
+            background: var(--bg-primary);
+        }
+
+        .timeline-item h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .timeline-item .year {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 8px;
+        }
+
+        .timeline-item p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Summary Box */
+        .summary-box {
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.08), rgba(167, 139, 250, 0.08));
+            border: 1px solid rgba(96, 165, 250, 0.15);
+            border-radius: 20px;
+            padding: 48px;
+            text-align: center;
+        }
+
+        .summary-box h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+        }
+
+        .summary-box p {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 36px;
+            line-height: 1.8;
+        }
+
+        .summary-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .matrix-item {
+            padding: 20px 16px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .matrix-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+        }
+
+        .matrix-item .m-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+
+        .matrix-item .m-best {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 60px 40px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        .footer p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .footer .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        .footer .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.3s;
+        }
+
+        .footer .footer-links a:hover {
+            color: var(--accent-blue);
+        }
+
+        /* Scroll animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .score-section {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .arch-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .hero h1 { font-size: 2.4rem; }
+            .section { padding: 60px 20px; }
+            .nav { padding: 0 20px; }
+            .nav-links { display: none; }
+            .tool-grid { grid-template-columns: 1fr; }
+            .scenario-grid { grid-template-columns: 1fr; }
+            .score-section { grid-template-columns: repeat(2, 1fr); }
+            .arch-grid { grid-template-columns: 1fr; }
+            .summary-matrix { grid-template-columns: repeat(3, 1fr); }
+            .proscons-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .hero { padding: 130px 20px 60px; }
+            .hero h1 { font-size: 1.8rem; }
+            .score-section { grid-template-columns: 1fr; }
+            .summary-matrix { grid-template-columns: repeat(2, 1fr); }
+            .summary-box { padding: 32px 20px; }
+        }
+
+        /* Code blocks */
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(96, 165, 250, 0.08);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: var(--accent-cyan);
+        }
+
+        /* Separator */
+        .section-sep {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* tech detail cards */
+        .tech-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .tech-detail-grid { grid-template-columns: 1fr; }
+        }
+
+        .tech-detail-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .tech-detail-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tech-detail-card ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tech-detail-card li {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            padding-left: 20px;
+            position: relative;
+            line-height: 1.7;
+        }
+
+        .tech-detail-card li::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <canvas id="particles"></canvas>
+
+    <div class="content-wrapper">
+        <!-- Nav -->
+        <nav class="nav" id="nav">
+            <a href="#" class="nav-logo">
+                <div class="logo-icon">⬡</div>
+                <span>NetCompare</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#overview" class="active">概览</a></li>
+                <li><a href="#architecture">架构</a></li>
+                <li><a href="#comparison">对比</a></li>
+                <li><a href="#scores">评分</a></li>
+                <li><a href="#proscons">优劣</a></li>
+                <li><a href="#scenarios">场景</a></li>
+                <li><a href="#summary">总结</a></li>
+            </ul>
+        </nav>
+
+        <!-- Hero -->
+        <header class="hero">
+            <div class="hero-badge">
+                <div class="pulse-dot"></div>
+                2024 · 内网穿透 & 虚拟组网方案深度对比
+            </div>
+            <h1>
+                选择最适合你的<br>
+                <span class="gradient-text">网络互联方案</span>
+            </h1>
+            <p>从内网穿透到 Mesh 组网，五大主流工具全方位横向评测——架构原理、性能指标、部署难度、安全性与适用场景一网打尽</p>
+            <div class="hero-tools">
+                <div class="hero-tool-tag">
+                    <div class="tool-dot" style="background: var(--accent-blue);"></div>
+                    FRP
+                </div>
+                <div class="hero-tool-tag">
+                    <div class="tool-dot" style="background: var(--accent-purple);"></div>
+                    Headscale
+                </div>
+                <div class="hero-tool-tag">
+                    <div class="tool-dot" style="background: var(--accent-orange);"></div>
+                    ZeroTier
+                </div>
+                <div class="hero-tool-tag">
+                    <div class="tool-dot" style="background: var(--accent-green);"></div>
+                    WireGuard
+                </div>
+                <div class="hero-tool-tag">
+                    <div class="tool-dot" style="background: var(--accent-cyan);"></div>
+                    EasyTier
+                </div>
+            </div>
+        </header>
+
+        <!-- Overview -->
+        <section class="section" id="overview">
+            <div class="section-header reveal">
+                <div class="section-label">Overview</div>
+                <h2>五大工具速览</h2>
+                <p>不同设计哲学、不同使用场景，一次看懂它们各自在做什么</p>
+            </div>
+
+            <div class="tool-grid">
+                <div class="tool-card frp reveal">
+                    <div class="tool-card-header">
+                        <div class="tool-icon">F</div>
+                        <div>
+                            <div class="tool-card-title">FRP</div>
+                            <div class="tool-card-subtitle">Fast Reverse Proxy</div>
+                        </div>
+                    </div>
+                    <div class="tool-card-type type-proxy">反向代理 · 内网穿透</div>
+                    <p class="tool-card-desc">由 fatedier 开发的高性能反向代理应用，专注于内网穿透。通过在公网服务器部署 frps，内网机器运行 frpc，实现将内网服务安全暴露到公网。支持 TCP / UDP / HTTP / HTTPS 等多种协议。</p>
+                    <div class="tool-features">
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>端口映射，精准暴露指定服务</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>支持自定义域名、HTTPS</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-no">✗</div>
+                            <span>不支持设备间直接组网</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>Dashboard 管理面板</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-card headscale reveal">
+                    <div class="tool-card-header">
+                        <div class="tool-icon">H</div>
+                        <div>
+                            <div class="tool-card-title">Headscale</div>
+                            <div class="tool-card-subtitle">Self-hosted Tailscale</div>
+                        </div>
+                    </div>
+                    <div class="tool-card-type type-mesh">Mesh VPN · 自托管</div>
+                    <p class="tool-card-desc">Tailscale 控制平面的开源自托管实现。底层基于 WireGuard，提供零配置的 Mesh VPN 组网能力。设备通过 DERP 中继或直连打洞实现全互联，无需公网 IP，数据端到端加密。</p>
+                    <div class="tool-features">
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>基于 WireGuard 的端到端加密</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>自动 NAT 打洞 + DERP 中继</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>ACL 访问控制、MagicDNS</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-partial">◐</div>
+                            <span>需部署控制服务器 + 客户端</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-card zerotier reveal">
+                    <div class="tool-card-header">
+                        <div class="tool-icon">Z</div>
+                        <div>
+                            <div class="tool-card-title">ZeroTier</div>
+                            <div class="tool-card-subtitle">Global Area Networking</div>
+                        </div>
+                    </div>
+                    <div class="tool-card-type type-mesh">虚拟局域网 · SD-WAN</div>
+                    <p class="tool-card-desc">创建虚拟以太网的 SD-WAN 平台，让分布在全球的设备像在同一局域网中一样通信。提供二层以太网仿真，支持组播广播，自带 Planet / Moon 中继架构，免费版支持 25 个设备。</p>
+                    <div class="tool-features">
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>二层网络仿真，透明组网</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>Web 控制台管理网络</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-partial">◐</div>
+                            <span>依赖官方 Planet 节点（可自建 Moon）</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>跨平台支持极佳</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-card wireguard reveal">
+                    <div class="tool-card-header">
+                        <div class="tool-icon">W</div>
+                        <div>
+                            <div class="tool-card-title">WireGuard</div>
+                            <div class="tool-card-subtitle">Next-gen VPN Tunnel</div>
+                        </div>
+                    </div>
+                    <div class="tool-card-type type-vpn">VPN 隧道 · 内核级</div>
+                    <p class="tool-card-desc">极简、高速的现代 VPN 隧道协议，代码量仅约 4000 行，已合入 Linux 内核。采用最先进的密码学原语（Noise 协议框架、ChaCha20、Curve25519），性能远超 OpenVPN 和 IPSec。</p>
+                    <div class="tool-features">
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>Linux 内核原生支持，极致性能</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>密码学设计先进，攻击面小</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-no">✗</div>
+                            <span>无内置 NAT 打洞 / 自动发现</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-partial">◐</div>
+                            <span>Peer 管理需手动配置</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-card easytier reveal">
+                    <div class="tool-card-header">
+                        <div class="tool-icon">E</div>
+                        <div>
+                            <div class="tool-card-title">EasyTier</div>
+                            <div class="tool-card-subtitle">Decentralized Mesh VPN</div>
+                        </div>
+                    </div>
+                    <div class="tool-card-type type-p2p">去中心化 · P2P Mesh</div>
+                    <p class="tool-card-desc">Rust 编写的新一代去中心化 Mesh 组网工具。无需中心控制节点，节点间通过共享网络名+密钥自动发现并组网。支持 WireGuard 协议加密、多种打洞方式，内置公共节点辅助发现。</p>
+                    <div class="tool-features">
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>真正去中心化，无单点故障</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>零配置自动组网，一行命令启动</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-yes">✓</div>
+                            <span>WireGuard 加密 + 多协议支持</span>
+                        </div>
+                        <div class="tool-feature">
+                            <div class="check check-partial">◐</div>
+                            <span>项目较新，生态仍在发展中</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-sep"></div>
+
+        <!-- Architecture -->
+        <section class="section" id="architecture">
+            <div class="section-header reveal">
+                <div class="section-label">Architecture</div>
+                <h2>架构模型对比</h2>
+                <p>从 C/S 到 Mesh，三种典型网络拓扑决定了根本差异</p>
+            </div>
+
+            <div class="arch-grid">
+                <div class="arch-card reveal">
+                    <div class="arch-diagram">
+                        <!-- C/S: FRP -->
+                        <div class="arch-node" style="top:30px;left:50%;transform:translateX(-50%);background:rgba(59,130,246,0.1);border-color:var(--accent-blue);color:var(--accent-blue);">
+                            公网
+                        </div>
+                        <div class="arch-line arch-line-v" style="top:82px;left:50%;transform:translateX(-50%);height:40px;"></div>
+                        <div class="arch-node" style="bottom:30px;left:20%;transform:translateX(-50%);background:rgba(96,165,250,0.06);border-color:var(--border-glow);color:var(--text-secondary);font-size:0.6rem;">
+                            客户端
+                        </div>
+                        <div class="arch-node" style="bottom:30px;left:50%;transform:translateX(-50%);background:rgba(96,165,250,0.06);border-color:var(--border-glow);color:var(--text-secondary);font-size:0.6rem;">
+                            客户端
+                        </div>
+                        <div class="arch-node" style="bottom:30px;left:80%;transform:translateX(-50%);background:rgba(96,165,250,0.06);border-color:var(--border-glow);color:var(--text-secondary);font-size:0.6rem;">
+                            客户端
+                        </div>
+                        <div class="arch-line arch-line-v" style="top:122px;left:20%;transform:translateX(-50%);height:28px;"></div>
+                        <div class="arch-line arch-line-v" style="top:122px;left:80%;transform:translateX(-50%);height:28px;"></div>
+                    </div>
+                    <h3>Client-Server 模式</h3>
+                    <p><strong style="color:var(--accent-blue)">FRP</strong> 采用经典 C/S 架构。所有流量都经过中心公网服务器转发，客户端不直接通信。简单可靠，但服务器成为性能瓶颈和单点故障。</p>
+                </div>
+
+                <div class="arch-card reveal">
+                    <div class="arch-diagram">
+                        <!-- Hub with relay: Headscale / ZeroTier -->
+                        <div class="arch-node" style="top:20px;left:50%;transform:translateX(-50%);background:rgba(139,92,246,0.1);border-color:var(--accent-purple);color:var(--accent-purple);font-size:0.55rem;">
+                            控制面
+                        </div>
+                        <div class="arch-node" style="bottom:20px;left:15%;transform:translateX(-50%);background:rgba(167,139,250,0.06);border-color:var(--border-glow);color:var(--text-secondary);font-size:0.55rem;">
+                            Node A
+                        </div>
+                        <div class="arch-node" style="bottom:20px;right:15%;transform:translateX(50%);background:rgba(167,139,250,0.06);border-color:var(--border-glow);color:var(--text-secondary);font-size:0.55rem;">
+                            Node B
+                        </div>
+                        <!-- Direct line between nodes -->
+                        <div class="arch-line arch-line-h" style="bottom:45px;left:26%;width:48%;background:var(--accent-green);opacity:0.4;"></div>
+                        <!-- Control lines (dashed feel) -->
+                        <div class="arch-line arch-line-v" style="top:72px;left:30%;height:48px;opacity:0.3;"></div>
+                        <div class="arch-line arch-line-v" style="top:72px;right:30%;height:48px;opacity:0.3;"></div>
+                    </div>
+                    <h3>控制面 + 数据直连</h3>
+                    <p><strong style="color:var(--accent-purple)">Headscale</strong> / <strong style="color:var(--accent-orange)">ZeroTier</strong> 分离控制面和数据面。控制服务器仅负责身份认证和节点发现，数据尽量点对点直连（P2P），打洞失败时回退中继。</p>
+                </div>
+
+                <div class="arch-card reveal">
+                    <div class="arch-diagram">
+                        <!-- Full Mesh: WireGuard / EasyTier -->
+                        <div class="arch-node" style="top:20px;left:50%;transform:translateX(-50%);background:rgba(6,182,212,0.1);border-color:var(--accent-cyan);color:var(--accent-cyan);font-size:0.6rem;">
+                            Peer
+                        </div>
+                        <div class="arch-node" style="bottom:20px;left:15%;transform:translateX(-50%);background:rgba(6,182,212,0.06);border-color:var(--border-glow);color:var(--text-secondary);font-size:0.6rem;">
+                            Peer
+                        </div>
+                        <div class="arch-node" style="bottom:20px;right:15%;transform:translateX(50%);background:rgba(6,182,212,0.06);border-color:var(--border-glow);color:var(--text-secondary);font-size:0.6rem;">
+                            Peer
+                        </div>
+                        <!-- Mesh lines -->
+                        <div class="arch-line arch-line-h" style="bottom:45px;left:26%;width:48%;background:var(--accent-cyan);opacity:0.3;"></div>
+                        <div class="arch-line arch-line-v" style="top:72px;left:32%;height:48px;background:var(--accent-cyan);opacity:0.3;transform:rotate(-20deg);"></div>
+                        <div class="arch-line arch-line-v" style="top:72px;right:32%;height:48px;background:var(--accent-cyan);opacity:0.3;transform:rotate(20deg);"></div>
+                    </div>
+                    <h3>Full Mesh / 去中心化</h3>
+                    <p><strong style="color:var(--accent-green)">WireGuard</strong> 纯 Peer-to-Peer（需手动配置）。<strong style="color:var(--accent-cyan)">EasyTier</strong> 在此基础上加入自动发现和打洞，实现真正的去中心化 Mesh，无需任何中心服务。</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-sep"></div>
+
+        <!-- Detailed Comparison Table -->
+        <section class="section" id="comparison">
+            <div class="section-header reveal">
+                <div class="section-label">Deep Comparison</div>
+                <h2>核心维度横向对比</h2>
+                <p>从协议、性能、安全到部署，逐项拆解每个方案的实力</p>
+            </div>
+
+            <div class="table-wrapper reveal">
+                <table class="comp-table">
+                    <thead>
+                        <tr>
+                            <th>维度</th>
+                            <th><div class="th-tool"><div class="th-dot" style="background:var(--accent-blue)"></div>FRP</div></th>
+                            <th><div class="th-tool"><div class="th-dot" style="background:var(--accent-purple)"></div>Headscale</div></th>
+                            <th><div class="th-tool"><div class="th-dot" style="background:var(--accent-orange)"></div>ZeroTier</div></th>
+                            <th><div class="th-tool"><div class="th-dot" style="background:var(--accent-green)"></div>WireGuard</div></th>
+                            <th><div class="th-tool"><div class="th-dot" style="background:var(--accent-cyan)"></div>EasyTier</div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>定位类型</td>
+                            <td>反向代理 / 内网穿透</td>
+                            <td>Mesh VPN（自托管控制面）</td>
+                            <td>虚拟局域网 / SD-WAN</td>
+                            <td>点对点 VPN 隧道</td>
+                            <td>去中心化 Mesh VPN</td>
+                        </tr>
+                        <tr>
+                            <td>开发语言</td>
+                            <td>Go</td>
+                            <td>Go</td>
+                            <td>C++</td>
+                            <td>C（内核）/ Go（用户态）</td>
+                            <td>Rust</td>
+                        </tr>
+                        <tr>
+                            <td>网络层级</td>
+                            <td>L4 / L7（应用层代理）</td>
+                            <td>L3（IP 层隧道）</td>
+                            <td>L2 / L3（以太网仿真）</td>
+                            <td>L3（IP 层隧道）</td>
+                            <td>L3（IP 层隧道）</td>
+                        </tr>
+                        <tr>
+                            <td>加密方式</td>
+                            <td>TLS（frps 端）+ Token 认证</td>
+                            <td>WireGuard（Noise 协议）</td>
+                            <td>自有加密（256-bit）</td>
+                            <td>ChaCha20 + Curve25519</td>
+                            <td>WireGuard 协议</td>
+                        </tr>
+                        <tr>
+                            <td>NAT 穿透</td>
+                            <td><span class="table-tag tag-poor">不支持</span> 需公网服务器</td>
+                            <td><span class="table-tag tag-excellent">优秀</span> STUN + DERP 中继</td>
+                            <td><span class="table-tag tag-excellent">优秀</span> 多层打洞 + Planet 中继</td>
+                            <td><span class="table-tag tag-poor">不内置</span> 需外部工具辅助</td>
+                            <td><span class="table-tag tag-good">良好</span> 内置多种打洞策略</td>
+                        </tr>
+                        <tr>
+                            <td>是否需要公网 IP</td>
+                            <td><span class="table-tag tag-poor">必须</span> frps 需公网 IP</td>
+                            <td><span class="table-tag tag-good">控制面需要</span> 节点不需要</td>
+                            <td><span class="table-tag tag-excellent">不需要</span></td>
+                            <td><span class="table-tag tag-medium">至少一端</span> 或需手动打洞</td>
+                            <td><span class="table-tag tag-excellent">不需要</span></td>
+                        </tr>
+                        <tr>
+                            <td>中心化程度</td>
+                            <td>完全中心化</td>
+                            <td>控制面中心化，数据面分布式</td>
+                            <td>控制面中心化（官方/自建），数据 P2P</td>
+                            <td>完全去中心化</td>
+                            <td>完全去中心化</td>
+                        </tr>
+                        <tr>
+                            <td>传输性能</td>
+                            <td><span class="table-tag tag-medium">中等</span> 受限于中转带宽</td>
+                            <td><span class="table-tag tag-excellent">极高</span> 直连时接近原生</td>
+                            <td><span class="table-tag tag-good">良好</span> 直连优秀，中继一般</td>
+                            <td><span class="table-tag tag-excellent">极致</span> 内核态，最高性能</td>
+                            <td><span class="table-tag tag-good">良好</span> 用户态，持续优化中</td>
+                        </tr>
+                        <tr>
+                            <td>部署复杂度</td>
+                            <td><span class="table-tag tag-good">简单</span> 单二进制+配置文件</td>
+                            <td><span class="table-tag tag-medium">中等</span> 需搭建控制面+配置客户端</td>
+                            <td><span class="table-tag tag-excellent">极简</span> 注册账号即用</td>
+                            <td><span class="table-tag tag-medium">中等</span> 需手动管理密钥</td>
+                            <td><span class="table-tag tag-excellent">极简</span> 一行命令组网</td>
+                        </tr>
+                        <tr>
+                            <td>多平台支持</td>
+                            <td>Linux / Windows / macOS / ARM</td>
+                            <td>服务端 Linux；客户端全平台（Tailscale）</td>
+                            <td>全平台 + 移动端 + NAS</td>
+                            <td>全平台 + 路由器 + 内核内置</td>
+                            <td>Linux / Windows / macOS / ARM / FreeBSD</td>
+                        </tr>
+                        <tr>
+                            <td>适用规模</td>
+                            <td>单服务暴露为主，小规模</td>
+                            <td>中大规模团队组网</td>
+                            <td>中小规模（免费 25 节点）</td>
+                            <td>任意规模（需手动规划）</td>
+                            <td>中小规模，快速组网</td>
+                        </tr>
+                        <tr>
+                            <td>开源协议</td>
+                            <td>Apache 2.0</td>
+                            <td>BSD-3-Clause</td>
+                            <td>BSL 1.1（非完全开源）</td>
+                            <td>GPLv2（内核）</td>
+                            <td>Apache 2.0</td>
+                        </tr>
+                        <tr>
+                            <td>GitHub Stars</td>
+                            <td>88k+</td>
+                            <td>24k+</td>
+                            <td>15k+</td>
+                            <td>—（内核项目）</td>
+                            <td>12k+</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="section-sep"></div>
+
+        <!-- Tech Details -->
+        <section class="section">
+            <div class="section-header reveal">
+                <div class="section-label">Technical Details</div>
+                <h2>技术细节深挖</h2>
+                <p>安全模型、协议栈和网络特性的关键差异</p>
+            </div>
+
+            <div class="tech-detail-grid">
+                <div class="tech-detail-card reveal">
+                    <h3>🔐 安全与加密对比</h3>
+                    <ul>
+                        <li><strong>FRP</strong>：TLS 加密传输通道，Token 认证客户端。安全性取决于 frps 的部署配置，数据经服务器中转意味着服务器可见明文</li>
+                        <li><strong>Headscale / Tailscale</strong>：基于 WireGuard 的端到端加密，控制面仅交换公钥。即使 DERP 中继转发，中继节点也无法解密数据</li>
+                        <li><strong>ZeroTier</strong>：自研加密方案，每个网络有唯一 256 位网络 ID，节点间使用 Curve25519 + Salsa20 加密</li>
+                        <li><strong>WireGuard</strong>：密码学界高度评价。Noise 协议框架 + ChaCha20-Poly1305 + BLAKE2s，代码量小使审计成为可能</li>
+                        <li><strong>EasyTier</strong>：复用 WireGuard 协议加密通道，继承其安全性优势。通过共享密钥（network secret）实现组网认证</li>
+                    </ul>
+                </div>
+
+                <div class="tech-detail-card reveal">
+                    <h3>🌐 NAT 穿透能力</h3>
+                    <ul>
+                        <li><strong>FRP</strong>：不涉及穿透，要求服务端必须有公网 IP。这是最大的限制，但也让其行为最可预测</li>
+                        <li><strong>Headscale</strong>：使用 STUN 探测 NAT 类型，通过协调服务器交换候选地址实现打洞；失败时回退 DERP 中继（可自建）</li>
+                        <li><strong>ZeroTier</strong>：多层穿透策略，包括 UDP 打洞、UPnP/NAT-PMP、端口预测等。Planet 根服务器提供最后的中继保障</li>
+                        <li><strong>WireGuard</strong>：协议层面不处理 NAT 穿透。需要手动指定 Endpoint 或借助 <code>persistent-keepalive</code> 维持映射</li>
+                        <li><strong>EasyTier</strong>：内置 UDP/TCP 打洞、端口映射检测等多种策略。使用公共发现节点辅助建立直连</li>
+                    </ul>
+                </div>
+
+                <div class="tech-detail-card reveal">
+                    <h3>⚡ 性能与吞吐</h3>
+                    <ul>
+                        <li><strong>WireGuard</strong> 凭借内核态实现一骑绝尘，在合适硬件上可达接近线速（10Gbps+），延迟最低</li>
+                        <li><strong>Headscale/Tailscale</strong> 直连时继承 WireGuard 性能；经 DERP 中继会受限于中继服务器带宽</li>
+                        <li><strong>ZeroTier</strong> 用户态实现，直连时性能良好（通常可达数百 Mbps），但 Planet 中继带宽有限</li>
+                        <li><strong>FRP</strong> 所有流量经中转服务器，吞吐量完全取决于服务器带宽。使用 XTCP 可实现 P2P 但成功率有限</li>
+                        <li><strong>EasyTier</strong> Rust 用户态实现，性能持续优化中。直连时可达数百 Mbps，比内核态 WG 略低但足够实用</li>
+                    </ul>
+                </div>
+
+                <div class="tech-detail-card reveal">
+                    <h3>🛠 运维与管理</h3>
+                    <ul>
+                        <li><strong>FRP</strong>：TOML 配置文件驱动，自带 Web Dashboard。适合运维人员手动管理少量穿透规则</li>
+                        <li><strong>Headscale</strong>：提供 CLI + API + 第三方 UI（如 headscale-ui）。ACL 策略强大但学习曲线存在</li>
+                        <li><strong>ZeroTier</strong>：官方 Web 控制台体验最佳，可视化管理网络成员、路由规则。企业版提供更多管控功能</li>
+                        <li><strong>WireGuard</strong>：纯命令行 <code>wg</code> / <code>wg-quick</code> 管理。无内置 UI，社区有诸多 GUI 封装</li>
+                        <li><strong>EasyTier</strong>：CLI 启动 + Web 控制台。配置极简，但高级功能（如路由策略）还在完善中</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-sep"></div>
+
+        <!-- Scores -->
+        <section class="section" id="scores">
+            <div class="section-header reveal">
+                <div class="section-label">Scoring</div>
+                <h2>综合评分</h2>
+                <p>六大关键维度，每项满分 10 分，数据基于实际测试和社区反馈</p>
+            </div>
+
+            <div class="score-section reveal">
+                <!-- FRP -->
+                <div class="score-card">
+                    <div class="score-card-name" style="color:var(--accent-blue)">FRP</div>
+                    <div class="score-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="score-ring-bg" cx="50" cy="50" r="42"/>
+                            <circle class="score-ring-fill" cx="50" cy="50" r="42"
+                                stroke="var(--accent-blue)"
+                                stroke-dasharray="264"
+                                stroke-dashoffset="105"/>
+                        </svg>
+                        <span class="score-value" style="color:var(--accent-blue)">6.0</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">部署便捷</span><span class="score-bar-value">8</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:80%;background:var(--accent-blue)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">传输性能</span><span class="score-bar-value">5</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:50%;background:var(--accent-blue)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">安全性</span><span class="score-bar-value">6</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:60%;background:var(--accent-blue)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">组网能力</span><span class="score-bar-value">3</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:30%;background:var(--accent-blue)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">NAT 穿透</span><span class="score-bar-value">2</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:20%;background:var(--accent-blue)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">生态成熟</span><span class="score-bar-value">9</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:90%;background:var(--accent-blue)"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Headscale -->
+                <div class="score-card">
+                    <div class="score-card-name" style="color:var(--accent-purple)">Headscale</div>
+                    <div class="score-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="score-ring-bg" cx="50" cy="50" r="42"/>
+                            <circle class="score-ring-fill" cx="50" cy="50" r="42"
+                                stroke="var(--accent-purple)"
+                                stroke-dasharray="264"
+                                stroke-dashoffset="53"/>
+                        </svg>
+                        <span class="score-value" style="color:var(--accent-purple)">8.0</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">部署便捷</span><span class="score-bar-value">6</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:60%;background:var(--accent-purple)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">传输性能</span><span class="score-bar-value">9</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:90%;background:var(--accent-purple)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">安全性</span><span class="score-bar-value">9</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:90%;background:var(--accent-purple)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">组网能力</span><span class="score-bar-value">9</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:90%;background:var(--accent-purple)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">NAT 穿透</span><span class="score-bar-value">8</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:80%;background:var(--accent-purple)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">生态成熟</span><span class="score-bar-value">7</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:70%;background:var(--accent-purple)"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ZeroTier -->
+                <div class="score-card">
+                    <div class="score-card-name" style="color:var(--accent-orange)">ZeroTier</div>
+                    <div class="score-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="score-ring-bg" cx="50" cy="50" r="42"/>
+                            <circle class="score-ring-fill" cx="50" cy="50" r="42"
+                                stroke="var(--accent-orange)"
+                                stroke-dasharray="264"
+                                stroke-dashoffset="58"/>
+                        </svg>
+                        <span class="score-value" style="color:var(--accent-orange)">7.8</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">部署便捷</span><span class="score-bar-value">9</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:90%;background:var(--accent-orange)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">传输性能</span><span class="score-bar-value">7</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:70%;background:var(--accent-orange)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">安全性</span><span class="score-bar-value">7</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:70%;background:var(--accent-orange)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">组网能力</span><span class="score-bar-value">9</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:90%;background:var(--accent-orange)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">NAT 穿透</span><span class="score-bar-value">9</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:90%;background:var(--accent-orange)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">生态成熟</span><span class="score-bar-value">8</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:80%;background:var(--accent-orange)"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WireGuard -->
+                <div class="score-card">
+                    <div class="score-card-name" style="color:var(--accent-green)">WireGuard</div>
+                    <div class="score-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="score-ring-bg" cx="50" cy="50" r="42"/>
+                            <circle class="score-ring-fill" cx="50" cy="50" r="42"
+                                stroke="var(--accent-green)"
+                                stroke-dasharray="264"
+                                stroke-dashoffset="66"/>
+                        </svg>
+                        <span class="score-value" style="color:var(--accent-green)">7.5</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">部署便捷</span><span class="score-bar-value">5</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:50%;background:var(--accent-green)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">传输性能</span><span class="score-bar-value">10</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--accent-green)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">安全性</span><span class="score-bar-value">10</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--accent-green)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">组网能力</span><span class="score-bar-value">6</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:60%;background:var(--accent-green)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">NAT 穿透</span><span class="score-bar-value">2</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:20%;background:var(--accent-green)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">生态成熟</span><span class="score-bar-value">10</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--accent-green)"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EasyTier -->
+                <div class="score-card">
+                    <div class="score-card-name" style="color:var(--accent-cyan)">EasyTier</div>
+                    <div class="score-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="score-ring-bg" cx="50" cy="50" r="42"/>
+                            <circle class="score-ring-fill" cx="50" cy="50" r="42"
+                                stroke="var(--accent-cyan)"
+                                stroke-dasharray="264"
+                                stroke-dashoffset="61"/>
+                        </svg>
+                        <span class="score-value" style="color:var(--accent-cyan)">7.7</span>
+                    </div>
+                    <div class="score-bars">
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">部署便捷</span><span class="score-bar-value">10</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--accent-cyan)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">传输性能</span><span class="score-bar-value">7</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:70%;background:var(--accent-cyan)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">安全性</span><span class="score-bar-value">8</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:80%;background:var(--accent-cyan)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">组网能力</span><span class="score-bar-value">9</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:90%;background:var(--accent-cyan)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">NAT 穿透</span><span class="score-bar-value">7</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:70%;background:var(--accent-cyan)"></div></div>
+                        </div>
+                        <div class="score-bar-item">
+                            <div class="score-bar-header"><span class="score-bar-label">生态成熟</span><span class="score-bar-value">5</span></div>
+                            <div class="score-bar-track"><div class="score-bar-fill" style="width:50%;background:var(--accent-cyan)"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-sep"></div>
+
+        <!-- Pros & Cons -->
+        <section class="section" id="proscons">
+            <div class="section-header reveal">
+                <div class="section-label">Pros &amp; Cons</div>
+                <h2>优势与局限</h2>
+                <p>没有完美的工具，只有最适合的选择</p>
+            </div>
+
+            <div class="proscons-grid">
+                <div class="proscons-card reveal">
+                    <div class="proscons-header">
+                        <div class="pc-icon" style="background:rgba(59,130,246,0.1);color:var(--accent-blue)">F</div>
+                        <h3>FRP</h3>
+                    </div>
+                    <ul class="pc-list">
+                        <li><span class="icon pros-icon">✦</span>部署简单直观，概念清晰。对于暴露单个服务（如 Web、SSH）到公网非常高效</li>
+                        <li><span class="icon pros-icon">✦</span>支持自定义域名绑定、HTTP 反向代理，适合 Web 开发者和小型服务发布</li>
+                        <li><span class="icon pros-icon">✦</span>社区成熟，GitHub 88k+ Star，文档完善，遇到问题易找解答</li>
+                        <li><span class="icon cons-icon">✧</span>必须拥有公网 IP 的服务器，存在服务器租用成本</li>
+                        <li><span class="icon cons-icon">✧</span>所有流量走中转，带宽和延迟受服务器限制，不适合大流量场景</li>
+                        <li><span class="icon cons-icon">✧</span>不具备组网能力，无法实现多设备互联互通</li>
+                    </ul>
+                </div>
+
+                <div class="proscons-card reveal">
+                    <div class="proscons-header">
+                        <div class="pc-icon" style="background:rgba(139,92,246,0.1);color:var(--accent-purple)">H</div>
+                        <h3>Headscale</h3>
+                    </div>
+                    <ul class="pc-list">
+                        <li><span class="icon pros-icon">✦</span>完全自托管，数据主权在自己手中。兼容 Tailscale 全平台客户端生态</li>
+                        <li><span class="icon pros-icon">✦</span>端到端 WireGuard 加密，直连性能极高。ACL 权限控制精细灵活</li>
+                        <li><span class="icon pros-icon">✦</span>MagicDNS 自动解析、子网路由、Exit Node 等企业级功能完备</li>
+                        <li><span class="icon cons-icon">✧</span>需要搭建和维护控制服务器，有一定的运维门槛</li>
+                        <li><span class="icon cons-icon">✧</span>控制面宕机时新设备无法加入（已连接设备仍可通信）</li>
+                        <li><span class="icon cons-icon">✧</span>相比 Tailscale 官方版，部分高级功能（如 Funnel）不可用</li>
+                    </ul>
+                </div>
+
+                <div class="proscons-card reveal">
+                    <div class="proscons-header">
+                        <div class="pc-icon" style="background:rgba(249,115,22,0.1);color:var(--accent-orange)">Z</div>
+                        <h3>ZeroTier</h3>
+                    </div>
+                    <ul class="pc-list">
+                        <li><span class="icon pros-icon">✦</span>开箱即用体验最佳，注册 → 创建网络 → 加入，三步完成组网</li>
+                        <li><span class="icon pros-icon">✦</span>L2 以太网仿真支持广播/组播，适合游戏联机、SMB 共享等场景</li>
+                        <li><span class="icon pros-icon">✦</span>Web 控制台直观易用，跨平台覆盖最广（含 iOS/Android/NAS）</li>
+                        <li><span class="icon cons-icon">✧</span>免费版限 25 节点。官方 Planet 节点在中国大陆延迟较高</li>
+                        <li><span class="icon cons-icon">✧</span>BSL 许可证非真正开源，自建 Moon 节点可改善但无法完全脱离官方基础设施</li>
+                        <li><span class="icon cons-icon">✧</span>自研加密方案未经密码学社区大规模审计</li>
+                    </ul>
+                </div>
+
+                <div class="proscons-card reveal">
+                    <div class="proscons-header">
+                        <div class="pc-icon" style="background:rgba(16,185,129,0.1);color:var(--accent-green)">W</div>
+                        <h3>WireGuard</h3>
+                    </div>
+                    <ul class="pc-list">
+                        <li><span class="icon pros-icon">✦</span>性能之王。内核态运行，加密开销极小，延迟和吞吐均为顶级水平</li>
+                        <li><span class="icon pros-icon">✦</span>代码量仅 ~4000 行，安全性经过密码学专家严格审计，是 VPN 安全标杆</li>
+                        <li><span class="icon pros-icon">✦</span>已合入 Linux 5.6+ 内核，主流发行版原生支持，长期稳定有保障</li>
+                        <li><span class="icon cons-icon">✧</span>不具备自动发现、NAT 穿透能力，需手动管理每个 Peer 的密钥和 Endpoint</li>
+                        <li><span class="icon cons-icon">✧</span>节点规模增长后配置管理复杂度呈 O(n²) 增长（Full Mesh）</li>
+                        <li><span class="icon cons-icon">✧</span>是"基础设施"而非"产品"，需要上层工具（Tailscale/Headscale/EasyTier）包装才好用</li>
+                    </ul>
+                </div>
+
+                <div class="proscons-card reveal">
+                    <div class="proscons-header">
+                        <div class="pc-icon" style="background:rgba(6,182,212,0.1);color:var(--accent-cyan)">E</div>
+                        <h3>EasyTier</h3>
+                    </div>
+                    <ul class="pc-list">
+                        <li><span class="icon pros-icon">✦</span>真正的去中心化——无需任何服务器，一行命令即可组建 Mesh 网络</li>
+                        <li><span class="icon pros-icon">✦</span>Rust 编写，内存安全有保障。同时支持 WireGuard 和自有协议</li>
+                        <li><span class="icon pros-icon">✦</span>支持子网代理、多协议监听（TCP/UDP/WS/WSS），灵活适配复杂网络环境</li>
+                        <li><span class="icon cons-icon">✧</span>项目较新（2024），社区规模和文档完善度仍在成长期</li>
+                        <li><span class="icon cons-icon">✧</span>用户态实现，极限性能不及内核态 WireGuard</li>
+                        <li><span class="icon cons-icon">✧</span>公共发现节点稳定性取决于社区维护，生产环境建议自建</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-sep"></div>
+
+        <!-- Scenarios -->
+        <section class="section" id="scenarios">
+            <div class="section-header reveal">
+                <div class="section-label">Use Cases</div>
+                <h2>场景推荐</h2>
+                <p>不同需求、不同规模，给你最直接的选型建议</p>
+            </div>
+
+            <div class="scenario-grid">
+                <div class="scenario-card reveal">
+                    <div class="scenario-icon" style="background:rgba(96,165,250,0.1)">🌐</div>
+                    <h3>暴露内网 Web 服务到公网</h3>
+                    <p class="scenario-desc">将家里或公司内网的 Web 应用、API 接口发布到互联网，支持自定义域名和 HTTPS。典型场景：开发调试、Webhook 接收、个人博客。</p>
+                    <div class="scenario-recommend">
+                        <div class="recommend-tag top"><span class="rank">首选</span> FRP</div>
+                        <div class="recommend-tag"><span class="rank">备选</span> Headscale + Funnel</div>
+                    </div>
+                </div>
+
+                <div class="scenario-card reveal">
+                    <div class="scenario-icon" style="background:rgba(139,92,246,0.1)">🏢</div>
+                    <h3>远程团队安全组网</h3>
+                    <p class="scenario-desc">分布在不同城市/国家的团队成员需要安全访问内部资源（Git、数据库、内部系统），需要精细的权限控制和审计能力。</p>
+                    <div class="scenario-recommend">
+                        <div class="recommend-tag top"><span class="rank">首选</span> Headscale</div>
+                        <div class="recommend-tag"><span class="rank">备选</span> ZeroTier</div>
+                    </div>
+                </div>
+
+                <div class="scenario-card reveal">
+                    <div class="scenario-icon" style="background:rgba(249,115,22,0.1)">🎮</div>
+                    <h3>游戏联机 / 局域网模拟</h3>
+                    <p class="scenario-desc">多人游戏需要虚拟局域网环境，支持广播发现和低延迟通信。如 Minecraft 联机、局域网对战游戏。</p>
+                    <div class="scenario-recommend">
+                        <div class="recommend-tag top"><span class="rank">首选</span> ZeroTier</div>
+                        <div class="recommend-tag"><span class="rank">备选</span> EasyTier</div>
+                    </div>
+                </div>
+
+                <div class="scenario-card reveal">
+                    <div class="scenario-icon" style="background:rgba(16,185,129,0.1)">🔒</div>
+                    <h3>高安全 Site-to-Site VPN</h3>
+                    <p class="scenario-desc">企业总部和分支机构之间建立永久性加密隧道，追求最高性能和最严格的安全标准，有固定公网 IP。</p>
+                    <div class="scenario-recommend">
+                        <div class="recommend-tag top"><span class="rank">首选</span> WireGuard</div>
+                        <div class="recommend-tag"><span class="rank">备选</span> Headscale</div>
+                    </div>
+                </div>
+
+                <div class="scenario-card reveal">
+                    <div class="scenario-icon" style="background:rgba(6,182,212,0.1)">🏠</div>
+                    <h3>家庭多设备互联</h3>
+                    <p class="scenario-desc">将家中 NAS、树莓派、远程笔记本连成一个虚拟网络，随时随地访问家中资源。希望零门槛、不折腾。</p>
+                    <div class="scenario-recommend">
+                        <div class="recommend-tag top"><span class="rank">首选</span> EasyTier</div>
+                        <div class="recommend-tag"><span class="rank">备选</span> ZeroTier</div>
+                    </div>
+                </div>
+
+                <div class="scenario-card reveal">
+                    <div class="scenario-icon" style="background:rgba(244,114,182,0.1)">☁️</div>
+                    <h3>多云 / 混合云互联</h3>
+                    <p class="scenario-desc">连接 AWS、Azure、阿里云等多个云上的 VPC 以及本地数据中心，构建统一的私有网络。需要高吞吐和稳定性。</p>
+                    <div class="scenario-recommend">
+                        <div class="recommend-tag top"><span class="rank">首选</span> WireGuard</div>
+                        <div class="recommend-tag"><span class="rank">备选</span> Headscale</div>
+                        <div class="recommend-tag"><span class="rank">轻量</span> EasyTier</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-sep"></div>
+
+        <!-- Decision Helper -->
+        <section class="section">
+            <div class="section-header reveal">
+                <div class="section-label">Quick Decision</div>
+                <h2>快速决策指南</h2>
+                <p>回答几个关键问题，快速找到你的最优解</p>
+            </div>
+
+            <div class="tech-detail-grid reveal">
+                <div class="tech-detail-card">
+                    <h3>🤔 你需要的是什么？</h3>
+                    <ul>
+                        <li><strong>只是把内网一个端口映射出去？</strong> → 直接用 <strong style="color:var(--accent-blue)">FRP</strong>，最简单直接</li>
+                        <li><strong>需要多台设备互相访问？</strong> → 这是"组网"需求，往下看</li>
+                        <li><strong>追求极致性能和安全？</strong> → <strong style="color:var(--accent-green)">WireGuard</strong> 是底层最优解</li>
+                        <li><strong>想要 WireGuard 的体验但不想手动配置？</strong> → <strong style="color:var(--accent-purple)">Headscale</strong></li>
+                        <li><strong>不想搭建任何服务器？</strong> → <strong style="color:var(--accent-cyan)">EasyTier</strong> 或 <strong style="color:var(--accent-orange)">ZeroTier</strong></li>
+                    </ul>
+                </div>
+
+                <div class="tech-detail-card">
+                    <h3>💡 关键考量因素</h3>
+                    <ul>
+                        <li><strong>有无公网 IP / VPS？</strong> 有 → FRP / WireGuard 可选；无 → 选 ZeroTier / EasyTier / Headscale</li>
+                        <li><strong>在中国大陆使用？</strong> ZeroTier 官方节点较慢需自建 Moon；Headscale 需自建 DERP；EasyTier 公共节点在国内可用</li>
+                        <li><strong>设备数量？</strong> &lt;5 台 → 任何方案均可；5-25 台 → ZeroTier 免费版够用；25+ → Headscale 或 WireGuard</li>
+                        <li><strong>运维能力？</strong> 弱 → ZeroTier / EasyTier；中等 → FRP / Headscale；强 → WireGuard 手动组网</li>
+                        <li><strong>数据敏感度？</strong> 极高 → WireGuard / Headscale（端到端加密 + 自托管）；一般 → 任意</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-sep"></div>
+
+        <!-- Summary -->
+        <section class="section" id="summary">
+            <div class="summary-box reveal">
+                <h2>总结：一句话定位每个工具</h2>
+                <p>它们不是相互替代的关系，而是解决不同层面问题的互补方案。WireGuard 是地基，Headscale 是在其上盖的智慧大楼，ZeroTier 和 EasyTier 是开箱即住的公寓，FRP 是一扇通往外界的精准之门。</p>
+
+                <div class="summary-matrix">
+                    <div class="matrix-item">
+                        <div class="m-name" style="color:var(--accent-blue)">FRP</div>
+                        <div class="m-best">精准的服务暴露工具<br>内网穿透首选</div>
+                    </div>
+                    <div class="matrix-item">
+                        <div class="m-name" style="color:var(--accent-purple)">Headscale</div>
+                        <div class="m-best">自主可控的企业级组网<br>安全与功能并重</div>
+                    </div>
+                    <div class="matrix-item">
+                        <div class="m-name" style="color:var(--accent-orange)">ZeroTier</div>
+                        <div class="m-best">最易上手的虚拟局域网<br>开箱即用</div>
+                    </div>
+                    <div class="matrix-item">
+                        <div class="m-name" style="color:var(--accent-green)">WireGuard</div>
+                        <div class="m-best">VPN 协议的终极形态<br>性能与安全标杆</div>
+                    </div>
+                    <div class="matrix-item">
+                        <div class="m-name" style="color:var(--accent-cyan)">EasyTier</div>
+                        <div class="m-best">零配置去中心化组网<br>最自由的新选择</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>本页面内容基于各项目官方文档、社区评测及实际使用经验整理，数据截至 2024 年</p>
+            <div class="footer-links">
+                <a href="https://github.com/fatedier/frp" target="_blank">FRP GitHub</a>
+                <a href="https://github.com/juanfont/headscale" target="_blank">Headscale GitHub</a>
+                <a href="https://github.com/zerotier/ZeroTierOne" target="_blank">ZeroTier GitHub</a>
+                <a href="https://www.wireguard.com/" target="_blank">WireGuard 官网</a>
+                <a href="https://github.com/EasyTier/EasyTier" target="_blank">EasyTier GitHub</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Scroll reveal
+        const reveals = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, i) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.classList.add('visible');
+                    }, i * 80);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        reveals.forEach(el => observer.observe(el));
+
+        // Nav scroll effect
+        const nav = document.getElementById('nav');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        // Animate score bars on reveal
+        const scoreObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.querySelectorAll('.score-bar-fill').forEach(bar => {
+                        const width = bar.style.width;
+                        bar.style.width = '0%';
+                        setTimeout(() => { bar.style.width = width; }, 300);
+                    });
+                    scoreObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('.score-card').forEach(card => scoreObserver.observe(card));
+
+        // Particle effect
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createParticles() {
+            particles = [];
+            const count = Math.min(80, Math.floor(window.innerWidth / 20));
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    size: Math.random() * 1.5 + 0.5,
+                    opacity: Math.random() * 0.3 + 0.1
+                });
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height;
+                if (p.y > canvas.height) p.y = 0;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(96, 165, 250, ${p.opacity})`;
+                ctx.fill();
+
+                // Connect nearby particles
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[j].x - p.x;
+                    const dy = particles[j].y - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(96, 165, 250, ${0.06 * (1 - dist / 120)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        resize();
+        createParticles();
+        animate();
+
+        window.addEventListener('resize', () => {
+            resize();
+            createParticles();
+        });
+
+        // Active nav link on scroll
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
