@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prometheus 核心概念必知必会</title>
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --card-bg: #1a1d2d;
+            --text-main: #e0e6ed;
+            --text-sub: #94a3b8;
+            --accent-color: #ff3e3e; /* Prometheus Red */
+            --accent-glow: rgba(255, 62, 62, 0.4);
+            --tech-blue: #00f2ff;
+            --tech-purple: #bc13fe;
+            --border-color: #2d3748;
+            --font-main: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 62, 62, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 242, 255, 0.05) 0%, transparent 20%);
+        }
+
+        /* 顶部Header */
+        header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #fff, var(--text-sub));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeInDown 1s ease;
+        }
+
+        .subtitle {
+            color: var(--accent-color);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            opacity: 0.8;
+            animation: fadeInUp 1s ease;
+        }
+
+        /* 布局容器 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-color);
+            opacity: 0.7;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            border-color: var(--accent-color);
+        }
+
+        .card:hover::before {
+            width: 100%;
+            opacity: 0.05;
+            background: var(--accent-color);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: var(--tech-blue);
+            display: flex;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .card-icon {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .card p, .card ul {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+            z-index: 1;
+        }
+
+        .card ul {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .card li {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .card li::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* 特定的卡片颜色变体 */
+        .card.counter::before { background: #ff9f43; }
+        .card.counter h2 { color: #ff9f43; }
+        
+        .card.gauge::before { background: #2ecc71; }
+        .card.gauge h2 { color: #2ecc71; }
+
+        .card.histogram::before { background: #9b59b6; }
+        .card.histogram h2 { color: #9b59b6; }
+
+        .card.summary::before { background: #e74c3c; }
+        .card.summary h2 { color: #e74c3c; }
+
+        /* 代码块风格 */
+        code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--tech-blue);
+        }
+
+        /* 动画 */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .container { grid-template-columns: 1fr; }
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #555;
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Prometheus</h1>
+        <div class="subtitle">Core Concepts // 核心概念必知必会</div>
+    </header>
+
+    <div class="container">
+        
+        <!-- 核心：拉取模式 -->
+        <div class="card">
+            <h2><span class="card-icon">⚡</span>Pull Model (拉取模式)</h2>
+            <p>Prometheus 默认采用 <strong>主动拉取</strong> 的方式采集数据，而不是由客户端推送。</p>
+            <ul>
+                <li>服务端周期性访问 Target 的 HTTP 端点 (/metrics)。</li>
+                <li>优势：<strong>无侵入性</strong>，便于统一管理</li>
+                <li>组件：<code>Node Exporter</code>, <code>Blackbox Exporter</code></li>
+            </ul>
+        </div>
+
+        <!-- 核心：数据类型 - Counter -->
+        <div class="card counter">
+            <h2><span class="card-icon">0 ↗</span>Counter (计数器)</h2>
+            <p>一个 <strong>只增不减</strong> 的计数器。</p>
+            <ul>
+                <li>用途：请求次数、错误总数、流量字节数。</li>
+                <li>分析：必须配合 <code>rate()</code> 或 <code>increase()</code> 使用。</li>
+                <li>示例：<code>rate(http_requests_total[5m])</code></li>
+            </ul>
+        </div>
+
+        <!-- 核心：数据类型 - Gauge -->
+        <div class="card gauge">
+            <h2><span class="card-icon">↕</span>Gauge (仪表盘)</h2>
+            <p>表示一个 <strong>可任意变化</strong> 的数值。</p>
+            <ul>
+                <li>用途：当前内存使用量、在线人数、CPU温度。</li>
+                <li>分析：直接查看当前值，或计算差值。</li>
+                <li>操作：<code>delta()</code>, <code>holt_winters()</code></li>
+            </ul>
+        </div>
+
+        <!-- 核心：数据类型 - Histogram -->
+        <div class="card histogram">
+            <h2><span class="card-icon">📊</span>Histogram (直方图)</h2>
+            <p>将数据统计分布划分到<strong>预设的桶 (Buckets)</strong> 中。</p>
+            <ul>
+                <li>用途：请求延迟 (< 0.1s, < 0.5s, < 1s)。</li>
+                <li>优势：<strong>服务端计算</strong>，适合高基数数据。</li>
+                <li>自动生成：<code>_bucket</code>, <code>_sum</code>, <code>_count</code></li>
+            </ul>
+        </div>
+
+        <!-- 核心：数据类型 - Summary -->
+        <div class="card summary">
+            <h2><span class="card-icon">%</span>Summary (摘要)</h2>
+            <p>直接在<strong>客户端计算</strong> 分位数 (Quantiles)。</p>
+            <ul>
+                <li>用途：请求延迟的中位数 (0.5)、P99 (0.99)。</li>
+                <li>缺点：<strong>不能聚合</strong> (高基数问题)。</li>
+                <li>选择：Histogram 用于可聚合场景，Summary 用于需要精确分位数的场景。</li>
+            </ul>
+        </div>
+
+        <!-- 核心：PromQL -->
+        <div class="card">
+            <h2><span class="card-icon">∑</span>PromQL (查询语言)</h2>
+            <p>Prometheus 的核心强大之处，用于对时序数据进行聚合和运算。</p>
+            <ul>
+                <li><strong>瞬时向量 (Instant Vector)</strong>: 返回某一时刻的一组时间序列。</li>
+                <li><strong>区间向量 (Range Vector)</strong>: 返回某一时间段内的数据。</li>
+                <li>常用函数：<code>rate()</code>, <code>irate()</code>, <code>avg()</code>, <code>topk()</code></li>
+            </ul>
+        </div>
+
+        <!-- 核心：Service Discovery -->
+        <div class="card">
+            <h2><span class="card-icon">🔍</span>Service Discovery (服务发现)</h2>
+            <p>在动态环境中（如 Kubernetes）自动发现监控目标。</p>
+            <ul>
+                <li>静态配置：适用于 IP 固定的场景。</li>
+                <li>动态发现：支持 <code>Kubernetes</code>, <code>Consul</code>, <code>DNS</code> 等。</li>
+                <li><code>relabel_configs</code>: 重新标记 (Relabeling) 是最核心的过滤逻辑。</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <footer>
+        Generated for Prometheus Learning // Design: Cyber-Minimalism
+    </footer>
+
+</body>
+</html>

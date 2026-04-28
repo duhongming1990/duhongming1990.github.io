@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prometheus 核心概念 | 必知必会</title>
+    <style>
+        :root {
+            --bg-color: #0a0f1a;
+            --card-bg: rgba(17, 25, 40, 0.75);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-cyan: #00f0ff;
+            --accent-purple: #a855f7;
+            --border-color: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.05), transparent 25%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            padding: 5rem 2rem 3rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem 5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(0, 240, 255, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(0, 240, 255, 0.2);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card h2 {
+            color: var(--accent-cyan);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2::before {
+            content: '/>';
+            color: var(--accent-purple);
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .card ul {
+            list-style: none;
+        }
+
+        .card ul li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.8rem;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .card ul li::before {
+            content: '■';
+            position: absolute;
+            left: 0;
+            top: 2px;
+            color: var(--accent-purple);
+            font-size: 0.8rem;
+        }
+
+        .highlight {
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.2rem; }
+            .container { padding: 0 1rem 3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Prometheus 核心概念</h1>
+        <p class="subtitle">云原生时代的监控标准，掌握这些核心概念，轻松驾驭系统可观测性。</p>
+    </header>
+
+    <main class="container">
+        <!-- Card 1 -->
+        <div class="card">
+            <h2>数据模型 (Data Model)</h2>
+            <p>Prometheus 将所有数据存储为<span class="highlight">时间序列 (Time Series)</span>。每个时间序列由指标名称和一组键值对唯一标识。</p>
+            <ul>
+                <li><strong>Metric Name:</strong> 描述系统特征（如 <code>http_requests_total</code>）。</li>
+                <li><strong>Labels (标签):</strong> 键值对，提供多维度的查询能力（如 <code>method="GET"</code>）。</li>
+                <li><strong>Samples (样本):</strong> 包含一个 float64 值和一个毫秒级时间戳。</li>
+            </ul>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="card">
+            <h2>四大指标类型 (Metric Types)</h2>
+            <p>客户端库提供了四种核心的指标类型，用于不同场景的数据采集：</p>
+            <ul>
+                <li><strong>Counter (计数器):</strong> 只增不减的累加指标（如请求总数、错误总数）。</li>
+                <li><strong>Gauge (仪表盘):</strong> 可增可减的瞬时值（如当前内存使用量、并发数）。</li>
+                <li><strong>Histogram (直方图):</strong> 对观察结果进行采样并分桶统计（如请求延迟分布）。</li>
+                <li><strong>Summary (摘要):</strong> 类似于直方图，但直接在客户端计算分位数（如 P99 延迟）。</li>
+            </ul>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="card">
+            <h2>PromQL (查询语言)</h2>
+            <p>Prometheus 内置的图灵完备查询语言，专为时间序列数据设计，功能极其强大。</p>
+            <ul>
+                <li><strong>实时聚合:</strong> 支持 sum, avg, min, max 等聚合操作。</li>
+                <li><strong>向量计算:</strong> 支持即时向量（Instant Vector）和区间向量（Range Vector）的数学运算。</li>
+                <li><strong>灵活过滤:</strong> 通过标签选择器精准定位数据（如 <code>{status="500"}</code>）。</li>
+            </ul>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="card">
+            <h2>Pull 模型 (拉取机制)</h2>
+            <p>与传统的 Push（推送）模型不同，Prometheus 默认采用 <span class="highlight">Pull（拉取）</span> 方式获取数据。</p>
+            <ul>
+                <li><strong>主动抓取:</strong> Server 定期通过 HTTP 请求从目标（Targets）的 <code>/metrics</code> 接口拉取数据。</li>
+                <li><strong>解耦与安全:</strong> 降低了客户端的复杂性，防止海量推送压垮监控服务端。</li>
+                <li><strong>Pushgateway:</strong> 针对短暂运行的批处理任务，提供中间网关接收推送数据。</li>
+            </ul>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="card">
+            <h2>服务发现 (Service Discovery)</h2>
+            <p>在动态的云原生环境中，监控目标 IP 随时变化，静态配置无法满足需求。</p>
+            <ul>
+                <li><strong>动态感知:</strong> 自动发现需要监控的目标实例。</li>
+                <li><strong>原生集成:</strong> 完美支持 Kubernetes, Consul, EC2, Azure 等多种环境。</li>
+                <li><strong>Relabeling (重标签):</strong> 在抓取前动态重写、过滤或丢弃目标的标签，极具灵活性。</li>
+            </ul>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="card">
+            <h2>核心生态组件 (Ecosystem)</h2>
+            <p>Prometheus 不是一个孤立的工具，而是一个完整的监控生态系统。</p>
+            <ul>
+                <li><strong>Prometheus Server:</strong> 核心大脑，负责抓取、存储数据并提供查询接口。</li>
+                <li><strong>Exporters:</strong> 各种数据采集器（如 Node Exporter, MySQL Exporter）。</li>
+                <li><strong>Alertmanager:</strong> 负责处理告警，支持去重、分组、路由（邮件、钉钉、Webhook）。</li>
+                <li><strong>Grafana:</strong> 黄金搭档，用于将 PromQL 查询结果进行炫酷的可视化展示。</li>
+            </ul>
+        </div>
+    </main>
+
+</body>
+</html>

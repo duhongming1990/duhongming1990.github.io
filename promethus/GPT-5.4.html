@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prometheus 核心概念 - 必知必会</title>
+  <style>
+    :root{
+      --bg:#07111f;
+      --bg2:#0b172a;
+      --panel:rgba(15, 28, 48, 0.72);
+      --panel-strong:rgba(12, 24, 42, 0.92);
+      --line:rgba(92, 132, 195, 0.28);
+      --text:#eaf2ff;
+      --muted:#9fb4d3;
+      --blue:#56c2ff;
+      --cyan:#3cf2ff;
+      --green:#3ee6a5;
+      --purple:#8b7cff;
+      --orange:#ffb454;
+      --shadow:0 10px 40px rgba(0,0,0,0.35);
+      --radius:18px;
+    }
+
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+    }
+
+    html{
+      scroll-behavior:smooth;
+    }
+
+    body{
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(60,242,255,0.08), transparent 25%),
+        radial-gradient(circle at 80% 0%, rgba(139,124,255,0.12), transparent 28%),
+        radial-gradient(circle at 70% 70%, rgba(62,230,165,0.08), transparent 25%),
+        linear-gradient(180deg, #050c18 0%, #081120 40%, #091525 100%);
+      min-height:100vh;
+      line-height:1.7;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(rgba(86,194,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(86,194,255,0.06) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: linear-gradient(to bottom, rgba(255,255,255,0.28), transparent 85%);
+    }
+
+    .container{
+      width:min(1180px, 92%);
+      margin:0 auto;
+    }
+
+    .hero{
+      padding:72px 0 36px;
+      position:relative;
+    }
+
+    .hero-card{
+      background:linear-gradient(135deg, rgba(11,23,42,0.88), rgba(8,18,34,0.72));
+      border:1px solid var(--line);
+      border-radius:28px;
+      padding:48px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero-card::before{
+      content:"";
+      position:absolute;
+      top:-120px;
+      right:-100px;
+      width:280px;
+      height:280px;
+      background:radial-gradient(circle, rgba(60,242,255,0.18), transparent 65%);
+      filter:blur(8px);
+    }
+
+    .hero-card::after{
+      content:"";
+      position:absolute;
+      left:-80px;
+      bottom:-80px;
+      width:220px;
+      height:220px;
+      background:radial-gradient(circle, rgba(139,124,255,0.16), transparent 70%);
+      filter:blur(8px);
+    }
+
+    .tag{
+      display:inline-block;
+      padding:6px 14px;
+      border:1px solid rgba(60,242,255,0.35);
+      color:var(--cyan);
+      border-radius:999px;
+      font-size:13px;
+      letter-spacing:1px;
+      background:rgba(60,242,255,0.08);
+      margin-bottom:18px;
+    }
+
+    h1{
+      font-size:clamp(30px, 5vw, 54px);
+      line-height:1.15;
+      margin-bottom:16px;
+      letter-spacing:0.5px;
+    }
+
+    .subtitle{
+      font-size:18px;
+      color:var(--muted);
+      max-width:800px;
+      margin-bottom:28px;
+    }
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+      gap:16px;
+      margin-top:26px;
+    }
+
+    .mini-card{
+      background:rgba(10,22,39,0.7);
+      border:1px solid rgba(92,132,195,0.22);
+      border-radius:16px;
+      padding:18px 18px 16px;
+      transition:0.25s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .mini-card:hover{
+      transform:translateY(-4px);
+      border-color:rgba(60,242,255,0.35);
+      box-shadow:0 12px 28px rgba(0,0,0,0.28);
+    }
+
+    .mini-card .num{
+      font-size:24px;
+      font-weight:700;
+      color:var(--cyan);
+      margin-bottom:6px;
+    }
+
+    .mini-card p{
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .nav{
+      position:sticky;
+      top:0;
+      z-index:20;
+      backdrop-filter: blur(14px);
+      background:rgba(6,15,28,0.72);
+      border-bottom:1px solid rgba(92,132,195,0.15);
+    }
+
+    .nav-inner{
+      width:min(1180px, 92%);
+      margin:0 auto;
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      padding:14px 0;
+    }
+
+    .nav a{
+      text-decoration:none;
+      color:var(--muted);
+      border:1px solid rgba(92,132,195,0.18);
+      background:rgba(10,18,34,0.48);
+      padding:8px 14px;
+      border-radius:999px;
+      font-size:14px;
+      transition:0.2s ease;
+    }
+
+    .nav a:hover{
+      color:var(--text);
+      border-color:rgba(60,242,255,0.35);
+      box-shadow:0 0 0 1px rgba(60,242,255,0.08) inset;
+    }
+
+    section{
+      padding:34px 0;
+    }
+
+    .section-title{
+      font-size:28px;
+      margin-bottom:16px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .section-title::before{
+      content:"";
+      width:10px;
+      height:24px;
+      border-radius:999px;
+      background:linear-gradient(180deg, var(--cyan), var(--purple));
+      box-shadow:0 0 12px rgba(60,242,255,0.45);
+    }
+
+    .section-desc{
+      color:var(--muted);
+      margin-bottom:22px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+      gap:18px;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(14,26,46,0.86), rgba(10,20,36,0.82));
+      border:1px solid rgba(92,132,195,0.2);
+      border-radius:var(--radius);
+      padding:22px;
+      box-shadow:var(--shadow);
+      transition:0.25s ease;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card:hover{
+      transform:translateY(-4px);
+      border-color:rgba(86,194,255,0.32);
+    }
+
+    .card h3{
+      font-size:20px;
+      margin-bottom:10px;
+      color:#f4f8ff;
+    }
+
+    .card p{
+      color:var(--muted);
+      font-size:15px;
+      margin-bottom:10px;
+    }
+
+    .card ul{
+      padding-left:20px;
+      color:var(--text);
+    }
+
+    .card li{
+      margin:8px 0;
+      color:#d9e8ff;
+    }
+
+    .chip{
+      display:inline-block;
+      margin-bottom:12px;
+      padding:5px 12px;
+      border-radius:999px;
+      font-size:12px;
+      color:#dffcff;
+      border:1px solid rgba(60,242,255,0.24);
+      background:rgba(60,242,255,0.08);
+    }
+
+    .timeline{
+      display:grid;
+      gap:16px;
+    }
+
+    .step{
+      display:grid;
+      grid-template-columns:78px 1fr;
+      gap:16px;
+      align-items:start;
+      background:linear-gradient(180deg, rgba(13,25,43,0.86), rgba(10,19,34,0.82));
+      border:1px solid rgba(92,132,195,0.2);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+
+    .step-index{
+      height:54px;
+      width:54px;
+      border-radius:16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:20px;
+      color:#081120;
+      background:linear-gradient(135deg, var(--cyan), var(--blue));
+      box-shadow:0 0 24px rgba(60,242,255,0.25);
+    }
+
+    .step h4{
+      font-size:19px;
+      margin-bottom:8px;
+    }
+
+    .step p{
+      color:var(--muted);
+    }
+
+    pre{
+      background:#08111f;
+      color:#dff7ff;
+      border:1px solid rgba(92,132,195,0.18);
+      border-radius:14px;
+      padding:16px;
+      overflow:auto;
+      font-size:14px;
+      line-height:1.6;
+      margin-top:12px;
+    }
+
+    code{
+      font-family:Consolas, Monaco, monospace;
+    }
+
+    .highlight{
+      color:var(--green);
+      font-weight:600;
+    }
+
+    .warning{
+      color:var(--orange);
+      font-weight:600;
+    }
+
+    .table-wrap{
+      overflow:auto;
+      border-radius:18px;
+      border:1px solid rgba(92,132,195,0.18);
+      box-shadow:var(--shadow);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      background:rgba(12,24,42,0.88);
+    }
+
+    th, td{
+      padding:16px;
+      border-bottom:1px solid rgba(92,132,195,0.14);
+      text-align:left;
+      vertical-align:top;
+    }
+
+    th{
+      color:#f4f8ff;
+      background:rgba(15,30,53,0.95);
+      font-weight:600;
+    }
+
+    td{
+      color:var(--muted);
+    }
+
+    .footer{
+      padding:28px 0 48px;
+      color:#85a0c7;
+      text-align:center;
+      font-size:14px;
+    }
+
+    .quote{
+      border-left:3px solid var(--cyan);
+      padding:14px 16px;
+      background:rgba(60,242,255,0.06);
+      color:#d9faff;
+      border-radius:0 12px 12px 0;
+      margin-top:12px;
+    }
+
+    @media (max-width: 768px){
+      .hero-card{
+        padding:28px;
+      }
+      .step{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="container">
+      <div class="hero-card">
+        <div class="tag">PROMETHEUS · 核心概念 · 必知必会</div>
+        <h1>Prometheus 核心知识地图</h1>
+        <p class="subtitle">
+          一页掌握 Prometheus 最关键的概念：指标模型、Label、抓取机制、PromQL、告警、存储与生态组件。
+          适合面试复习、入门学习、监控体系搭建前的知识梳理。
+        </p>
+
+        <div class="hero-grid">
+          <div class="mini-card">
+            <div class="num">01</div>
+            <p>理解 Prometheus 是什么、解决什么问题</p>
+          </div>
+          <div class="mini-card">
+            <div class="num">02</div>
+            <p>掌握时序数据、Metric、Label、Sample</p>
+          </div>
+          <div class="mini-card">
+            <div class="num">03</div>
+            <p>学会抓取、存储、查询与告警链路</p>
+          </div>
+          <div class="mini-card">
+            <div class="num">04</div>
+            <p>掌握最常用的 PromQL 语法与思维</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#intro">Prometheus 是什么</a>
+      <a href="#model">数据模型</a>
+      <a href="#types">四大指标类型</a>
+      <a href="#workflow">工作流程</a>
+      <a href="#promql">PromQL 必会</a>
+      <a href="#alert">告警机制</a>
+      <a href="#best">最佳实践</a>
+      <a href="#interview">面试高频点</a>
+    </div>
+  </nav>
+
+  <main class="container">
+
+    <section id="intro">
+      <h2 class="section-title">1. Prometheus 是什么</h2>
+      <p class="section-desc">
+        Prometheus 是一套开源的监控告警系统，特别适合云原生、容器化、微服务场景。
+        它的核心能力是：<span class="highlight">采集指标、存储时序数据、执行查询、触发告警</span>。
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <span class="chip">核心定位</span>
+          <h3>监控系统，不是日志系统</h3>
+          <p>Prometheus 主要用于采集和分析数值型指标，例如 CPU、内存、QPS、延迟、错误率。</p>
+          <ul>
+            <li>适合看趋势、聚合、告警</li>
+            <li>不适合存详细文本日志</li>
+            <li>也不适合作为链路追踪系统</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <span class="chip">核心优势</span>
+          <h3>拉模式 + 多维度标签</h3>
+          <p>Prometheus 通过 HTTP 主动抓取目标暴露的指标，并使用 Label 构建多维分析能力。</p>
+          <ul>
+            <li>支持灵活服务发现</li>
+            <li>天然适合动态扩缩容环境</li>
+            <li>PromQL 查询能力非常强</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <span class="chip">适用场景</span>
+          <h3>云原生监控首选</h3>
+          <p>在 Kubernetes、容器平台、微服务架构中，Prometheus 已成为事实标准。</p>
+          <ul>
+            <li>主机监控</li>
+            <li>服务监控</li>
+            <li>应用性能监控</li>
+            <li>业务指标监控</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="model">
+      <h2 class="section-title">2. 数据模型：Prometheus 的灵魂</h2>
+      <p class="section-desc">
+        想学会 Prometheus，最重要的就是理解它的时序数据模型。
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <span class="chip">Time Series</span>
+          <h3>时序数据</h3>
+          <p>Prometheus 存储的是按时间变化的一组数值序列。</p>
+          <ul>
+            <li>每条时序 = 指标名 + 一组标签</li>
+            <li>每个时间点对应一个采样值</li>
+            <li>本质上是不断追加的监控数据流</li>
+          </ul>
+          <pre><code>http_requests_total{method="GET",code="200"} 1024</code></pre>
+        </div>
+
+        <div class="card">
+          <span class="chip">Metric</span>
+          <h3>指标名</h3>
+          <p>Metric 是监控项名称，例如：</p>
+          <ul>
+            <li><code>up</code>：目标是否存活</li>
+            <li><code>http_requests_total</code>：请求总数</li>
+            <li><code>node_cpu_seconds_total</code>：CPU 使用时间</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <span class="chip">Label</span>
+          <h3>标签</h3>
+          <p>Label 是键值对，用于描述指标维度，是 Prometheus 最核心的能力之一。</p>
+          <ul>
+            <li><code>instance="10.0.0.1:9100"</code></li>
+            <li><code>job="node-exporter"</code></li>
+            <li><code>method="GET"</code></li>
+            <li><code>status="500"</code></li>
+          </ul>
+          <div class="quote">同一个指标名，通过不同 Label 组合，可以形成大量时序。</div>
+        </div>
+
+        <div class="card">
+          <span class="chip">Sample</span>
+          <h3>采样点</h3>
+          <p>一次采集会生成一个样本点，样本点包含：</p>
+          <ul>
+            <li>时间戳 timestamp</li>
+            <li>值 value</li>
+          </ul>
+          <pre><code>(metric + labels) + timestamp + value</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="types">
+      <h2 class="section-title">3. 四大指标类型：必背</h2>
+      <p class="section-desc">
+        Prometheus 官方定义了 4 类常见指标类型，这是面试和实践中的高频考点。
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>类型</th>
+              <th>含义</th>
+              <th>典型场景</th>
+              <th>注意点</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Counter</strong></td>
+              <td>只增不减的计数器</td>
+              <td>请求总数、错误总数、任务执行次数</td>
+              <td>重启后会归零，通常配合 <code>rate()</code> / <code>increase()</code> 使用</td>
+            </tr>
+            <tr>
+              <td><strong>Gauge</strong></td>
+              <td>可增可减的瞬时值</td>
+              <td>CPU 使用率、内存占用、在线连接数</td>
+              <td>表示当前状态，不一定是累积值</td>
+            </tr>
+            <tr>
+              <td><strong>Histogram</strong></td>
+              <td>对数据分桶统计</td>
+              <td>接口延迟、响应大小</td>
+              <td>可计算分位数近似值，常用于延迟分析</td>
+            </tr>
+            <tr>
+              <td><strong>Summary</strong></td>
+              <td>客户端直接计算分位数</td>
+              <td>请求耗时摘要</td>
+              <td>不易跨实例聚合，现代场景下通常更推荐 Histogram</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid" style="margin-top:18px;">
+        <div class="card">
+          <h3>Counter 示例</h3>
+          <pre><code>http_requests_total{job="app",status="200"}</code></pre>
+          <p>看“增长速度”而不是只看总数：</p>
+          <pre><code>rate(http_requests_total[5m])</code></pre>
+        </div>
+        <div class="card">
+          <h3>Gauge 示例</h3>
+          <pre><code>node_memory_MemAvailable_bytes</code></pre>
+          <p>它表示某一刻的剩余内存，可直接查看当前值。</p>
+        </div>
+        <div class="card">
+          <h3>Histogram 示例</h3>
+          <pre><code>http_request_duration_seconds_bucket</code></pre>
+          <p>通常结合 <code>histogram_quantile()</code> 求 P90 / P95 / P99。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow">
+      <h2 class="section-title">4. 工作流程：Prometheus 怎么跑起来</h2>
+      <p class="section-desc">
+        下面是 Prometheus 从采集到告警的完整链路。
+      </p>
+
+      <div class="timeline">
+        <div class="step">
+          <div class="step-index">1</div>
+          <div>
+            <h4>Target 暴露指标</h4>
+            <p>被监控对象通过 HTTP 暴露 <code>/metrics</code> 接口，返回文本格式指标数据。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-index">2</div>
+          <div>
+            <h4>Prometheus 定时抓取</h4>
+            <p>Prometheus 按配置的 <code>scrape_interval</code> 定时拉取目标指标，这就是典型的 <span class="highlight">Pull 模式</span>。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-index">3</div>
+          <div>
+            <h4>本地 TSDB 存储</h4>
+            <p>抓取到的数据被写入本地时序数据库 TSDB，便于后续聚合分析与历史查询。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-index">4</div>
+          <div>
+            <h4>PromQL 查询计算</h4>
+            <p>用户、Grafana、告警规则都可以通过 PromQL 对时序数据进行查询和聚合。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-index">5</div>
+          <div>
+            <h4>Alertmanager 告警通知</h4>
+            <p>命中告警规则后，Prometheus 将告警发送给 Alertmanager，再由其完成分组、抑制、路由、通知。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <span class="chip">最常见组件</span>
+        <h3>Prometheus 生态常见角色</h3>
+        <ul>
+          <li><strong>Prometheus Server</strong>：采集、存储、查询、规则计算</li>
+          <li><strong>Exporter</strong>：把第三方系统指标转换为 Prometheus 可抓取格式</li>
+          <li><strong>Pushgateway</strong>：短生命周期任务的临时指标上报中转</li>
+          <li><strong>Alertmanager</strong>：告警收敛与通知</li>
+          <li><strong>Grafana</strong>：可视化展示</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">5. Pull 模式 vs Push 模式</h2>
+      <p class="section-desc">
+        这是 Prometheus 的经典考点。
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <h3>为什么 Prometheus 默认用 Pull</h3>
+          <ul>
+            <li>Prometheus 可以主动发现和管理采集目标</li>
+            <li>便于统一控制抓取频率和超时</li>
+            <li>目标状态是否可达更容易判断</li>
+            <li>天然适配 Kubernetes 等动态环境</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>什么时候会用 Pushgateway</h3>
+          <ul>
+            <li>批处理任务、脚本任务、短生命周期 Job</li>
+            <li>任务执行完就退出，Prometheus 来不及抓取</li>
+            <li>此时可先推到 Pushgateway，再由 Prometheus 抓取</li>
+          </ul>
+          <p class="warning">注意：Pushgateway 不是常规监控数据上报总入口，不能滥用。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="promql">
+      <h2 class="section-title">6. PromQL 必知必会</h2>
+      <p class="section-desc">
+        PromQL 是 Prometheus 的查询语言，也是它最强大的部分。学 Prometheus，PromQL 一定要会。
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <h3>基础查询</h3>
+          <pre><code>up
+up{job="node-exporter"}
+http_requests_total{status="500"}</code></pre>
+          <p>通过指标名 + Label 过滤，找到你关心的时间序列。</p>
+        </div>
+
+        <div class="card">
+          <h3>区间向量</h3>
+          <pre><code>http_requests_total[5m]</code></pre>
+          <p>表示取最近 5 分钟内的样本数据，通常用于计算速率、增长量、波动值。</p>
+        </div>
+
+        <div class="card">
+          <h3>常用函数</h3>
+          <pre><code>rate(http_requests_total[5m])
+increase(http_requests_total[1h])
+sum(rate(http_requests_total[5m]))
+avg(node_load1)
+max(node_memory_MemTotal_bytes)</code></pre>
+          <ul>
+            <li><code>rate()</code>：平均每秒增长率</li>
+            <li><code>increase()</code>：区间内总增量</li>
+            <li><code>sum()</code> / <code>avg()</code> / <code>max()</code>：聚合计算</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>按标签聚合</h3>
+          <pre><code>sum by (job) (rate(http_requests_total[5m]))
+sum by (instance) (node_memory_MemAvailable_bytes)
+avg by (pod) (container_cpu_usage_seconds_total)</code></pre>
+          <p>这是多维分析的核心，用某个标签维度做统计聚合。</p>
+        </div>
+
+        <div class="card">
+          <h3>错误率计算</h3>
+          <pre><code>sum(rate(http_requests_total{status=~"5.."}[5m]))
+/
+sum(rate(http_requests_total[5m]))</code></pre>
+          <p>经典场景：计算 5xx 错误率。</p>
+        </div>
+
+        <div class="card">
+          <h3>延迟分位数计算</h3>
+          <pre><code>histogram_quantile(
+  0.95,
+  sum by (le) (rate(http_request_duration_seconds_bucket[5m]))
+)</code></pre>
+          <p>使用 Histogram 统计接口 P95 延迟，是生产环境非常常见的写法。</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <span class="chip">PromQL 学习口诀</span>
+        <h3>先选数据，再算时间，再做聚合</h3>
+        <p>
+          一个典型 PromQL 思路通常是：
+          <span class="highlight">指标筛选 → 时间窗口 → 函数计算 → 按标签聚合</span>
+        </p>
+        <pre><code>sum by (service) (
+  rate(http_requests_total{env="prod",status=~"2..|5.."}[5m])
+)</code></pre>
+      </div>
+    </section>
+
+    <section id="alert">
+      <h2 class="section-title">7. 告警机制：Prometheus + Alertmanager</h2>
+      <p class="section-desc">
+        告警不是简单“阈值触发”，而是一整套规则评估与通知治理体系。
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <h3>告警规则</h3>
+          <p>Prometheus 周期性执行告警规则表达式，满足条件就进入告警状态。</p>
+          <pre><code>groups:
+- name: host-alerts
+  rules:
+  - alert: InstanceDown
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "实例不可用"
+      description: "目标 {{ $labels.instance }} 已宕机"</code></pre>
+        </div>
+
+        <div class="card">
+          <h3><code>for</code> 很重要</h3>
+          <p><code>for: 1m</code> 表示条件持续 1 分钟才真正触发告警。</p>
+          <ul>
+            <li>防止瞬时抖动造成误报</li>
+            <li>让告警更稳定、更可信</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Alertmanager 能做什么</h3>
+          <ul>
+            <li>告警分组（Grouping）</li>
+            <li>告警抑制（Inhibition）</li>
+            <li>告警静默（Silence）</li>
+            <li>多渠道通知：邮件、Webhook、钉钉、企业微信等</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="best">
+      <h2 class="section-title">8. 最佳实践：真正要记住的</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>1）指标命名要规范</h3>
+          <ul>
+            <li>使用统一前缀，表达清晰</li>
+            <li>Counter 结尾常带 <code>_total</code></li>
+            <li>单位写在名称里，如 <code>_seconds</code>、<code>_bytes</code></li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>2）Label 不要爆炸</h3>
+          <ul>
+            <li>避免高基数标签，如 user_id、order_id、trace_id</li>
+            <li>Label 维度过多会造成时序数量暴涨</li>
+            <li>这是 Prometheus 性能问题的高发根源</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>3）Counter 要配合 rate</h3>
+          <ul>
+            <li>不要直接看 Counter 总值判断趋势</li>
+            <li>看单位时间增长率更有意义</li>
+            <li>如 QPS、错误率都应基于 <code>rate()</code></li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>4）优先用 Histogram 做延迟监控</h3>
+          <ul>
+            <li>更适合跨实例聚合</li>
+            <li>支持计算 P95/P99</li>
+            <li>在分布式服务监控中更实用</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>5）监控要覆盖黄金指标</h3>
+          <ul>
+            <li>延迟（Latency）</li>
+            <li>流量（Traffic）</li>
+            <li>错误（Errors）</li>
+            <li>饱和度（Saturation）</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>6）告警要可执行</h3>
+          <ul>
+            <li>不要只报“有问题”</li>
+            <li>要带实例、服务、环境、阈值等上下文</li>
+            <li>最好能直接给出排查方向</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="interview">
+      <h2 class="section-title">9. 面试高频必答点</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Prometheus 的核心特点是什么？</h3>
+          <p>
+            基于 Pull 模式抓取指标，使用多维 Label 构建时序数据模型，
+            支持 PromQL 查询、规则计算和告警，特别适合云原生动态环境。
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Prometheus 为什么适合 Kubernetes？</h3>
+          <p>
+            因为它支持服务发现、目标动态变化、多实例聚合和标签模型，
+            非常适合 Pod 频繁创建销毁的场景。
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Counter 和 Gauge 的区别？</h3>
+          <p>
+            Counter 只增不减，适合累计量；Gauge 可增可减，适合当前状态值。
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Histogram 和 Summary 的区别？</h3>
+          <p>
+            Histogram 在服务端可聚合，适合分布式系统；Summary 在客户端计算分位数，
+            跨实例聚合能力较差，因此一般更推荐 Histogram。
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Pushgateway 适用于什么场景？</h3>
+          <p>
+            适合短生命周期批任务，不适合长期服务的常规指标上报。
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>PromQL 中 rate() 有什么作用？</h3>
+          <p>
+            用于计算 Counter 在一段时间内的平均每秒增长速率，是 QPS、错误率分析的基础。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">10. 一张图记忆 Prometheus</h2>
+      <div class="card">
+        <pre><code>应用 / 主机 / 中间件
+        │
+        │ 暴露 /metrics
+        ▼
+Prometheus Server（定时抓取）
+        │
+        ├── TSDB 本地存储
+        ├── PromQL 查询
+        ├── Recording Rules 预计算
+        └── Alert Rules 告警规则
+                 │
+                 ▼
+           Alertmanager
+                 │
+                 ▼
+      邮件 / 钉钉 / 企业微信 / Webhook
+
+Grafana ← 查询 Prometheus 做可视化展示</code></pre>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    Prometheus 核心概念速查页 · 适合入门、复习、面试、技术分享
+  </footer>
+
+</body>
+</html>

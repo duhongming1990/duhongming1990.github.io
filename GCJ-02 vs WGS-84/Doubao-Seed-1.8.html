@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GCJ-02 vs WGS-84 坐标系对比</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- Tailwind配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5e9',
+            secondary: '#38bdf8',
+            dark: '#0f172a',
+            darker: '#020617',
+            light: '#f1f5f9',
+            accent: '#818cf8',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .text-gradient {
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .grid-lines {
+        background-image: linear-gradient(to right, rgba(14, 165, 233, 0.1) 1px, transparent 1px),
+                          linear-gradient(to bottom, rgba(14, 165, 233, 0.1) 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+      .animate-float {
+        animation: float 6s ease-in-out infinite;
+      }
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(14, 165, 233, 0.1), 0 10px 10px -5px rgba(14, 165, 233, 0.04);
+      }
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+  </style>
+</head>
+<body class="bg-dark text-light font-sans">
+  <!-- 背景网格 -->
+  <div class="fixed inset-0 grid-lines opacity-30 z-0"></div>
+  
+  <!-- 顶部导航 -->
+  <header class="sticky top-0 bg-darker/80 backdrop-blur-md border-b border-primary/20 z-50">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gradient bg-gradient-to-r from-primary to-secondary">坐标系对比</h1>
+      <nav>
+        <ul class="flex space-x-6">
+          <li><a href="#intro" class="hover:text-primary transition-colors">简介</a></li>
+          <li><a href="#comparison" class="hover:text-primary transition-colors">对比</a></li>
+          <li><a href="#conversion" class="hover:text-primary transition-colors">转换</a></li>
+          <li><a href="#usage" class="hover:text-primary transition-colors">应用</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 英雄区 -->
+  <section class="relative overflow-hidden py-20">
+    <div class="container mx-auto px-4 flex flex-col items-center text-center">
+      <div class="relative z-10">
+        <h2 class="text-5xl md:text-6xl font-bold mb-6">
+          <span class="text-gradient bg-gradient-to-r from-primary to-secondary">GCJ-02</span> 
+          <span class="text-white">vs</span> 
+          <span class="text-gradient bg-gradient-to-r from-accent to-primary">WGS-84</span>
+        </h2>
+        <p class="text-lg md:text-xl max-w-3xl mx-auto text-gray-300">探索两种常用地理坐标系的差异、转换及应用场景，了解它们在定位服务中的核心角色</p>
+      </div>
+      
+      <!-- 装饰元素 -->
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-3xl animate-float"></div>
+      <div class="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-accent/10 rounded-full blur-2xl animate-float" style="animation-delay: 2s"></div>
+    </div>
+  </section>
+
+  <!-- 简介部分 -->
+  <section id="intro" class="py-16 bg-darker">
+    <div class="container mx-auto px-4">
+      <h3 class="text-3xl font-bold mb-12 text-center">坐标系简介</h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- GCJ-02卡片 -->
+        <div class="bg-dark/50 backdrop-blur-sm p-8 rounded-xl border border-primary/20 card-hover">
+          <div class="flex items-center mb-4">
+            <div class="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mr-4">
+              <i class="fa fa-map-o text-primary text-2xl"></i>
+            </div>
+            <h4 class="text-2xl font-bold">GCJ-02坐标系</h4>
+          </div>
+          <p class="text-gray-300 mb-4">GCJ-02（火星坐标系）是由中国国家测绘局制定的地理坐标系，通过对WGS-84坐标进行非线性偏移得到。</p>
+          <ul class="space-y-2 text-gray-300">
+            <li class="flex items-start">
+              <i class="fa fa-check-circle text-primary mt-1 mr-2"></i>
+              <span>中国境内强制使用的加密坐标系</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fa fa-check-circle text-primary mt-1 mr-2"></i>
+              <span>偏移范围约在300米以内</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fa fa-check-circle text-primary mt-1 mr-2"></i>
+              <span>百度地图在其基础上进一步加密为BD-09</span>
+            </li>
+          </ul>
+        </div>
+        
+        <!-- WGS-84卡片 -->
+        <div class="bg-dark/50 backdrop-blur-sm p-8 rounded-xl border border-accent/20 card-hover">
+          <div class="flex items-center mb-4">
+            <div class="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center mr-4">
+              <i class="fa fa-globe text-accent text-2xl"></i>
+            </div>
+            <h4 class="text-2xl font-bold">WGS-84坐标系</h4>
+          </div>
+          <p class="text-gray-300 mb-4">WGS-84（World Geodetic System 1984）是全球通用的地球坐标系，是GPS系统使用的标准坐标系。</p>
+          <ul class="space-y-2 text-gray-300">
+            <li class="flex items-start">
+              <i class="fa fa-check-circle text-accent mt-1 mr-2"></i>
+              <span>国际通用标准坐标系</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fa fa-check-circle text-accent mt-1 mr-2"></i>
+              <span>GPS设备直接输出的原始坐标</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fa fa-check-circle text-accent mt-1 mr-2"></i>
+              <span>不受地域限制，全球统一标准</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 对比部分 -->
+  <section id="comparison" class="py-16">
+    <div class="container mx-auto px-4">
+      <h3 class="text-3xl font-bold mb-12 text-center">核心差异对比</h3>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-darker border-b border-primary/20">
+              <th class="py-4 px-6 text-left text-primary">对比项</th>
+              <th class="py-4 px-6 text-left text-primary">GCJ-02</th>
+              <th class="py-4 px-6 text-left text-accent">WGS-84</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-gray-700 hover:bg-dark/50 transition-colors">
+              <td class="py-4 px-6 font-medium">全称</td>
+              <td class="py-4 px-6">国测局坐标系（火星坐标系）</td>
+              <td class="py-4 px-6">世界大地坐标系1984</td>
+            </tr>
+            <tr class="border-b border-gray-700 hover:bg-dark/50 transition-colors">
+              <td class="py-4 px-6 font-medium">使用范围</td>
+              <td class="py-4 px-6">中国境内（包括港澳台）</td>
+              <td class="py-4 px-6">全球范围</td>
+            </tr>
+            <tr class="border-b border-gray-700 hover:bg-dark/50 transition-colors">
+              <td class="py-4 px-6 font-medium">精度</td>
+              <td class="py-4 px-6">存在系统偏移，相对精度高</td>
+              <td class="py-4 px-6">绝对精度高，全球统一基准</td>
+            </tr>
+            <tr class="border-b border-gray-700 hover:bg-dark/50 transition-colors">
+              <td class="py-4 px-6 font-medium">获取方式</td>
+              <td class="py-4 px-6">通过加密算法转换得到</td>
+              <td class="py-4 px-6">GPS设备直接输出</td>
+            </tr>
+            <tr class="border-b border-gray-700 hover:bg-dark/50 transition-colors">
+              <td class="py-4 px-6 font-medium">使用场景</td>
+              <td class="py-4 px-6">中国境内地图服务（高德、腾讯等）</td>
+              <td class="py-4 px-6">国际地图服务、GPS原始数据</td>
+            </tr>
+            <tr class="hover:bg-dark/50 transition-colors">
+              <td class="py-4 px-6 font-medium">偏移特性</td>
+              <td class="py-4 px-6">对WGS-84进行非线性偏移</td>
+              <td class="py-4 px-6">无人为偏移，真实地理位置</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 转换部分 -->
+  <section id="conversion" class="py-16 bg-darker">
+    <div class="container mx-auto px-4">
+      <h3 class="text-3xl font-bold mb-12 text-center">坐标转换原理</h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- WGS-84转GCJ-02 -->
+        <div class="bg-dark/50 backdrop-blur-sm p-8 rounded-xl border border-primary/20">
+          <h4 class="text-xl font-bold mb-4 flex items-center">
+            <i class="fa fa-arrow-right text-primary mr-2"></i>
+            WGS-84 → GCJ-02
+          </h4>
+          <p class="text-gray-300 mb-4">将GPS原始坐标转换为国内地图使用的加密坐标，需要使用国家测绘局提供的偏移算法。</p>
+          <div class="bg-dark p-4 rounded-lg border border-primary/30">
+            <pre class="text-xs text-primary overflow-x-auto">
+// 简化转换公式示例
+function wgs2gcj(wgsLat, wgsLng) {
+  var dLat = transformLat(wgsLng - 105.0, wgsLat - 35.0);
+  var dLng = transformLng(wgsLng - 105.0, wgsLat - 35.0);
+  var radLat = wgsLat / 180.0 * Math.PI;
+  var magic = Math.sin(radLat);
+  magic = 1 - ee * magic * magic;
+  var sqrtMagic = Math.sqrt(magic);
+  dLat = (dLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * Math.PI);
+  dLng = (dLng * 180.0) / (a / sqrtMagic * Math.cos(radLat) * Math.PI);
+  var gcjLat = wgsLat + dLat;
+  var gcjLng = wgsLng + dLng;
+  return [gcjLat, gcjLng];
+}
+            </pre>
+          </div>
+        </div>
+        
+        <!-- GCJ-02转WGS-84 -->
+        <div class="bg-dark/50 backdrop-blur-sm p-8 rounded-xl border border-accent/20">
+          <h4 class="text-xl font-bold mb-4 flex items-center">
+            <i class="fa fa-arrow-left text-accent mr-2"></i>
+            GCJ-02 → WGS-84
+          </h4>
+          <p class="text-gray-300 mb-4">将国内地图坐标转换为GPS原始坐标，需要使用逆向算法，通常采用迭代逼近的方式实现。</p>
+          <div class="bg-dark p-4 rounded-lg border border-accent/30">
+            <pre class="text-xs text-accent overflow-x-auto">
+// 简化转换公式示例
+function gcj2wgs(gcjLat, gcjLng) {
+  var initDelta = 0.01;
+  var threshold = 0.000001;
+  var dLat = initDelta, dLng = initDelta;
+  var mLat = gcjLat - dLat, mLng = gcjLng - dLng;
+  var pLat = gcjLat + dLat, pLng = gcjLng + dLng;
+  var wgsLat, wgsLng, i = 0;
+  while (1) {
+    wgsLat = (mLat + pLat) / 2;
+    wgsLng = (mLng + pLng) / 2;
+    var tmp = wgs2gcj(wgsLat, wgsLng);
+    dLat = tmp[0] - gcjLat;
+    dLng = tmp[1] - gcjLng;
+    if ((Math.abs(dLat) < threshold) && (Math.abs(dLng) < threshold))
+      break;
+    if (dLat > 0) pLat = wgsLat; else mLat = wgsLat;
+    if (dLng > 0) pLng = wgsLng; else mLng = wgsLng;
+    if (++i > 10000) break;
+  }
+  return [wgsLat, wgsLng];
+}
+            </pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 应用场景 -->
+  <section id="usage" class="py-16">
+    <div class="container mx-auto px-4">
+      <h3 class="text-3xl font-bold mb-12 text-center">应用场景</h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- 卡片1 -->
+        <div class="bg-dark/50 backdrop-blur-sm p-6 rounded-xl border border-primary/20 card-hover">
+          <div class="w-14 h-14 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
+            <i class="fa fa-map text-primary text-2xl"></i>
+          </div>
+          <h4 class="text-xl font-bold mb-3">国内地图服务</h4>
+          <p class="text-gray-300">高德地图、腾讯地图、百度地图等国内主流地图服务均使用GCJ-02或其进一步加密的坐标系（如百度BD-09）。</p>
+        </div>
+        
+        <!-- 卡片2 -->
+        <div class="bg-dark/50 backdrop-blur-sm p-6 rounded-xl border border-primary/20 card-hover">
+          <div class="w-14 h-14 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
+            <i class="fa fa-car text-primary text-2xl"></i>
+          </div>
+          <h4 class="text-xl font-bold mb-3">导航与定位</h4>
+          <p class="text-gray-300">国内导航软件、物流追踪系统、共享单车等服务均采用GCJ-02坐标系，确保与国内地图数据的一致性。</p>
+        </div>
+        
+        <!-- 卡片3 -->
+        <div class="bg-dark/50 backdrop-blur-sm p-6 rounded-xl border border-primary/20 card-hover">
+          <div class="w-14 h-14 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
+            <i class="fa fa-globe text-primary text-2xl"></i>
+          </div>
+          <h4 class="text-xl font-bold mb-3">国际应用</h4>
+          <p class="text-gray-300">Google Maps、OpenStreetMap等国际地图服务，以及GPS设备原始数据、航空航天等领域使用WGS-84坐标系。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="bg-darker py-12 border-t border-primary/20">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-6 md:mb-0">
+          <h2 class="text-2xl font-bold text-gradient bg-gradient-to-r from-primary to-secondary mb-2">坐标系对比</h2>
+          <p class="text-gray-400">GCJ-02与WGS-84坐标系的技术解析与应用指南</p>
+        </div>
+        <div class="flex space-x-6">
+          <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+            <i class="fa fa-github text-xl"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+            <i class="fa fa-twitter text-xl"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+            <i class="fa fa-linkedin text-xl"></i>
+          </a>
+        </div>
+      </div>
+      <div class="mt-8 text-center text-gray-500 text-sm">
+        © 2025 坐标系对比 | 科技感十足的技术展示页面
+      </div>
+    </div>
+  </footer>
+
+  <!-- 回到顶部按钮 -->
+  <button id="backToTop" class="fixed bottom-8 right-8 bg-primary/80 hover:bg-primary text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all opacity-0 invisible">
+    <i class="fa fa-arrow-up"></i>
+  </button>
+
+  <!-- JavaScript -->
+  <script>
+    // 回到顶部按钮功能
+    const backToTopBtn = document.getElementById('backToTop');
+    
+    window.addEventListener('scroll', () => {
+      if (window.pageYOffset > 300) {
+        backToTopBtn.classList.remove('opacity-0', 'invisible');
+        backToTopBtn.classList.add('opacity-100', 'visible');
+      } else {
+        backToTopBtn.classList.remove('opacity-100', 'visible');
+        backToTopBtn.classList.add('opacity-0', 'invisible');
+      }
+    });
+    
+    backToTopBtn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+    
+    // 平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+          behavior: 'smooth'
+        });
+      });
+    });
+  </script>
+</body>
+</html>

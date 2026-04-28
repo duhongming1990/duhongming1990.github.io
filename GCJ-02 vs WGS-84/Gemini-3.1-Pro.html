@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>坐标系对比：GCJ-02 vs WGS-84</title>
+    <style>
+        :root {
+            --bg-color: #050914;
+            --grid-color: rgba(0, 255, 255, 0.05);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --cyan: #00f0ff;
+            --purple: #b026ff;
+            --panel-bg: rgba(16, 23, 42, 0.6);
+            --panel-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            /* 科技感网格背景 */
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 30px 30px;
+            background-position: center center;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            animation: fadeIn 1s ease-out;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        h1 span.wgs { color: var(--cyan); text-shadow: 0 0 15px rgba(0, 240, 255, 0.5); }
+        h1 span.vs { color: var(--text-muted); font-size: 1.5rem; margin: 0 15px; }
+        h1 span.gcj { color: var(--purple); text-shadow: 0 0 15px rgba(176, 38, 255, 0.5); }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+
+        /* 卡片布局 */
+        .cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 3px;
+        }
+
+        .card.wgs::before { background: var(--cyan); box-shadow: 0 0 15px var(--cyan); }
+        .card.gcj::before { background: var(--purple); box-shadow: 0 0 15px var(--purple); }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card.wgs:hover { box-shadow: 0 10px 30px rgba(0, 240, 255, 0.1); }
+        .card.gcj:hover { box-shadow: 0 10px 30px rgba(176, 38, 255, 0.1); }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card.wgs h2 { color: var(--cyan); }
+        .card.gcj h2 { color: var(--purple); }
+
+        .tag {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid;
+        }
+
+        .card.wgs .tag { border-color: var(--cyan); color: var(--cyan); }
+        .card.gcj .tag { border-color: var(--purple); color: var(--purple); }
+
+        .card p {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            margin-bottom: 12px;
+            padding-left: 20px;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        .feature-list li::before {
+            content: '▹';
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .card.wgs .feature-list li::before { color: var(--cyan); }
+        .card.gcj .feature-list li::before { color: var(--purple); }
+
+        /* 对比表格 */
+        .table-container {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .highlight-wgs { color: var(--cyan); }
+        .highlight-gcj { color: var(--purple); }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .cards { grid-template-columns: 1fr; }
+            h1 { font-size: 1.8rem; }
+            th, td { padding: 12px 10px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1><span class="wgs">WGS-84</span><span class="vs">VS</span><span class="gcj">GCJ-02</span></h1>
+            <div class="subtitle">全球标准与中国国家标准的底层逻辑碰撞</div>
+        </header>
+
+        <div class="cards">
+            <!-- WGS-84 卡片 -->
+            <div class="card wgs">
+                <h2>WGS-84 <span class="tag">地球坐标系</span></h2>
+                <p>World Geodetic System 1984，是目前最广泛使用的全球地理坐标系统，也是全球定位系统（GPS）的基础数据标准。</p>
+                <ul class="feature-list">
+                    <li><strong>无加密：</strong> 真实的经纬度坐标，无任何人为偏移。</li>
+                    <li><strong>全球通用：</strong> 适用于全球范围内的定位与导航。</li>
+                    <li><strong>硬件直出：</strong> 智能手机、GPS芯片底层获取的原始坐标均为 WGS-84。</li>
+                    <li><strong>代表应用：</strong> Google Earth、海外版 Google Maps、苹果地图（海外）。</li>
+                </ul>
+            </div>
+
+            <!-- GCJ-02 卡片 -->
+            <div class="card gcj">
+                <h2>GCJ-02 <span class="tag">火星坐标系</span></h2>
+                <p>由中国国家测绘局（国测局）制定的地理信息系统坐标系统。出于国家安全考虑，在 WGS-84 基础上加入了非线性加密算法。</p>
+                <ul class="feature-list">
+                    <li><strong>加密偏移：</strong> 坐标经过混淆，与真实物理位置存在几十到几百米的随机偏移。</li>
+                    <li><strong>中国专属：</strong> 仅在中国大陆及港澳地区适用（部分系统港澳台处理有差异）。</li>
+                    <li><strong>合规要求：</strong> 在中国境内提供互联网地图服务，必须使用此坐标系或其衍生系。</li>
+                    <li><strong>代表应用：</strong> 高德地图、腾讯地图、中国版 Google Maps。</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 详细对比表格 -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>对比维度</th>
+                        <th>WGS-84 (地球坐标系)</th>
+                        <th>GCJ-02 (火星坐标系)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>制定机构</strong></td>
+                        <td>美国国防部制图局</td>
+                        <td>中国国家测绘地理信息局</td>
+                    </tr>
+                    <tr>
+                        <td><strong>准确度</strong></td>
+                        <td><span class="highlight-wgs">极高（真实物理位置）</span></td>
+                        <td><span class="highlight-gcj">人为偏移（几十至几百米误差）</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>算法特性</strong></td>
+                        <td>线性、公开标准</td>
+                        <td>非线性加密算法（不可逆推，但有近似解密算法）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>国内合规性</strong></td>
+                        <td>不可直接用于国内公开地图展示</td>
+                        <td><span class="highlight-gcj">国内互联网地图强制标准</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>衍生坐标系</strong></td>
+                        <td>-</td>
+                        <td>BD-09 (百度在 GCJ-02 基础上再次加密)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>开发场景</strong></td>
+                        <td>硬件GPS数据采集、海外地图开发</td>
+                        <td>国内App定位、高德/腾讯地图API接入</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>

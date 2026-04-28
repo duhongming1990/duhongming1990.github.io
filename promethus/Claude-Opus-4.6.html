@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prometheus 核心概念 · 必知必会</title>
+    <style>
+        :root {
+            --primary: #e6522c;
+            --accent: #00d4ff;
+            --bg-dark: #0a0e1a;
+            --bg-card: #111827;
+            --bg-card-hover: #1a2332;
+            --border: #1e3a5f;
+            --text: #e0e7ff;
+            --text-dim: #8892b0;
+            --glow: rgba(0, 212, 255, 0.15);
+            --glow-orange: rgba(230, 82, 44, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: float linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero Header */
+        .hero {
+            text-align: center;
+            padding: 60px 20px 50px;
+            position: relative;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 200px; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .logo-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 24px;
+        }
+
+        .logo-ring {
+            width: 110px; height: 110px;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: rotate 20s linear infinite;
+            position: relative;
+        }
+
+        .logo-ring::before {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border: 1px dashed rgba(230,82,44,0.3);
+            border-radius: 50%;
+            animation: rotate 30s linear infinite reverse;
+        }
+
+        @keyframes rotate {
+            to { transform: rotate(360deg); }
+        }
+
+        .logo-fire {
+            font-size: 48px;
+            filter: drop-shadow(0 0 20px rgba(230,82,44,0.6));
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), #ff8a65, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+
+        .hero .subtitle {
+            font-size: 1.15rem;
+            color: var(--text-dim);
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
+        .hero .desc {
+            margin-top: 20px;
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.8;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            padding: 30px 0 40px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 20px rgba(0,212,255,0.4);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Section titles */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 50px 0 28px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0,212,255,0.1);
+        }
+
+        .section-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--primary), #ff6b35);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px var(--glow-orange);
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .section-header .en {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Architecture diagram */
+        .arch-diagram {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .arch-diagram::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+        }
+
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 10px 0;
+        }
+
+        .arch-node {
+            background: linear-gradient(135deg, #1a2332, #0d1525);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 22px;
+            text-align: center;
+            min-width: 130px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .arch-node:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px var(--glow);
+        }
+
+        .arch-node.core {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #1a1015, #15101a);
+            min-width: 160px;
+        }
+
+        .arch-node.core:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px var(--glow-orange);
+        }
+
+        .arch-node-icon {
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+        }
+
+        .arch-node-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .arch-node-desc {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .arch-arrow {
+            color: var(--accent);
+            font-size: 1.4rem;
+            opacity: 0.6;
+            animation: pulse-arrow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-arrow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Cards grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, var(--glow), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 30px var(--glow);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .card-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .card-icon.blue { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2); }
+        .card-icon.orange { background: rgba(230,82,44,0.1); border: 1px solid rgba(230,82,44,0.2); }
+        .card-icon.green { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); }
+        .card-icon.purple { background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2); }
+        .card-icon.pink { background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.2); }
+        .card-icon.yellow { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .card-en {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .card-body {
+            position: relative;
+        }
+
+        .card-desc {
+            font-size: 0.88rem;
+            color: var(--text-dim);
+            line-height: 1.7;
+            margin-bottom: 14px;
+        }
+
+        /* Tags */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: rgba(0,212,255,0.08);
+            border: 1px solid rgba(0,212,255,0.15);
+            color: var(--accent);
+            letter-spacing: 0.5px;
+        }
+
+        .tag.orange {
+            background: rgba(230,82,44,0.08);
+            border-color: rgba(230,82,44,0.2);
+            color: var(--primary);
+        }
+
+        .tag.green {
+            background: rgba(16,185,129,0.08);
+            border-color: rgba(16,185,129,0.2);
+            color: #10b981;
+        }
+
+        .tag.purple {
+            background: rgba(139,92,246,0.08);
+            border-color: rgba(139,92,246,0.2);
+            color: #8b5cf6;
+        }
+
+        /* Metric types special */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+
+        .metric-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+
+        .metric-card.counter::after { background: linear-gradient(90deg, #00d4ff, #0099cc); }
+        .metric-card.counter:hover { border-color: #00d4ff; }
+        .metric-card.gauge::after { background: linear-gradient(90deg, #10b981, #059669); }
+        .metric-card.gauge:hover { border-color: #10b981; }
+        .metric-card.histogram::after { background: linear-gradient(90deg, #8b5cf6, #6d28d9); }
+        .metric-card.histogram:hover { border-color: #8b5cf6; }
+        .metric-card.summary::after { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .metric-card.summary:hover { border-color: #f59e0b; }
+
+        .metric-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .metric-zh {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 14px;
+        }
+
+        .metric-desc {
+            font-size: 0.88rem;
+            color: var(--text-dim);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .metric-example {
+            background: #0a0f1c;
+            border: 1px solid rgba(0,212,255,0.1);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.78rem;
+            color: var(--accent);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .metric-visual {
+            margin: 14px 0;
+            height: 40px;
+            display: flex;
+            align-items: end;
+            gap: 3px;
+        }
+
+        .bar {
+            flex: 1;
+            border-radius: 2px 2px 0 0;
+            min-width: 4px;
+            transition: height 0.3s;
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: #060a14;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 16px 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: '';
+            position: absolute;
+            top: 12px; left: 16px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-label {
+            position: absolute;
+            top: 10px; right: 16px;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            background: rgba(0,212,255,0.08);
+            padding: 2px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(0,212,255,0.1);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .code-block pre {
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.82rem;
+            line-height: 1.8;
+            color: var(--text);
+            margin-top: 8px;
+        }
+
+        .code-block .comment { color: #4a6a8a; }
+        .code-block .keyword { color: var(--accent); }
+        .code-block .string { color: #10b981; }
+        .code-block .func { color: #f59e0b; }
+        .code-block .number { color: #ec4899; }
+        .code-block .label { color: #8b5cf6; }
+
+        /* PromQL Section */
+        .promql-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+        }
+
+        .promql-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .promql-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--glow);
+        }
+
+        .promql-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .promql-badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(230,82,44,0.15);
+            color: var(--primary);
+            font-weight: 400;
+        }
+
+        .promql-item {
+            margin-bottom: 12px;
+        }
+
+        .promql-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .promql-desc {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .promql-code {
+            background: #060a14;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.78rem;
+            color: var(--accent);
+            border: 1px solid rgba(0,212,255,0.08);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        /* Best practices */
+        .practices-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 16px;
+        }
+
+        .practice-item {
+            display: flex;
+            gap: 14px;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .practice-item:hover {
+            border-color: rgba(0,212,255,0.3);
+            background: var(--bg-card-hover);
+        }
+
+        .practice-num {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), #ff6b35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .practice-content h4 {
+            font-size: 0.95rem;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .practice-content p {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* Table styles */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+        }
+
+        thead {
+            background: rgba(0,212,255,0.05);
+        }
+
+        th {
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 14px 20px;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            border-bottom: 1px solid rgba(30,58,95,0.4);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(0,212,255,0.02);
+        }
+
+        td code {
+            background: rgba(0,212,255,0.08);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.78rem;
+            color: var(--accent);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 50px 20px 30px;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            border-top: 1px solid rgba(0,212,255,0.05);
+            margin-top: 60px;
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .footer .heart {
+            color: var(--primary);
+            animation: heartbeat 1.5s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .hero .subtitle { letter-spacing: 4px; font-size: 0.9rem; }
+            .stats-bar { gap: 30px; }
+            .arch-flow { flex-direction: column; }
+            .arch-arrow { transform: rotate(90deg); }
+            .promql-grid { grid-template-columns: 1fr; }
+            .practices-list { grid-template-columns: 1fr; }
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 10px rgba(0,212,255,0.3);
+        }
+    </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="container">
+
+    <!-- Hero -->
+    <header class="hero fade-in">
+        <div class="logo-container">
+            <div class="logo-ring">
+                <span class="logo-fire">🔥</span>
+            </div>
+        </div>
+        <h1>Prometheus</h1>
+        <div class="subtitle">核心概念 · 必知必会</div>
+        <p class="desc">
+            Prometheus 是一套开源的系统监控与告警框架，由 SoundCloud 开发并于2016年加入 CNCF，
+            是继 Kubernetes 之后第二个毕业的项目。它以强大的多维数据模型、灵活的查询语言和高效的时序数据库著称。
+        </p>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats-bar fade-in">
+        <div class="stat-item">
+            <div class="stat-value">CNCF</div>
+            <div class="stat-label">毕业项目</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">PULL</div>
+            <div class="stat-label">采集模式</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">TSDB</div>
+            <div class="stat-label">时序存储</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">PromQL</div>
+            <div class="stat-label">查询语言</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">4</div>
+            <div class="stat-label">指标类型</div>
+        </div>
+    </div>
+
+    <!-- ==================== 1. Architecture ==================== -->
+    <div class="section-header fade-in">
+        <div class="section-icon">🏗</div>
+        <div>
+            <h2>整体架构</h2>
+            <div class="en">Architecture Overview</div>
+        </div>
+    </div>
+
+    <div class="arch-diagram fade-in">
+        <div class="arch-flow">
+            <div class="arch-node">
+                <div class="arch-node-icon">📦</div>
+                <div class="arch-node-title">Exporters</div>
+                <div class="arch-node-desc">指标暴露端点</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node">
+                <div class="arch-node-icon">🔍</div>
+                <div class="arch-node-title">Service Discovery</div>
+                <div class="arch-node-desc">自动发现目标</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node core">
+                <div class="arch-node-icon">🔥</div>
+                <div class="arch-node-title">Prometheus Server</div>
+                <div class="arch-node-desc">采集 · 存储 · 计算</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node">
+                <div class="arch-node-icon">🔔</div>
+                <div class="arch-node-title">Alertmanager</div>
+                <div class="arch-node-desc">告警路由与通知</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node">
+                <div class="arch-node-icon">📊</div>
+                <div class="arch-node-title">Grafana</div>
+                <div class="arch-node-desc">可视化展示</div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:24px;">
+            <div style="display:inline-flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center;">
+                <div class="arch-node" style="min-width:110px;">
+                    <div class="arch-node-icon">📤</div>
+                    <div class="arch-node-title">Pushgateway</div>
+                    <div class="arch-node-desc">短生命周期任务</div>
+                </div>
+                <span class="arch-arrow">→</span>
+                <span style="color:var(--text-dim); font-size:0.8rem;">推送至 Prometheus Server</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 2. Data Model ==================== -->
+    <div class="section-header fade-in">
+        <div class="section-icon">📐</div>
+        <div>
+            <h2>数据模型</h2>
+            <div class="en">Data Model</div>
+        </div>
+    </div>
+
+    <div class="cards-grid fade-in">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon blue">📈</div>
+                <div>
+                    <div class="card-title">时间序列 Time Series</div>
+                    <div class="card-en">唯一标识的数据流</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    每条时间序列由 <strong style="color:#fff">指标名称(metric name)</strong> 和一组
+                    <strong style="color:#fff">标签(labels)</strong> 唯一标识。每个时间点包含一个 float64 的值和毫秒级时间戳。
+                </div>
+                <div class="metric-example">
+                    http_requests_total{method="GET", status="200"} → 1024 @1625000000
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon orange">🏷</div>
+                <div>
+                    <div class="card-title">标签 Labels</div>
+                    <div class="card-en">多维度数据模型核心</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    标签是 key=value 的键值对，赋予指标多维度能力。标签分为<strong style="color:#fff">固有标签</strong>（target自带）
+                    和<strong style="color:#fff">外部标签</strong>（relabel添加），任何标签变化都会产生新的时间序列。
+                </div>
+                <div class="tags">
+                    <span class="tag">instance</span>
+                    <span class="tag">job</span>
+                    <span class="tag orange">method</span>
+                    <span class="tag orange">status</span>
+                    <span class="tag green">env</span>
+                    <span class="tag green">region</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon green">📝</div>
+                <div>
+                    <div class="card-title">样本 Sample</div>
+                    <div class="card-en">时序数据的最小单元</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    每个样本包含三要素：完整的指标名称与标签集合、一个 <strong style="color:#fff">float64</strong> 数值、
+                    一个 <strong style="color:#fff">int64</strong> 毫秒级 Unix 时间戳。Prometheus 按固定间隔采集样本。
+                </div>
+                <div class="tags">
+                    <span class="tag purple">metric + labels</span>
+                    <span class="tag">float64 value</span>
+                    <span class="tag orange">timestamp(ms)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 3. Metric Types ==================== -->
+    <div class="section-header fade-in">
+        <div class="section-icon">📊</div>
+        <div>
+            <h2>四大指标类型</h2>
+            <div class="en">Metric Types</div>
+        </div>
+    </div>
+
+    <div class="metric-grid fade-in">
+        <!-- Counter -->
+        <div class="metric-card counter">
+            <div style="display:flex;justify-content:space-between;align-items:start;">
+                <div>
+                    <div class="metric-name">Counter 计数器</div>
+                    <div class="metric-zh">只增不减 · 累计值</div>
+                </div>
+                <span style="font-size:2rem;">📈</span>
+            </div>
+            <div class="metric-desc">
+                单调递增的累加器，值只能增加或在重启时归零。适用于请求数、错误数、任务完成数等场景。
+                通常搭配 <code style="color:var(--accent)">rate()</code> 或 <code style="color:var(--accent)">increase()</code> 使用。
+            </div>
+            <div class="metric-visual">
+                <div class="bar" style="height:15%;background:#00d4ff"></div>
+                <div class="bar" style="height:22%;background:#00d4ff"></div>
+                <div class="bar" style="height:30%;background:#00d4ff"></div>
+                <div class="bar" style="height:35%;background:#00d4ff"></div>
+                <div class="bar" style="height:45%;background:#00d4ff"></div>
+                <div class="bar" style="height:55%;background:#00d4ff"></div>
+                <div class="bar" style="height:60%;background:#00d4ff"></div>
+                <div class="bar" style="height:70%;background:#00d4ff"></div>
+                <div class="bar" style="height:78%;background:#00d4ff"></div>
+                <div class="bar" style="height:88%;background:#00d4ff"></div>
+                <div class="bar" style="height:95%;background:#00d4ff"></div>
+                <div class="bar" style="height:100%;background:#00d4ff"></div>
+            </div>
+            <div class="metric-example">http_requests_total{method="POST"}</div>
+        </div>
+
+        <!-- Gauge -->
+        <div class="metric-card gauge">
+            <div style="display:flex;justify-content:space-between;align-items:start;">
+                <div>
+                    <div class="metric-name">Gauge 仪表盘</div>
+                    <div class="metric-zh">可增可减 · 瞬时值</div>
+                </div>
+                <span style="font-size:2rem;">🌡</span>
+            </div>
+            <div class="metric-desc">
+                可以任意上下波动的数值，代表某个瞬时状态。适用于温度、内存使用率、当前并发连接数、
+                队列长度等场景。
+            </div>
+            <div class="metric-visual">
+                <div class="bar" style="height:60%;background:#10b981"></div>
+                <div class="bar" style="height:45%;background:#10b981"></div>
+                <div class="bar" style="height:70%;background:#10b981"></div>
+                <div class="bar" style="height:85%;background:#10b981"></div>
+                <div class="bar" style="height:55%;background:#10b981"></div>
+                <div class="bar" style="height:40%;background:#10b981"></div>
+                <div class="bar" style="height:75%;background:#10b981"></div>
+                <div class="bar" style="height:90%;background:#10b981"></div>
+                <div class="bar" style="height:50%;background:#10b981"></div>
+                <div class="bar" style="height:65%;background:#10b981"></div>
+                <div class="bar" style="height:80%;background:#10b981"></div>
+                <div class="bar" style="height:35%;background:#10b981"></div>
+            </div>
+            <div class="metric-example">node_memory_MemAvailable_bytes</div>
+        </div>
+
+        <!-- Histogram -->
+        <div class="metric-card histogram">
+            <div style="display:flex;justify-content:space-between;align-items:start;">
+                <div>
+                    <div class="metric-name">Histogram 直方图</div>
+                    <div class="metric-zh">分桶统计 · 分位数计算</div>
+                </div>
+                <span style="font-size:2rem;">📊</span>
+            </div>
+            <div class="metric-desc">
+                将观测值分配到预定义的桶(bucket)中，自动生成 <code style="color:#8b5cf6">_bucket</code>、
+                <code style="color:#8b5cf6">_sum</code>、<code style="color:#8b5cf6">_count</code> 三组时间序列。
+                适合请求延迟、响应大小的分布分析。
+            </div>
+            <div class="metric-visual">
+                <div class="bar" style="height:20%;background:#8b5cf6"></div>
+                <div class="bar" style="height:45%;background:#8b5cf6"></div>
+                <div class="bar" style="height:85%;background:#8b5cf6"></div>
+                <div class="bar" style="height:100%;background:#8b5cf6"></div>
+                <div class="bar" style="height:75%;background:#8b5cf6"></div>
+                <div class="bar" style="height:50%;background:#8b5cf6"></div>
+                <div class="bar" style="height:30%;background:#8b5cf6"></div>
+                <div class="bar" style="height:15%;background:#8b5cf6"></div>
+                <div class="bar" style="height:8%;background:#8b5cf6"></div>
+                <div class="bar" style="height:5%;background:#8b5cf6"></div>
+                <div class="bar" style="height:3%;background:#8b5cf6"></div>
+                <div class="bar" style="height:2%;background:#8b5cf6"></div>
+            </div>
+            <div class="metric-example">histogram_quantile(0.95, rate(http_duration_bucket[5m]))</div>
+        </div>
+
+        <!-- Summary -->
+        <div class="metric-card summary">
+            <div style="display:flex;justify-content:space-between;align-items:start;">
+                <div>
+                    <div class="metric-name">Summary 摘要</div>
+                    <div class="metric-zh">客户端计算 · 精确分位数</div>
+                </div>
+                <span style="font-size:2rem;">📋</span>
+            </div>
+            <div class="metric-desc">
+                在客户端直接计算流式 φ-分位数。生成 <code style="color:#f59e0b">{quantile="0.5"}</code>、
+                <code style="color:#f59e0b">_sum</code>、<code style="color:#f59e0b">_count</code>。
+                无法聚合，适合单实例精确分位数需求。
+            </div>
+            <div class="metric-visual">
+                <div class="bar" style="height:10%;background:#f59e0b"></div>
+                <div class="bar" style="height:30%;background:#f59e0b"></div>
+                <div class="bar" style="height:65%;background:#f59e0b"></div>
+                <div class="bar" style="height:95%;background:#f59e0b"></div>
+                <div class="bar" style="height:100%;background:#f59e0b"></div>
+                <div class="bar" style="height:100%;background:#f59e0b"></div>
+                <div class="bar" style="height:100%;background:#f59e0b"></div>
+                <div class="bar" style="height:100%;background:#f59e0b"></div>
+                <div class="bar" style="height:100%;background:#f59e0b"></div>
+                <div class="bar" style="height:100%;background:#f59e0b"></div>
+                <div class="bar" style="height:100%;background:#f59e0b"></div>
+                <div class="bar" style="height:100%;background:#f59e0b"></div>
+            </div>
+            <div class="metric-example">go_gc_duration_seconds{quantile="0.99"}</div>
+        </div>
+    </div>
+
+    <!-- Histogram vs Summary -->
+    <div style="margin-top:24px;" class="fade-in">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>对比维度</th>
+                        <th>Histogram</th>
+                        <th>Summary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>分位数计算</td>
+                        <td>服务端 (PromQL)</td>
+                        <td>客户端 (应用内)</td>
+                    </tr>
+                    <tr>
+                        <td>可否聚合</td>
+                        <td><span style="color:#10b981">✅ 可以跨实例聚合</span></td>
+                        <td><span style="color:#ef4444">❌ 不可聚合</span></td>
+                    </tr>
+                    <tr>
+                        <td>精确度</td>
+                        <td>近似值（取决于桶边界）</td>
+                        <td>精确值</td>
+                    </tr>
+                    <tr>
+                        <td>性能开销</td>
+                        <td>客户端低，服务端查询时计算</td>
+                        <td>客户端高（流式计算）</td>
+                    </tr>
+                    <tr>
+                        <td>推荐场景</td>
+                        <td><code>SLA / SLO / 多实例聚合</code></td>
+                        <td><code>单实例精确分位数</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== 4. PromQL ==================== -->
+    <div class="section-header fade-in">
+        <div class="section-icon">⚡</div>
+        <div>
+            <h2>PromQL 查询语言</h2>
+            <div class="en">Prometheus Query Language</div>
+        </div>
+    </div>
+
+    <!-- Data Types -->
+    <div class="cards-grid fade-in" style="margin-bottom:24px;">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon blue">1️⃣</div>
+                <div>
+                    <div class="card-title">瞬时向量 Instant Vector</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">同一时刻的一组时间序列，每条只有一个样本值。最常用的类型。</div>
+                <div class="metric-example">http_requests_total{job="api"}</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon orange">2️⃣</div>
+                <div>
+                    <div class="card-title">范围向量 Range Vector</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">一段时间范围内的样本集合，用 <code style="color:var(--accent)">[duration]</code> 选择，不能直接绘图。</div>
+                <div class="metric-example">http_requests_total{job="api"}[5m]</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon green">3️⃣</div>
+                <div>
+                    <div class="card-title">标量 & 字符串</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">标量(Scalar)为浮点数值，字符串(String)目前较少使用，用于表达式中的常量运算。</div>
+                <div class="metric-example">count(up == 1)  →  scalar: 5</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PromQL Examples -->
+    <div class="promql-grid fade-in">
+        <div class="promql-card">
+            <div class="promql-title">
+                🔢 聚合操作
+                <span class="promql-badge">Aggregation</span>
+            </div>
+            <div class="promql-item">
+                <div class="promql-desc">按 job 统计请求速率 Top5</div>
+                <div class="promql-code">topk(5, sum by(job) (rate(http_requests_total[5m])))</div>
+            </div>
+            <div class="promql-item">
+                <div class="promql-desc">统计各状态码的请求比例</div>
+                <div class="promql-code">sum(rate(http_requests_total[5m])) by (status)</div>
+            </div>
+            <div class="promql-item">
+                <div class="promql-desc">统计在线实例数</div>
+                <div class="promql-code">count(up == 1)</div>
+            </div>
+        </div>
+
+        <div class="promql-card">
+            <div class="promql-title">
+                ⏱ 速率计算
+                <span class="promql-badge">Rate & Increase</span>
+            </div>
+            <div class="promql-item">
+                <div class="promql-desc">每秒请求速率 (Counter必备)</div>
+                <div class="promql-code">rate(http_requests_total[5m])</div>
+            </div>
+            <div class="promql-item">
+                <div class="promql-desc">过去1小时增长量</div>
+                <div class="promql-code">increase(http_requests_total[1h])</div>
+            </div>
+            <div class="promql-item">
+                <div class="promql-desc">瞬时增长率 (适合波动大的指标)</div>
+                <div class="promql-code">irate(http_requests_total[5m])</div>
+            </div>
+        </div>
+
+        <div class="promql-card">
+            <div class="promql-title">
+                📐 数学与过滤
+                <span class="promql-badge">Math & Filter</span>
+            </div>
+            <div class="promql-item">
+                <div class="promql-desc">内存使用率 (%)</div>
+                <div class="promql-code">(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100</div>
+            </div>
+            <div class="promql-item">
+                <div class="promql-desc">CPU使用率 > 80% 的实例</div>
+                <div class="promql-code">100 - (avg by(instance)(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80</div>
+            </div>
+        </div>
+
+        <div class="promql-card">
+            <div class="promql-title">
+                📊 直方图分位数
+                <span class="promql-badge">Histogram</span>
+            </div>
+            <div class="promql-item">
+                <div class="promql-desc">P99 请求延迟</div>
+                <div class="promql-code">histogram_quantile(0.99, sum(rate(http_duration_seconds_bucket[5m])) by (le))</div>
+            </div>
+            <div class="promql-item">
+                <div class="promql-desc">平均请求延迟</div>
+                <div class="promql-code">rate(http_duration_seconds_sum[5m]) / rate(http_duration_seconds_count[5m])</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 5. Service Discovery ==================== -->
+    <div class="section-header fade-in">
+        <div class="section-icon">🔍</div>
+        <div>
+            <h2>服务发现 & 核心组件</h2>
+            <div class="en">Service Discovery & Components</div>
+        </div>
+    </div>
+
+    <div class="cards-grid fade-in">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon blue">🎯</div>
+                <div>
+                    <div class="card-title">服务发现</div>
+                    <div class="card-en">Service Discovery</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    自动发现监控目标，无需手动配置每个实例。支持多种发现机制，动态适配云原生环境中服务的弹性伸缩。
+                </div>
+                <div class="tags">
+                    <span class="tag">kubernetes_sd</span>
+                    <span class="tag">consul_sd</span>
+                    <span class="tag orange">ec2_sd</span>
+                    <span class="tag orange">dns_sd</span>
+                    <span class="tag green">file_sd</span>
+                    <span class="tag green">static_config</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon orange">📦</div>
+                <div>
+                    <div class="card-title">Exporter 导出器</div>
+                    <div class="card-en">将指标转化为Prometheus格式</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    第三方系统的指标桥接器，将非Prometheus格式的指标转换为标准格式暴露在 /metrics 端点上。
+                </div>
+                <div class="tags">
+                    <span class="tag">node_exporter</span>
+                    <span class="tag">mysqld_exporter</span>
+                    <span class="tag orange">redis_exporter</span>
+                    <span class="tag orange">blackbox_exporter</span>
+                    <span class="tag purple">cadvisor</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon purple">📤</div>
+                <div>
+                    <div class="card-title">Pushgateway</div>
+                    <div class="card-en">短生命周期任务的桥梁</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    为无法被拉取的短期任务（如 CronJob、批处理脚本）提供 Push 模式。任务将指标推送到 Pushgateway，
+                    Prometheus 再从其拉取。<strong style="color:#f59e0b">注意：</strong>不应滥用为通用 Push 网关。
+                </div>
+                <div class="tags">
+                    <span class="tag purple">batch job</span>
+                    <span class="tag purple">cronjob</span>
+                    <span class="tag">短生命周期</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon green">🔔</div>
+                <div>
+                    <div class="card-title">Alertmanager</div>
+                    <div class="card-en">告警管理中心</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    接收 Prometheus 推送的告警，负责去重、分组、抑制、静默和路由，将告警通知发送至邮件、
+                    Slack、Webhook、PagerDuty 等渠道。
+                </div>
+                <div class="tags">
+                    <span class="tag green">分组 Grouping</span>
+                    <span class="tag green">抑制 Inhibition</span>
+                    <span class="tag">静默 Silence</span>
+                    <span class="tag orange">路由 Routing</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon pink">💾</div>
+                <div>
+                    <div class="card-title">TSDB 存储引擎</div>
+                    <div class="card-en">Local Time Series Database</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    Prometheus 自研的高性能本地时序数据库，按 2 小时 Block 组织数据，使用 WAL 保障写入安全。
+                    支持 Remote Write/Read 对接远端长期存储。
+                </div>
+                <div class="tags">
+                    <span class="tag pink">Block</span>
+                    <span class="tag pink">WAL</span>
+                    <span class="tag">Compaction</span>
+                    <span class="tag">Remote Write</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon yellow">🏷</div>
+                <div>
+                    <div class="card-title">Relabeling 标签重写</div>
+                    <div class="card-en">采集前后的标签魔法</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    在采集前(<code style="color:var(--accent)">relabel_configs</code>)和采集后
+                    (<code style="color:var(--accent)">metric_relabel_configs</code>)对标签进行修改、过滤、映射，
+                    是高级配置的核心能力。
+                </div>
+                <div class="tags">
+                    <span class="tag yellow">replace</span>
+                    <span class="tag yellow">keep</span>
+                    <span class="tag">drop</span>
+                    <span class="tag">hashmod</span>
+                    <span class="tag orange">labelmap</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 6. Recording & Alert Rules ==================== -->
+    <div class="section-header fade-in">
+        <div class="section-icon">📜</div>
+        <div>
+            <h2>规则引擎</h2>
+            <div class="en">Recording Rules & Alert Rules</div>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap:20px;" class="fade-in">
+        <div class="code-block">
+            <span class="code-label">Recording Rule</span>
+            <pre>
+<span class="comment"># 预计算规则 — 加速复杂查询</span>
+<span class="keyword">groups:</span>
+  - <span class="keyword">name:</span> <span class="string">http_rules</span>
+    <span class="keyword">rules:</span>
+      - <span class="keyword">record:</span> <span class="func">job:http_requests:rate5m</span>
+        <span class="keyword">expr:</span> <span class="label">sum by(job)</span>(
+          rate(<span class="func">http_requests_total</span>[5m])
+        )
+
+      - <span class="keyword">record:</span> <span class="func">job:http_latency:p99</span>
+        <span class="keyword">expr:</span> histogram_quantile(<span class="number">0.99</span>,
+          sum by(job, le)(
+            rate(<span class="func">http_duration_bucket</span>[5m])
+          )
+        )</pre>
+        </div>
+
+        <div class="code-block">
+            <span class="code-label">Alert Rule</span>
+            <pre>
+<span class="comment"># 告警规则 — 触发条件 + 持续时间</span>
+<span class="keyword">groups:</span>
+  - <span class="keyword">name:</span> <span class="string">instance_alerts</span>
+    <span class="keyword">rules:</span>
+      - <span class="keyword">alert:</span> <span class="func">HighMemoryUsage</span>
+        <span class="keyword">expr:</span> (
+          <span class="number">1</span> - node_memory_MemAvailable_bytes
+              / node_memory_MemTotal_bytes
+        ) * <span class="number">100</span> > <span class="number">85</span>
+        <span class="keyword">for:</span> <span class="string">5m</span>
+        <span class="keyword">labels:</span>
+          <span class="label">severity:</span> <span class="string">warning</span>
+        <span class="keyword">annotations:</span>
+          <span class="label">summary:</span> <span class="string">"内存使用率超过85%"</span>
+          <span class="label">description:</span> <span class="string">"{{ $labels.instance }} 内存 {{ $value | printf \"%.1f\" }}%"</span></pre>
+        </div>
+    </div>
+
+    <!-- ==================== 7. Configuration ==================== -->
+    <div class="section-header fade-in">
+        <div class="section-icon">⚙️</div>
+        <div>
+            <h2>核心配置结构</h2>
+            <div class="en">prometheus.yml</div>
+        </div>
+    </div>
+
+    <div class="code-block fade-in">
+        <span class="code-label">prometheus.yml</span>
+        <pre>
+<span class="keyword">global:</span>
+  <span class="label">scrape_interval:</span>     <span class="string">15s</span>       <span class="comment"># 全局采集间隔</span>
+  <span class="label">evaluation_interval:</span> <span class="string">15s</span>       <span class="comment"># 规则评估间隔</span>
+  <span class="label">scrape_timeout:</span>      <span class="string">10s</span>       <span class="comment"># 采集超时时间</span>
+
+<span class="keyword">alerting:</span>
+  <span class="label">alertmanagers:</span>
+    - <span class="label">static_configs:</span>
+        - <span class="label">targets:</span> [<span class="string">'alertmanager:9093'</span>]
+
+<span class="keyword">rule_files:</span>
+  - <span class="string">"rules/recording_rules.yml"</span>
+  - <span class="string">"rules/alert_rules.yml"</span>
+
+<span class="keyword">scrape_configs:</span>
+  <span class="comment"># 监控 Prometheus 自身</span>
+  - <span class="keyword">job_name:</span> <span class="string">'prometheus'</span>
+    <span class="label">static_configs:</span>
+      - <span class="label">targets:</span> [<span class="string">'localhost:9090'</span>]
+
+  <span class="comment"># 主机监控</span>
+  - <span class="keyword">job_name:</span> <span class="string">'node'</span>
+    <span class="label">file_sd_configs:</span>
+      - <span class="label">files:</span> [<span class="string">'targets/nodes.json'</span>]
+        <span class="label">refresh_interval:</span> <span class="string">30s</span>
+
+  <span class="comment"># Kubernetes Pod 自动发现</span>
+  - <span class="keyword">job_name:</span> <span class="string">'kubernetes-pods'</span>
+    <span class="label">kubernetes_sd_configs:</span>
+      - <span class="label">role:</span> <span class="string">pod</span>
+    <span class="label">relabel_configs:</span>
+      - <span class="label">source_labels:</span> [<span class="func">__meta_kubernetes_pod_annotation_prometheus_io_scrape</span>]
+        <span class="label">action:</span> <span class="string">keep</span>
+        <span class="label">regex:</span> <span class="number">true</span></pre>
+    </div>
+
+    <!-- ==================== 8. Alert Lifecycle ==================== -->
+    <div class="section-header fade-in">
+        <div class="section-icon">🚨</div>
+        <div>
+            <h2>告警生命周期</h2>
+            <div class="en">Alert Lifecycle</div>
+        </div>
+    </div>
+
+    <div class="arch-diagram fade-in" style="margin-bottom:20px;">
+        <div class="arch-flow">
+            <div class="arch-node">
+                <div class="arch-node-icon">✅</div>
+                <div class="arch-node-title" style="color:#10b981">Inactive</div>
+                <div class="arch-node-desc">条件未满足</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node">
+                <div class="arch-node-icon">⏳</div>
+                <div class="arch-node-title" style="color:#f59e0b">Pending</div>
+                <div class="arch-node-desc">条件满足，等待 for</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node core">
+                <div class="arch-node-icon">🔥</div>
+                <div class="arch-node-title" style="color:#ef4444">Firing</div>
+                <div class="arch-node-desc">持续超过 for，发送告警</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node">
+                <div class="arch-node-icon">📨</div>
+                <div class="arch-node-title">Alertmanager</div>
+                <div class="arch-node-desc">去重·分组·路由·通知</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cards-grid fade-in">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon green">🔀</div>
+                <div>
+                    <div class="card-title">分组 Grouping</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    将相同性质的告警合并为一组通知。例如集群大面积故障时，按 <code style="color:var(--accent)">cluster</code>
+                    和 <code style="color:var(--accent)">alertname</code> 分组，避免告警风暴。
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon orange">🚫</div>
+                <div>
+                    <div class="card-title">抑制 Inhibition</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    当某条高优先级告警触发时，自动抑制相关的低优先级告警。例如节点宕机告警触发后，
+                    抑制该节点上的所有服务告警。
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon purple">🔇</div>
+                <div>
+                    <div class="card-title">静默 Silence</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-desc">
+                    在指定时间窗口内，对匹配的告警进行静默处理。适合计划维护、已知问题期间临时屏蔽告警通知。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 9. Best Practices ==================== -->
+    <div class="section-header fade-in">
+        <div class="section-icon">💡</div>
+        <div>
+            <h2>最佳实践</h2>
+            <div class="en">Best Practices</div>
+        </div>
+    </div>
+
+    <div class="practices-list fade-in">
+        <div class="practice-item">
+            <div class="practice-num">01</div>
+            <div class="practice-content">
+                <h4>指标命名规范</h4>
+                <p>使用 <code style="color:var(--accent)">库名_子系统_单位_total</code> 格式，如
+                <code style="color:var(--accent)">http_server_requests_seconds_total</code>，保持统一后缀（_total / _bytes / _seconds）。</p>
+            </div>
+        </div>
+        <div class="practice-item">
+            <div class="practice-num">02</div>
+            <div class="practice-content">
+                <h4>控制标签基数</h4>
+                <p>避免高基数标签（如 user_id、request_id）。标签值的排列组合直接决定时间序列数量，
+                基数爆炸会导致 OOM。</p>
+            </div>
+        </div>
+        <div class="practice-item">
+            <div class="practice-num">03</div>
+            <div class="practice-content">
+                <h4>Counter 必用 rate()</h4>
+                <p>永远不要直接对 Counter 画图。使用 <code style="color:var(--accent)">rate()</code> 或
+                <code style="color:var(--accent)">increase()</code> 转换为速率，自动处理重启归零问题。</p>
+            </div>
+        </div>
+        <div class="practice-item">
+            <div class="practice-num">04</div>
+            <div class="practice-content">
+                <h4>善用 Recording Rules</h4>
+                <p>对频繁使用的复杂查询预计算结果，降低 Dashboard 加载时的查询压力，显著提升 Grafana 响应速度。</p>
+            </div>
+        </div>
+        <div class="practice-item">
+            <div class="practice-num">05</div>
+            <div class="practice-content">
+                <h4>Histogram 优先于 Summary</h4>
+                <p>在多实例环境下优先使用 Histogram，因为它支持服务端聚合。只有在需要精确分位数且单实例场景下才选 Summary。</p>
+            </div>
+        </div>
+        <div class="practice-item">
+            <div class="practice-num">06</div>
+            <div class="practice-content">
+                <h4>告警设置 for 持续时间</h4>
+                <p>避免瞬时波动触发告警。建议 <code style="color:var(--accent)">for: 5m</code> 以上，根据业务容忍度调整，
+                减少告警噪音。</p>
+            </div>
+        </div>
+        <div class="practice-item">
+            <div class="practice-num">07</div>
+            <div class="practice-content">
+                <h4>长期存储方案</h4>
+                <p>本地存储仅适合短期。使用 Remote Write 对接
+                <code style="color:var(--accent)">Thanos</code> / <code style="color:var(--accent)">VictoriaMetrics</code>
+                / <code style="color:var(--accent)">Cortex</code> 实现长期存储和全局视图。</p>
+            </div>
+        </div>
+        <div class="practice-item">
+            <div class="practice-num">08</div>
+            <div class="practice-content">
+                <h4>监控 Prometheus 自身</h4>
+                <p>关注 <code style="color:var(--accent)">prometheus_tsdb_head_series</code>（活跃序列数）、
+                采集延迟、WAL 大小等内部指标，防止监控系统本身成为盲区。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 10. Quick Reference ==================== -->
+    <div class="section-header fade-in">
+        <div class="section-icon">📋</div>
+        <div>
+            <h2>PromQL 速查表</h2>
+            <div class="en">Quick Reference</div>
+        </div>
+    </div>
+
+    <div class="table-wrapper fade-in">
+        <table>
+            <thead>
+                <tr>
+                    <th>函数/操作</th>
+                    <th>说明</th>
+                    <th>示例</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>rate()</code></td>
+                    <td>计算 Counter 的每秒平均增长率</td>
+                    <td><code>rate(requests_total[5m])</code></td>
+                </tr>
+                <tr>
+                    <td><code>irate()</code></td>
+                    <td>基于最后两个点的瞬时增长率</td>
+                    <td><code>irate(requests_total[5m])</code></td>
+                </tr>
+                <tr>
+                    <td><code>increase()</code></td>
+                    <td>时间范围内的增长量</td>
+                    <td><code>increase(requests_total[1h])</code></td>
+                </tr>
+                <tr>
+                    <td><code>sum()</code></td>
+                    <td>求和聚合</td>
+                    <td><code>sum by(job) (rate(...))</code></td>
+                </tr>
+                <tr>
+                    <td><code>avg()</code></td>
+                    <td>平均值聚合</td>
+                    <td><code>avg by(instance) (cpu_usage)</code></td>
+                </tr>
+                <tr>
+                    <td><code>histogram_quantile()</code></td>
+                    <td>从 Histogram 计算分位数</td>
+                    <td><code>histogram_quantile(0.95, sum(rate(duration_bucket[5m])) by (le))</code></td>
+                </tr>
+                <tr>
+                    <td><code>predict_linear()</code></td>
+                    <td>线性预测未来值</td>
+                    <td><code>predict_linear(disk_free[1h], 4*3600)</code></td>
+                </tr>
+                <tr>
+                    <td><code>absent()</code></td>
+                    <td>判断指标是否存在</td>
+                    <td><code>absent(up{job="api"})</code></td>
+                </tr>
+                <tr>
+                    <td><code>label_replace()</code></td>
+                    <td>正则替换标签值</td>
+                    <td><code>label_replace(up, "host", "\$1", "instance", "(.*):.*")</code></td>
+                </tr>
+                <tr>
+                    <td><code>topk() / bottomk()</code></td>
+                    <td>取最大/最小的 N 个序列</td>
+                    <td><code>topk(10, rate(requests_total[5m]))</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer fade-in">
+        <p>
+            Built with <span class="heart">♥</span> for Prometheus learners
+            &nbsp;|&nbsp;
+            <a href="https://prometheus.io/docs" target="_blank">Official Docs ↗</a>
+        </p>
+        <p style="margin-top:8px; opacity:0.5;">
+            Prometheus® is a registered trademark of The Linux Foundation.
+        </p>
+    </footer>
+
+</div>
+
+<script>
+    // Create floating particles
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 50; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (8 + Math.random() * 12) + 's';
+        p.style.animationDelay = (Math.random() * 15) + 's';
+        p.style.width = p.style.height = (1 + Math.random() * 2) + 'px';
+        if (Math.random() > 0.7) {
+            p.style.background = '#e6522c';
+        }
+        particlesContainer.appendChild(p);
+    }
+
+    // Scroll-triggered fade-in
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
