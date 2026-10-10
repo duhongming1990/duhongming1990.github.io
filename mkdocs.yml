@@ -1,5 +1,10 @@
-site_name: 杜洪明最佳实践
+site_name: 杜莱恩特
 nav:
   - Home: index.md
   - bytebytego: bytebytego.md
   - IDEA: IDEA.md
+# https://www.mkdocs.org/user-guide/choosing-your-theme/
+# Office Themes: mkdocs readthedocs 
+# Third Party Themes: material
+theme: material
+
